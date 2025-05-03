@@ -29,7 +29,7 @@
 		"@repo/typescript-config": "workspace:*",
 		"@repo/workspace-dependencies": "workspace:*",
 		"@turbo/gen": "2.5.2",
-		"npm-run-all2": "8.0.0",
+		"npm-run-all2": "8.0.1",
 		"prettier": "3.5.3",
 		"prettier-plugin-packagejson": "2.5.10",
 		"syncpack": "13.0.4",

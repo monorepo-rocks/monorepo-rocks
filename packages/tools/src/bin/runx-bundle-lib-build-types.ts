@@ -2,7 +2,7 @@ import 'zx/globals'
 
 import { inspect } from 'node:util'
 import { program } from '@commander-js/extra-typings'
-import { catchProcessError } from '@jahands/cli-tools'
+import { catchProcessError } from '@jahands/cli-tools/proc'
 import ts from 'typescript'
 
 import { z } from '@repo/zod'

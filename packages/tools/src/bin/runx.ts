@@ -1,7 +1,7 @@
 import 'zx/globals'
 
 import { program } from '@commander-js/extra-typings'
-import { catchProcessError } from '@jahands/cli-tools'
+import { catchProcessError } from '@jahands/cli-tools/proc'
 
 import { buildCmd } from '../cmd/build'
 import { checkCmd } from '../cmd/check'
@@ -9,7 +9,7 @@ import { checkWorkersTypesCmd } from '../cmd/check-workers-types'
 import { fixCmd } from '../cmd/fix'
 import { parseChangesetCmd } from '../cmd/parse-changeset'
 
-program
+void program
 	.name('runx')
 	.description('A CLI for scripts that automate this repo')
 

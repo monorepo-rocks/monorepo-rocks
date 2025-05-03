@@ -19,7 +19,7 @@
 	},
 	"dependencies": {
 		"@commander-js/extra-typings": "13.1.0",
-		"@jahands/cli-tools": "0.9.3",
+		"@jahands/cli-tools": "0.10.0",
 		"commander": "13.1.0",
 		"zx": "8.5.3"
 	},

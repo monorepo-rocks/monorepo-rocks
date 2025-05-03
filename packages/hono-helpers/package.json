@@ -19,7 +19,7 @@
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "0.8.24",
-		"@cloudflare/workers-types": "4.20250502.0",
+		"@cloudflare/workers-types": "4.20250503.0",
 		"@repo/eslint-config": "workspace:*",
 		"@repo/tools": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
