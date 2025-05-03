@@ -64,6 +64,10 @@ buildCmd
 					external.push('node:events', 'node:async_hooks', 'node:buffer', 'cloudflare:test')
 				}
 
+				// Only minify for node target. Workers will minify
+				// later using wrangler or vite.
+				const minify = platform === 'node'
+
 				const opts: esbuild.BuildOptions = {
 					entryPoints,
 					outdir: './dist/',
@@ -73,6 +77,7 @@ buildCmd
 					},
 					target: 'es2022',
 					bundle: true,
+					minify,
 					format,
 					sourcemap: 'both',
 					treeShaking: true,
