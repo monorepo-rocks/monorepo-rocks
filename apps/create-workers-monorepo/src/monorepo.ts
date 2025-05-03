@@ -1,4 +1,3 @@
-import os from 'node:os'
 import path from 'node:path'
 import { input } from '@inquirer/prompts'
 import { cliError } from '@jahands/cli-tools/errors'
