@@ -27,71 +27,77 @@ buildCmd
 		'Optional platform to target (options: node)',
 		validateArg(z.enum(['node']))
 	)
+	.option('--types <boolean>', 'include .d.ts type output', validateArg(z.stringbool()), true)
 
-	.action(async (entryPoints, { format: moduleFormats, platform, rootDir, minify, sourcemap }) => {
-		entryPoints = z
-			.string()
-			.array()
-			.min(1)
-			.parse(entryPoints)
-			.map((d) => path.join(rootDir ?? '.', d))
+	.action(
+		async (entryPoints, { format: moduleFormats, platform, rootDir, minify, sourcemap, types }) => {
+			entryPoints = z
+				.string()
+				.array()
+				.min(1)
+				.parse(entryPoints)
+				.map((d) => path.join(rootDir ?? '.', d))
 
-		type Format = z.infer<typeof Format>
-		const Format = z.enum(['esm', 'cjs'])
+			type Format = z.infer<typeof Format>
+			const Format = z.enum(['esm', 'cjs'])
 
-		const formats = Format.array().parse(moduleFormats)
+			const formats = Format.array().parse(moduleFormats)
 
-		await fs.rm('./dist/', { force: true, recursive: true })
+			await fs.rm('./dist/', { force: true, recursive: true })
 
-		await Promise.all([
-			$({
-				stdio: 'inherit',
-			})`runx-bundle-lib-build-types ${entryPoints}`,
+			const maybeOutputTypes = types
+				? $({
+						stdio: 'inherit',
+					})`runx-bundle-lib-build-types ${entryPoints}`
+				: undefined
 
-			...formats.map(async (outFormat) => {
-				type Config = {
-					format: Format
-					outExt: string
-				}
+			await Promise.all([
+				maybeOutputTypes,
+				...formats.map(async (outFormat) => {
+					type Config = {
+						format: Format
+						outExt: string
+					}
 
-				const { format, outExt } = match<'esm' | 'cjs', Config>(outFormat)
-					.with('esm', () => ({
-						format: 'esm',
-						outExt: '.mjs',
-					}))
-					.with('cjs', () => ({
-						format: 'cjs',
-						outExt: '.cjs',
-					}))
-					.exhaustive()
+					const { format, outExt } = match<'esm' | 'cjs', Config>(outFormat)
+						.with('esm', () => ({
+							format: 'esm',
+							outExt: '.mjs',
+						}))
+						.with('cjs', () => ({
+							format: 'cjs',
+							outExt: '.cjs',
+						}))
+						.exhaustive()
 
-				const external: string[] = []
-				if (!platform || platform !== 'node') {
-					// assume we're targetting Cloudflare Workers
-					external.push('node:events', 'node:async_hooks', 'node:buffer', 'cloudflare:test')
-				}
+					const external: string[] = []
+					if (!platform || platform !== 'node') {
+						// assume we're targetting Cloudflare Workers
+						external.push('node:events', 'node:async_hooks', 'node:buffer', 'cloudflare:test')
+					}
 
-				const opts: esbuild.BuildOptions = {
-					entryPoints,
-					outdir: './dist/',
-					logLevel: 'warning',
-					outExtension: {
-						'.js': outExt,
-					},
-					target: 'es2022',
-					bundle: true,
-					minify,
-					format,
-					sourcemap,
-					treeShaking: true,
-					external,
-				}
+					const opts: esbuild.BuildOptions = {
+						entryPoints,
+						outdir: './dist/',
+						logLevel: 'warning',
+						outExtension: {
+							'.js': outExt,
+						},
+						target: 'es2022',
+						bundle: true,
+						minify,
+						format,
+						sourcemap,
+						treeShaking: true,
+						external,
+					}
 
-				if (platform) {
-					opts.platform = platform
-				}
+					if (platform) {
+						opts.platform = platform
+					}
 
-				await esbuild.build(opts)
-			}),
-		])
-	})
+					await esbuild.build(opts)
+				}),
+			])
+		}
+	)

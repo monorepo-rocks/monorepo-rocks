@@ -10,9 +10,10 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "runx build lib ./src/bin/create-workers-monorepo.ts --platform=node --format=cjs --minify --sourcemap=external",
+		"build": "runx build lib ./src/bin/create-workers-monorepo.ts --platform=node --format=cjs --minify --sourcemap=external --types=false",
 		"check:lint": "run-eslint-workers",
 		"check:types": "run-tsc",
+		"prepublishOnly": "rm -f dist/*.map",
 		"start": "turbo build && node ./dist/create-workers-monorepo.cjs",
 		"test": "run-vitest"
 	},
