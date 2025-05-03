@@ -1,7 +1,7 @@
 import 'zx/globals'
 
 import { program } from '@commander-js/extra-typings'
-import { catchProcessError } from '@jahands/cli-tools'
+import { catchProcessError } from '@jahands/cli-tools/proc'
 
 void program
 	.name('create-workers-monorepo')
