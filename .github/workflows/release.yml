@@ -40,7 +40,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
   create-release-pr:
-    name: Create Release PR or Publish to NPM
+    name: Create Release PR
     runs-on: blacksmith-4vcpu-ubuntu-2204
     timeout-minutes: 5
     concurrency: ${{ github.workflow }}-create-release-pr
