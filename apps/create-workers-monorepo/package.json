@@ -10,7 +10,7 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "runx build lib ./src/bin/create-workers-monorepo.ts --platform=node --format=cjs",
+		"build": "runx build lib ./src/bin/create-workers-monorepo.ts --platform=node --format=cjs --minify",
 		"check:lint": "run-eslint-workers",
 		"check:types": "run-tsc",
 		"start": "turbo build && node ./dist/create-workers-monorepo.cjs",
