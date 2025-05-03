@@ -26,7 +26,7 @@ void program
 			},
 		}).then((answer) => answer.trim())
 
-		echo(chalk.green(`Creating monorepo with name: ${name}`))
+		echo(chalk.green(`Creating monorepo with name: ${chalk.white(name)}`))
 	})
 
 	// Don't hang for unresolved promises
