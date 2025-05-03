@@ -7,6 +7,7 @@ import { buildCmd } from '../cmd/build'
 import { checkCmd } from '../cmd/check'
 import { checkWorkersTypesCmd } from '../cmd/check-workers-types'
 import { fixCmd } from '../cmd/fix'
+import { parseChangesetCmd } from '../cmd/parse-changeset'
 
 program
 	.name('runx')
@@ -19,6 +20,7 @@ program
 	.addCommand(fixCmd)
 	.addCommand(buildCmd)
 	.addCommand(checkCmd)
+	.addCommand(parseChangesetCmd)
 
 	// Don't hang for unresolved promises
 	.hook('postAction', () => process.exit(0))
