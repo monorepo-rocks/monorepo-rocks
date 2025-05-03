@@ -6,6 +6,11 @@ on:
 
 env:
   FORCE_COLOR: 1
+  TURBO_TEAM: monorepo_rocks
+  TURBO_API: https://turbo.uuid.rocks
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
+  TURBO_LOG_ORDER: grouped
 
 jobs:
   test-and-deploy:
