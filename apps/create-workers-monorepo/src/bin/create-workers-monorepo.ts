@@ -11,6 +11,9 @@ void program
 	.description('A CLI for creating a Workers monorepo')
 	.option('-n, --name <name>', 'The name of the monorepo', validateArg(RepoName))
 	.action(async (opts) => {
+		echo(chalk.bold.cyan('👋 Welcome to create-workers-monorepo!'))
+		echo(chalk.dim("Let's get your Cloudflare Workers monorepo set up...\n"))
+
 		await createMonorepo(opts)
 	})
 
