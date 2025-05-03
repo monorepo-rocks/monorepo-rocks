@@ -25,7 +25,7 @@ async function promptRepoName(): Promise<string> {
 	}).then((answer) => answer.trim())
 }
 
-export async function createMonorepo(opts: CreateMonorepoOptions = {}) {
+export async function createMonorepo(opts: CreateMonorepoOptions) {
 	const name = opts.name ?? (await promptRepoName())
 	echo(chalk.green(`Creating monorepo with name: ${chalk.white(name)}`))
 
