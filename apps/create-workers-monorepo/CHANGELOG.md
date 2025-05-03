@@ -1,5 +1,12 @@
 # create-workers-monorepo
 
+## 0.2.1
+
+### Patch Changes
+
+- b6b6dea: fix: update main and bin fields
+- 832e30f: chore: add additional metadata to package.json
+
 ## 0.2.0
 
 ### Minor Changes
