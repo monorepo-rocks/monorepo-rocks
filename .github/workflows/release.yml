@@ -59,7 +59,8 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile --child-concurrency=10
       - name: Build Packages
-        run: pnpm turbo build \
+        run: |
+          pnpm turbo build \
           -F ./apps/create-workers-monorepo
       - name: Create Release PR or Publish to NPM
         uses: changesets/action@v1
