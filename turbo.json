@@ -4,8 +4,7 @@
 	"globalEnv": ["CI", "GITHUB_ACTIONS", "VITEST"],
 	"globalPassThroughEnv": ["WRANGLER_LOG", "FORCE_COLOR"],
 	"remoteCache": {
-		// Enable if using Turbo Remote Cache
-		"enabled": false,
+		"enabled": true,
 		"signature": true
 	},
 	"ui": "tui",

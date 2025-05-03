@@ -11,23 +11,26 @@
 	],
 	"scripts": {
 		"build": "runx build lib ./src/bin/create-workers-monorepo.ts --platform=node --format=cjs --minify --sourcemap=external --types=false",
+		"build:dev": "runx build lib ./src/bin/create-workers-monorepo.ts --platform=node --format=cjs --sourcemap=external --types=false",
 		"check:lint": "run-eslint-workers",
 		"check:types": "run-tsc",
 		"prepublishOnly": "rm -f dist/*.map",
-		"start": "turbo build && node ./dist/create-workers-monorepo.cjs",
+		"start": "run-s -s build:dev start:run",
+		"start:run": "node ./dist/create-workers-monorepo.cjs",
 		"test": "run-vitest"
 	},
-	"dependencies": {
-		"@commander-js/extra-typings": "13.1.0",
-		"@jahands/cli-tools": "0.10.0",
-		"commander": "13.1.0",
-		"zx": "8.5.3"
-	},
 	"devDependencies": {
+		"@commander-js/extra-typings": "13.1.0",
+		"@inquirer/prompts": "7.5.0",
+		"@jahands/cli-tools": "0.10.0",
 		"@repo/eslint-config": "workspace:*",
 		"@repo/tools": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
 		"@types/node": "22.15.3",
-		"vitest": "3.1.2"
+		"commander": "13.1.0",
+		"ts-pattern": "5.7.0",
+		"vitest": "3.1.2",
+		"zod": "4.0.0-beta.20250430T185432",
+		"zx": "8.5.3"
 	}
 }

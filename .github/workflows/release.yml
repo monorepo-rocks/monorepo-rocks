@@ -6,11 +6,16 @@ on:
 
 env:
   FORCE_COLOR: 1
+  TURBO_TEAM: monorepo_rocks
+  TURBO_API: https://turbo.uuid.rocks
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
+  TURBO_LOG_ORDER: grouped
 
 jobs:
   test-and-deploy:
     name: Test and Deploy
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2204
     timeout-minutes: 10
     concurrency: ${{ github.workflow }}
     steps:
@@ -18,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: useblacksmith/setup-node@v5
         with:
           node-version: lts/*
           cache: 'pnpm'
@@ -35,10 +40,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
   create-release-pr:
-    # For Workers, we always deploy on commits to main.
-    # Release PRs are for adding changelogs only (for convenience)
-    name: Create Release PR
-    runs-on: ubuntu-latest
+    name: Create Release PR or Publish to NPM
+    runs-on: blacksmith-4vcpu-ubuntu-2204
     timeout-minutes: 5
     concurrency: ${{ github.workflow }}-create-release-pr
     permissions:
@@ -49,7 +52,7 @@ jobs:
         uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: useblacksmith/setup-node@v5
         with:
           node-version: lts/*
           cache: 'pnpm'
