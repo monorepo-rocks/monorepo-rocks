@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+set -eu
+
+vitest run --silent --testTimeout=15000

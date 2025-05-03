@@ -1,0 +1,50 @@
+{
+	"name": "workers-monorepo-template",
+	"version": "1.0.0",
+	"private": true,
+	"sideEffects": false,
+	"scripts": {
+		"build:workspace": "turbo -F @repo/workspace-dependencies build",
+		"changeset:new": "run-changeset-new",
+		"check": "runx check",
+		"check:ci": "run-s check:deps check:format check:turbo",
+		"check:deps": "syncpack lint",
+		"check:format": "prettier . --check --cache --ignore-unknown",
+		"check:turbo": "turbo check",
+		"fix": "runx fix",
+		"fix:deps": "run-fix-deps",
+		"fix:lint": "FIX_ESLINT=1 turbo check:lint",
+		"fix:format": "prettier . --write --cache --ignore-unknown",
+		"fix:workers-types": "turbo fix:workers-types",
+		"test": "vitest",
+		"test:ci": "run-vitest-ci",
+		"update-deps": "run-update-deps",
+		"new-worker": "run-turbo-gen"
+	},
+	"devDependencies": {
+		"@changesets/cli": "2.29.2",
+		"@ianvs/prettier-plugin-sort-imports": "4.4.1",
+		"@repo/eslint-config": "workspace:*",
+		"@repo/tools": "workspace:*",
+		"@repo/typescript-config": "workspace:*",
+		"@repo/workspace-dependencies": "workspace:*",
+		"@turbo/gen": "2.5.2",
+		"npm-run-all2": "8.0.0",
+		"prettier": "3.5.3",
+		"prettier-plugin-packagejson": "2.5.10",
+		"syncpack": "13.0.4",
+		"turbo": "2.5.2",
+		"typescript": "5.5.4",
+		"vitest": "3.1.2"
+	},
+	"packageManager": "pnpm@10.10.0",
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"core-js-pure",
+			"esbuild",
+			"sharp",
+			"unrs-resolver",
+			"workerd"
+		]
+	}
+}

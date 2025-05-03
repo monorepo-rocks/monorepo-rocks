@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+set -eu
+
+tsc --noEmit -p tsconfig.json
