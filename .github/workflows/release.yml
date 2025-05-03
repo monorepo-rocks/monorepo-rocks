@@ -60,6 +60,8 @@ jobs:
         run: pnpm install --frozen-lockfile --child-concurrency=10 --filter .
       - name: Create Release PR or Publish to NPM
         uses: changesets/action@v1
+        with:
+          publish: pnpm changesets publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
