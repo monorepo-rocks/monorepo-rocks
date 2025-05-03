@@ -58,6 +58,12 @@ buildCmd
 					}))
 					.exhaustive()
 
+				const external: string[] = []
+				if (!platform || platform !== 'node') {
+					// assume we're targetting Cloudflare Workers
+					external.push('node:events', 'node:async_hooks', 'node:buffer', 'cloudflare:test')
+				}
+
 				const opts: esbuild.BuildOptions = {
 					entryPoints,
 					outdir: './dist/',
@@ -70,7 +76,7 @@ buildCmd
 					format,
 					sourcemap: 'both',
 					treeShaking: true,
-					external: ['node:events', 'node:async_hooks', 'node:buffer', 'cloudflare:test'],
+					external,
 				}
 
 				if (platform) {
