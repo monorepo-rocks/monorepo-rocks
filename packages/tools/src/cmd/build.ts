@@ -27,7 +27,12 @@ buildCmd
 		'Optional platform to target (options: node)',
 		validateArg(z.enum(['node']))
 	)
-	.option('--types <boolean>', 'include .d.ts type output', validateArg(z.stringbool()), true)
+	.option(
+		'--types <boolean>',
+		'Include .d.ts types in output (usually desired for libraries)',
+		validateArg(z.stringbool()),
+		true
+	)
 
 	.action(
 		async (entryPoints, { format: moduleFormats, platform, rootDir, minify, sourcemap, types }) => {
