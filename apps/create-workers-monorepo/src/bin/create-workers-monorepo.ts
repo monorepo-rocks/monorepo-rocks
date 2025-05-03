@@ -13,7 +13,7 @@ void program
 
 	.action(async () => {
 		const name = await input({
-			message: 'What would you like to name your monorepo?',
+			message: 'What do you want to name your monorepo?',
 			validate: (value) => {
 				const trimmedValue = value.trim()
 				if (trimmedValue === '') {
