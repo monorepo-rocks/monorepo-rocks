@@ -17,12 +17,18 @@ buildCmd
 	.option('-f, --format <format...>', 'Formats to use (options: esm, cjs)', ['esm'])
 	.option('--minify', 'Minify output', false)
 	.option(
+		'--sourcemap <string>',
+		'Include sourcemaps in the output',
+		validateArg(z.union([z.enum(['both', 'linked', 'inline', 'external']), z.stringbool()])),
+		'both'
+	)
+	.option(
 		'--platform <string>',
 		'Optional platform to target (options: node)',
 		validateArg(z.enum(['node']))
 	)
 
-	.action(async (entryPoints, { format: moduleFormats, platform, rootDir, minify }) => {
+	.action(async (entryPoints, { format: moduleFormats, platform, rootDir, minify, sourcemap }) => {
 		entryPoints = z
 			.string()
 			.array()
@@ -76,7 +82,7 @@ buildCmd
 					bundle: true,
 					minify,
 					format,
-					sourcemap: 'both',
+					sourcemap,
 					treeShaking: true,
 					external,
 				}
