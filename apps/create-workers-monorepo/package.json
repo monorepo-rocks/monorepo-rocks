@@ -1,0 +1,23 @@
+{
+	"name": "create-workers-monorepo",
+	"version": "0.1.0",
+	"private": false,
+	"sideEffects": false,
+	"type": "module",
+	"main": "./dist/index.mjs",
+	"bin": "./dist/index.mjs",
+	"scripts": {
+		"build": "runx build lib ./src/index.ts --platform=node",
+		"check:lint": "run-eslint-workers",
+		"check:types": "run-tsc",
+		"test": "run-vitest"
+	},
+	"dependencies": {},
+	"devDependencies": {
+		"@repo/eslint-config": "workspace:*",
+		"@repo/tools": "workspace:*",
+		"@repo/typescript-config": "workspace:*",
+		"@types/node": "22.15.3",
+		"vitest": "3.1.2"
+	}
+}
