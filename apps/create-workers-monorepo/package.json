@@ -10,12 +10,18 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "runx build lib ./src/index.ts --platform=node",
+		"build": "runx build lib ./src/bin/create-workers-monorepo.ts --platform=node --format=cjs",
 		"check:lint": "run-eslint-workers",
 		"check:types": "run-tsc",
+		"start": "turbo build && node ./dist/create-workers-monorepo.cjs",
 		"test": "run-vitest"
 	},
-	"dependencies": {},
+	"dependencies": {
+		"@commander-js/extra-typings": "13.1.0",
+		"@jahands/cli-tools": "0.9.3",
+		"commander": "13.1.0",
+		"zx": "8.5.3"
+	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
 		"@repo/tools": "workspace:*",

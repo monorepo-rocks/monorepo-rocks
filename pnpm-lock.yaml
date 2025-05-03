@@ -52,6 +52,19 @@ importers:
         version: 3.1.2(@types/node@22.15.3)(@vitest/ui@3.1.2)(lightningcss@1.29.2)(tsx@4.19.4)(yaml@2.7.1)
 
   apps/create-workers-monorepo:
+    dependencies:
+      '@commander-js/extra-typings':
+        specifier: 13.1.0
+        version: 13.1.0(commander@13.1.0)
+      '@jahands/cli-tools':
+        specifier: 0.9.3
+        version: 0.9.3(@commander-js/extra-typings@13.1.0(commander@13.1.0))(commander@13.1.0)(typescript@5.8.2)(zod@4.0.0-beta.20250430T185432)(zx@8.5.3)
+      commander:
+        specifier: 13.1.0
+        version: 13.1.0
+      zx:
+        specifier: 8.5.3
+        version: 8.5.3
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*

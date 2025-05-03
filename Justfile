@@ -22,6 +22,11 @@ dev *flags:
 preview:
   pnpm run preview
 
+# Run start script
+[no-cd]
+start:
+  pnpm start
+
 # Create changeset
 cs:
   pnpm run-changeset-new
