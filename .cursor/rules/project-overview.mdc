@@ -1,7 +1,7 @@
 ---
-description:
+description: Useful when needing to determine repo structure or commands to run
 globs:
-alwaysApply: true
+alwaysApply: false
 ---
 # Project Overview: Cloudflare Workers Monorepo Template
 
