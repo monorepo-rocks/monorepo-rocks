@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { fs } from 'zx'
 
 export type RepoName = z.infer<typeof RepoName>
-export const RepoName = z.string().regex(/^[a-z0-9-_.]+$/i)
+export const RepoName = z.string().regex(/^(?!\.+$)(?!_+$)[a-z0-9-_.]+$/i)
 
 export interface CreateMonorepoOptions {
 	name?: string
