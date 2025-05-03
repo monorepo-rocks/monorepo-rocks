@@ -15,13 +15,14 @@ buildCmd
 	.argument('<entrypoints...>', 'Entrypoint(s) of the app. e.g. src/index.ts')
 	.option('-d, --root-dir <string>', 'Root directory to look for entrypoints')
 	.option('-f, --format <format...>', 'Formats to use (options: esm, cjs)', ['esm'])
+	.option('--minify', 'Minify output', false)
 	.option(
 		'--platform <string>',
 		'Optional platform to target (options: node)',
 		validateArg(z.enum(['node']))
 	)
 
-	.action(async (entryPoints, { format: moduleFormats, platform, rootDir }) => {
+	.action(async (entryPoints, { format: moduleFormats, platform, rootDir, minify }) => {
 		entryPoints = z
 			.string()
 			.array()
@@ -63,10 +64,6 @@ buildCmd
 					// assume we're targetting Cloudflare Workers
 					external.push('node:events', 'node:async_hooks', 'node:buffer', 'cloudflare:test')
 				}
-
-				// Only minify for node target. Workers will minify
-				// later using wrangler or vite.
-				const minify = platform === 'node'
 
 				const opts: esbuild.BuildOptions = {
 					entryPoints,
