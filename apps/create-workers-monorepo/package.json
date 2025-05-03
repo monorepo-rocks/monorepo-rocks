@@ -4,8 +4,8 @@
 	"private": false,
 	"sideEffects": false,
 	"type": "module",
-	"main": "./dist/index.mjs",
-	"bin": "./dist/index.mjs",
+	"main": "./dist/create-workers-monorepo.cjs",
+	"bin": "./dist/create-workers-monorepo.cjs",
 	"files": [
 		"dist"
 	],
