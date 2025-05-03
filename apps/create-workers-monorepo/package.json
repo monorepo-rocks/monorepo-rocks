@@ -2,8 +2,28 @@
 	"name": "create-workers-monorepo",
 	"version": "0.2.0",
 	"private": false,
+	"description": "Create a monorepo for Cloudflare Workers applications",
+	"keywords": [
+		"cloudflare workers",
+		"monorepo",
+		"cloudflare",
+		"workers"
+	],
+	"homepage": "https://github.com/monorepo-rocks/monorepo-rocks/tree/main/apps/create-workers-monorepo",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/monorepo-rocks/monorepo-rocks.git",
+		"directory": "apps/create-workers-monorepo"
+	},
+	"author": {
+		"name": "Jacob Hands",
+		"url": "https://twitter.com/jachands"
+	},
 	"sideEffects": false,
 	"type": "module",
+	"exports": {
+		".": "./dist/create-workers-monorepo.cjs"
+	},
 	"main": "./dist/create-workers-monorepo.cjs",
 	"bin": "./dist/create-workers-monorepo.cjs",
 	"files": [
