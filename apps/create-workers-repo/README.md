@@ -6,6 +6,8 @@ A CLI to bootstrap a monorepo for building Cloudflare Workers applications.
 
 **Note:** This is an alias for [create-workers-monorepo](https://npmjs.org/package/create-workers-monorepo)
 
+![demo](https://monorepo.rocks/images/create-workers-monorepo-demo.gif)
+
 ## Usage
 
 To create a new monorepo, run:

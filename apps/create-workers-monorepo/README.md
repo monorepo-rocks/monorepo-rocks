@@ -4,6 +4,8 @@
 
 A CLI to bootstrap a monorepo for building Cloudflare Workers applications.
 
+![demo](https://monorepo.rocks/images/create-workers-monorepo-demo.gif)
+
 ## Usage
 
 To create a new monorepo, run:
