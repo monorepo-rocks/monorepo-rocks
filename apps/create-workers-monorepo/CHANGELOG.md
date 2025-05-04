@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.4.3
+
+### Patch Changes
+
+- 5dd0695: chore: update wording
+
 ## 0.4.2
 
 ### Patch Changes
