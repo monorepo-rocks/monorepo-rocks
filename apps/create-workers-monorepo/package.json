@@ -47,6 +47,7 @@
 		"@repo/eslint-config": "workspace:*",
 		"@repo/tools": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
+		"@types/fs-extra": "11.0.4",
 		"@types/node": "22.15.3",
 		"commander": "13.1.0",
 		"ts-pattern": "5.7.0",

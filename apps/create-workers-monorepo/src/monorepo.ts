@@ -56,6 +56,13 @@ async function promptUseGitHubActions(): Promise<boolean> {
 	})
 }
 
+async function promptInstallDependencies(): Promise<boolean> {
+	return confirm({
+		message: 'Install dependencies?',
+		default: true,
+	})
+}
+
 export async function createMonorepo(opts: CreateMonorepoOptions) {
 	await ensurePrerequisites()
 
@@ -109,9 +116,27 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 
 	echo(`${chalk.green('Monorepo created successfully!')} ${chalk.dim(targetDir)}`)
 
+	if (await promptInstallDependencies()) {
+		echo(chalk.dim(`Installing dependencies...`))
+
+		// get pnpm version from package.json
+		const pkgJson = z
+			.object({
+				packageManager: z.string().regex(/^pnpm@\d+\.\d+\.\d+$/),
+			})
+			.parse(JSON.parse(fs.readFileSync(path.join(targetDir, 'package.json'), 'utf8')))
+
+		const pnpmVersion = pkgJson.packageManager.split('@')[1]
+		if (!pnpmVersion) {
+			throw cliError('Failed to parse package.json: No pnpm version found')
+		}
+		const cmd = `npm exec --yes pnpm@${pnpmVersion} -- install --child-concurrency=10 --loglevel=error`
+		echo(chalk.dim(`Running command: ${cmd}`))
+		await $`${cmd.split(' ')}`.verbose()
+	}
+
 	// check if vscode or cursor are installed and offer to open the project with one of them
 	const availableEditors = await getAvailableEditors()
-
 	if (availableEditors.length > 0) {
 		const openEditor = await confirm({
 			message: 'Want to open the project in an editor?',
