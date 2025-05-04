@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.4.2
+
+### Patch Changes
+
+- d4db359: chore: add demo to readme
+
 ## 0.4.1
 
 ### Patch Changes
