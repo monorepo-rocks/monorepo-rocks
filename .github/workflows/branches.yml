@@ -26,6 +26,7 @@ jobs:
         uses: useblacksmith/setup-node@v5
         with:
           node-version: lts/*
+          check-latest: false
       - name: Mount PNPM Cache
         uses: useblacksmith/stickydisk@v1
         with:
