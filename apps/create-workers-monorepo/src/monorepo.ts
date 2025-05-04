@@ -4,15 +4,13 @@ import { cliError } from '@jahands/cli-tools/errors'
 import { z } from 'zod'
 import { $, chalk, fs } from 'zx'
 
+import { getAvailableEditors } from './editor'
+import { isDirEmpty } from './fs'
+
 export async function ensurePrerequisites() {
 	if (!(await which('git', { nothrow: true }))) {
 		throw cliError('git is required to create a monorepo. Please install it and try again.')
 	}
-}
-
-function isDirEmpty(dir: string): boolean {
-	const files = fs.readdirSync(dir)
-	return files.length === 0
 }
 
 export const RepoName = z.string().regex(/^(?!\.+$)(?!_+$)[a-z0-9-_.]+$/i)
@@ -56,29 +54,6 @@ async function promptUseGitHubActions(): Promise<boolean> {
 		message: 'Do you want to use GitHub Actions?',
 		default: true,
 	})
-}
-
-interface Editor {
-	name: string
-	command: string
-}
-
-const Editors = [
-	{ name: 'Cursor', command: 'cursor' },
-	{ name: 'Visual Studio Code', command: 'code' },
-] as const satisfies Editor[]
-
-async function getAvailableEditors(): Promise<Editor[]> {
-	const availableEditors: Editor[] = []
-	await Promise.all(
-		Editors.map(async (editor) => {
-			if (await which(editor.command, { nothrow: true })) {
-				availableEditors.push(editor)
-			}
-		})
-	)
-	availableEditors.sort((a, b) => a.name.localeCompare(b.name))
-	return availableEditors
 }
 
 export async function createMonorepo(opts: CreateMonorepoOptions) {
