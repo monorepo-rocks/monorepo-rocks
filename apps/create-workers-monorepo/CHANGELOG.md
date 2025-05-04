@@ -1,5 +1,15 @@
 # create-workers-monorepo
 
+## 0.4.0
+
+### Minor Changes
+
+- 9f65465: feat: add option to install dependencies during setup
+
+### Patch Changes
+
+- a0ddf82: fix: don't print stack trace when prompt is inturrupted
+
 ## 0.3.1
 
 ### Patch Changes
