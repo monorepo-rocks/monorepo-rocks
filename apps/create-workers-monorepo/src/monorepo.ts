@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { input } from '@inquirer/prompts'
+import { confirm, input, select } from '@inquirer/prompts'
 import { cliError } from '@jahands/cli-tools/errors'
 import { z } from 'zod'
 import { $, chalk, fs } from 'zx'
@@ -8,6 +8,11 @@ export async function ensurePrerequisites() {
 	if (!(await which('git', { nothrow: true }))) {
 		throw cliError('git is required to create a monorepo. Please install it and try again.')
 	}
+}
+
+function isDirEmpty(dir: string): boolean {
+	const files = fs.readdirSync(dir)
+	return files.length === 0
 }
 
 export const RepoName = z.string().regex(/^(?!\.+$)(?!_+$)[a-z0-9-_.]+$/i)
@@ -28,8 +33,7 @@ async function promptRepoName(): Promise<string> {
 			const targetDir = path.resolve(process.cwd(), trimmedValue)
 			if (fs.existsSync(targetDir)) {
 				try {
-					const files = fs.readdirSync(targetDir)
-					if (files.length > 0) {
+					if (!isDirEmpty(targetDir)) {
 						return `Directory "${trimmedValue}" already exists and is not empty. Please choose a different name or remove the existing directory.`
 					}
 				} catch (e) {
@@ -47,10 +51,42 @@ async function promptRepoName(): Promise<string> {
 	}).then((answer) => answer.trim())
 }
 
+async function promptUseGitHubActions(): Promise<boolean> {
+	return confirm({
+		message: 'Do you want to use GitHub Actions?',
+		default: true,
+	})
+}
+
+interface Editor {
+	name: string
+	command: string
+}
+
+const Editors = [
+	{ name: 'Cursor', command: 'cursor' },
+	{ name: 'Visual Studio Code', command: 'code' },
+] as const satisfies Editor[]
+
+async function getAvailableEditors(): Promise<Editor[]> {
+	const availableEditors: Editor[] = []
+	await Promise.all(
+		Editors.map(async (editor) => {
+			if (await which(editor.command, { nothrow: true })) {
+				availableEditors.push(editor)
+			}
+		})
+	)
+	availableEditors.sort((a, b) => a.name.localeCompare(b.name))
+	return availableEditors
+}
+
 export async function createMonorepo(opts: CreateMonorepoOptions) {
 	await ensurePrerequisites()
 
 	const name = opts.name ?? (await promptRepoName())
+	const useGitHubActions = await promptUseGitHubActions()
+
 	echo(chalk.blue(`Creating monorepo with name: ${chalk.white(name)}`))
 
 	const targetDir = path.resolve(process.cwd(), name)
@@ -82,12 +118,39 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 		throw cliError(`Failed to create monorepo: ${e instanceof Error ? e.message : String(e)}`)
 	}
 
+	if (!useGitHubActions) {
+		fs.rmSync(path.join(targetDir, '.github/workflows'), { recursive: true, force: true })
+		// delete the .github directory if it's empty
+		if (isDirEmpty(path.join(targetDir, '.github'))) {
+			fs.rmSync(path.join(targetDir, '.github'), { recursive: true, force: true })
+		}
+	}
+
 	echo(chalk.dim(`Initializing git repository...`))
 	cd(targetDir)
 	await $`git init`.quiet()
 	await $`git add .`.quiet()
 	await $`git commit -m "Initial commit"`.quiet()
 
-	echo(chalk.green(`Monorepo created successfully!`))
-	echo(chalk.dim(`  ${targetDir}`))
+	echo(`${chalk.green('Monorepo created successfully!')} ${chalk.dim(targetDir)}`)
+
+	// check if vscode or cursor are installed and offer to open the project with one of them
+	const availableEditors = await getAvailableEditors()
+
+	if (availableEditors.length > 0) {
+		const openEditor = await confirm({
+			message: 'Want to open the project in an editor?',
+			default: true,
+		})
+
+		if (openEditor) {
+			const editor = await select({
+				message: 'Which editor do you want to use?',
+				choices: availableEditors.map((editor) => ({ name: editor.name, value: editor })),
+			})
+
+			echo(chalk.dim(`Opening project in ${editor.name}...`))
+			await $`${editor.command} .`.quiet()
+		}
+	}
 }
