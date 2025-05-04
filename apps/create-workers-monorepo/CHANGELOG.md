@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.3.0
+
+### Minor Changes
+
+- 6950914: feat: make GitHub Actions optional and offer to open in vscode or cursor
+
 ## 0.2.2
 
 ### Patch Changes
