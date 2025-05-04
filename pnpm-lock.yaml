@@ -94,6 +94,10 @@ importers:
         version: 8.5.3
 
   apps/create-workers-repo:
+    dependencies:
+      create-workers-monorepo:
+        specifier: workspace:*
+        version: link:../create-workers-monorepo
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -104,9 +108,6 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
-      create-workers-monorepo:
-        specifier: workspace:*
-        version: link:../create-workers-monorepo
 
   packages/eslint-config:
     devDependencies:

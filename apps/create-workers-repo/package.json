@@ -39,10 +39,12 @@
 		"start:run": "node ./dist/create-workers-repo.cjs",
 		"test": "run-vitest"
 	},
+	"dependencies": {
+		"create-workers-monorepo": "workspace:*"
+	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
 		"@repo/tools": "workspace:*",
-		"@repo/typescript-config": "workspace:*",
-		"create-workers-monorepo": "workspace:*"
+		"@repo/typescript-config": "workspace:*"
 	}
 }
