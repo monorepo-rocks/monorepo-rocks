@@ -20,8 +20,8 @@ export const runCLI = () =>
 				await createMonorepo(opts)
 			} catch (e) {
 				if (e instanceof Error && e.name === 'ExitPromptError') {
-					echo(chalk.red('Aborted.'))
-					process.exit(1)
+					echo(chalk.red('Operation cancelled.'))
+					process.exit(0)
 				} else {
 					throw e
 				}
