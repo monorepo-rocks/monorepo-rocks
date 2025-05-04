@@ -135,11 +135,11 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 		await $`${cmd.split(' ')}`.verbose()
 	}
 
-	// check if vscode or cursor are installed and offer to open the project with one of them
+	// check if vscode or cursor are installed and offer to open the monorepo with one of them
 	const availableEditors = await getAvailableEditors()
 	if (availableEditors.length > 0) {
 		const openEditor = await confirm({
-			message: 'Want to open the project in an editor?',
+			message: 'Want to open your new monorepo in an editor?',
 			default: true,
 		})
 
@@ -149,7 +149,7 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 				choices: availableEditors.map((editor) => ({ name: editor.name, value: editor })),
 			})
 
-			echo(chalk.dim(`Opening project in ${editor.name}...`))
+			echo(chalk.dim(`Opening monorepo in ${editor.name}...`))
 			await $`${editor.command} .`.quiet()
 		}
 	}
