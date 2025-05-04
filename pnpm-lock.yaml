@@ -90,6 +90,21 @@ importers:
         specifier: 8.5.3
         version: 8.5.3
 
+  apps/create-workers-repo:
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@repo/tools':
+        specifier: workspace:*
+        version: link:../../packages/tools
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      create-workers-monorepo:
+        specifier: workspace:*
+        version: link:../create-workers-monorepo
+
   packages/eslint-config:
     devDependencies:
       '@types/eslint':

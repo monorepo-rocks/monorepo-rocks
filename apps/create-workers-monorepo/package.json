@@ -22,7 +22,8 @@
 	"sideEffects": false,
 	"type": "module",
 	"exports": {
-		".": "./dist/create-workers-monorepo.cjs"
+		".": "./dist/create-workers-monorepo.cjs",
+		"./cli": "./src/cli.ts"
 	},
 	"main": "./dist/create-workers-monorepo.cjs",
 	"bin": "./dist/create-workers-monorepo.cjs",
