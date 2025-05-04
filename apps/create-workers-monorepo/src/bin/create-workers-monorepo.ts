@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import 'zx/globals'
 
 import { program } from '@commander-js/extra-typings'
