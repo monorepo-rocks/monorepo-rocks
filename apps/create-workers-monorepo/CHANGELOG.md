@@ -1,5 +1,12 @@
 # create-workers-monorepo
 
+## 0.2.2
+
+### Patch Changes
+
+- 778e9e3: fix: add shebang to create-workers-monorepo.ts
+- 28918a1: chore: update readme
+
 ## 0.2.1
 
 ### Patch Changes
