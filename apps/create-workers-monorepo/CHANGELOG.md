@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.4.1
+
+### Patch Changes
+
+- 5bd4e5d: chore: exit with code 0 when operation is cancelled
+
 ## 0.4.0
 
 ### Minor Changes
