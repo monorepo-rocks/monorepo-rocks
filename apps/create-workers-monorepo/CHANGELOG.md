@@ -1,5 +1,12 @@
 # create-workers-monorepo
 
+## 0.3.1
+
+### Patch Changes
+
+- c160ac8: chore: refactor cli into separate file
+- c9c290a: chore: move helpers to separate files
+
 ## 0.3.0
 
 ### Minor Changes
