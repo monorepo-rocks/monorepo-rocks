@@ -16,8 +16,16 @@ export const runCLI = () =>
 		.action(async (opts) => {
 			echo(chalk.bold.cyan(`👋 Welcome to create-workers-monorepo v${version}!`))
 			echo(chalk.dim("Let's get your Cloudflare Workers monorepo set up...\n"))
-
-			await createMonorepo(opts)
+			try {
+				await createMonorepo(opts)
+			} catch (e) {
+				if (e instanceof Error && e.name === 'ExitPromptError') {
+					echo(chalk.red('Aborted.'))
+					process.exit(1)
+				} else {
+					throw e
+				}
+			}
 		})
 
 		// Don't hang for unresolved promises
