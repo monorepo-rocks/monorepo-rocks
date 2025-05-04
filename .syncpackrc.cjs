@@ -7,7 +7,7 @@ const config = {
 		{
 			label: 'local packages',
 			packages: ['**'],
-			dependencies: ['@repo/*'],
+			dependencies: ['@repo/*', 'create-workers-monorepo'],
 			dependencyTypes: ['!local'], // Exclude the local package itself
 			pinVersion: 'workspace:*',
 		},
