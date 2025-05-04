@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: useblacksmith/setup-node@v5
         with:
-          node-version: 22
+          node-version: 22.15.0
       - name: Mount PNPM Cache
         uses: useblacksmith/stickydisk@v1
         with:
