@@ -26,7 +26,11 @@ jobs:
         uses: useblacksmith/setup-node@v5
         with:
           node-version: lts/*
-          cache: 'pnpm'
+      - name: Mount PNPM Cache
+        uses: useblacksmith/stickydisk@v1
+        with:
+          key: ${{ github.repository }}-pnpm-store
+          path: ~/.pnpm-store
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile --child-concurrency=10
       - name: Check
@@ -55,7 +59,11 @@ jobs:
         uses: useblacksmith/setup-node@v5
         with:
           node-version: lts/*
-          cache: 'pnpm'
+      - name: Mount PNPM Cache
+        uses: useblacksmith/stickydisk@v1
+        with:
+          key: ${{ github.repository }}-pnpm-store
+          path: ~/.pnpm-store
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile --child-concurrency=10
       - name: Build Packages
