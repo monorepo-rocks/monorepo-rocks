@@ -30,8 +30,8 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "runx build lib ./src/bin/create-workers-repo.ts --platform=node --format=cjs --minify --sourcemap=external --types=false",
-		"build:dev": "runx build lib ./src/bin/create-workers-repo.ts --platform=node --format=cjs --sourcemap=external --types=false",
+		"build": "runx build lib ./src/bin/create-workers-repo.ts --platform=node --format=cjs --sourcemap=external --no-types",
+		"build:dev": "runx build lib ./src/bin/create-workers-repo.ts --platform=node --format=cjs --sourcemap=external --no-types --no-minify",
 		"check:lint": "run-eslint-workers",
 		"check:types": "run-tsc",
 		"prepublishOnly": "rm -f dist/*.map",

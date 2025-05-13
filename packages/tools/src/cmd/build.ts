@@ -1,3 +1,4 @@
+import { inspect } from 'node:util'
 import { Command } from '@commander-js/extra-typings'
 import { validateArg } from '@jahands/cli-tools/args'
 import * as esbuild from 'esbuild'
@@ -5,17 +6,56 @@ import { match } from 'ts-pattern'
 
 import { z } from '@repo/zod'
 
+import { TSHelpers } from '../tsconfig'
+
+import type { TSCompilerOptions } from '../tsconfig'
+
 export const buildCmd = new Command('build').description('Scripts to build things')
+
+buildCmd
+	.command('tsc')
+	.description('Build a library with tsc')
+	.argument('<entrypoint...>', 'Entrypoint(s) for the program')
+	.option('-r, --root-dir <string>', 'Root dir for tsc to use (overrides tsconfig.json)', 'src')
+	.action(async (entrypoints, { rootDir }) => {
+		const tsHelpers = await new TSHelpers().init()
+		const { ts } = tsHelpers
+		await $`rm -rf ./dist` // Make sure we don't have any previous artifacts
+
+		// Read the parent config so that we don't get
+		// weird path issues from being in a monorepo
+		const parentTsConfig = z
+			.object({ extends: z.string() })
+			.parse(JSON.parse(fs.readFileSync('./tsconfig.json').toString())).extends
+
+		const tsconfig = ts.readConfigFile(`./node_modules/${parentTsConfig}`, ts.sys.readFile)
+		if (tsconfig.error) {
+			throw new Error(`failed to read tsconfig: ${inspect(tsconfig)}`)
+		}
+
+		const jsonCompopts = tsHelpers.getCompilerOptionsJSONFollowExtends('tsconfig.json')
+		const tmp = ts.convertCompilerOptionsFromJson(jsonCompopts, '')
+		if (tmp.errors.length > 0) {
+			throw new Error(`failed parse config: ${inspect(tmp)}`)
+		}
+
+		const tsOptions = {
+			...tmp.options,
+			rootDir: rootDir,
+		} satisfies TSCompilerOptions
+
+		ts.createProgram(entrypoints, tsOptions).emit()
+	})
 
 buildCmd
 	.command('bundle-lib')
 	.alias('lib')
-	.description('Bundle library with esbuild (usually to resolve vitest issues)')
+	.description('Bundle library with esbuild')
 
 	.argument('<entrypoints...>', 'Entrypoint(s) of the app. e.g. src/index.ts')
 	.option('-d, --root-dir <string>', 'Root directory to look for entrypoints')
 	.option('-f, --format <format...>', 'Formats to use (options: esm, cjs)', ['esm'])
-	.option('--minify', 'Minify output', false)
+	.option('--no-minify', `Don't minify output`)
 	.option(
 		'--sourcemap <string>',
 		'Include sourcemaps in the output',
@@ -24,15 +64,11 @@ buildCmd
 	)
 	.option(
 		'--platform <string>',
-		'Optional platform to target (options: node)',
-		validateArg(z.enum(['node']))
+		'Optional platform to target (options: cloudflare_workers,browser, node, neutral)',
+		validateArg(z.enum(['cloudflare_workers', 'browser', 'node', 'neutral'])),
+		'cloudflare_workers'
 	)
-	.option(
-		'--types <boolean>',
-		'Include .d.ts types in output (usually desired for libraries)',
-		validateArg(z.stringbool()),
-		true
-	)
+	.option('--no-types', `Don't include .d.ts types in output (usually not recommended)`)
 
 	.action(
 		async (entryPoints, { format: moduleFormats, platform, rootDir, minify, sourcemap, types }) => {
@@ -53,7 +89,7 @@ buildCmd
 			const maybeOutputTypes = types
 				? $({
 						stdio: 'inherit',
-					})`runx-bundle-lib-build-types ${entryPoints}`
+					})`runx build bundle-lib-build-types ${entryPoints}`
 				: undefined
 
 			await Promise.all([
@@ -76,8 +112,7 @@ buildCmd
 						.exhaustive()
 
 					const external: string[] = []
-					if (!platform || platform !== 'node') {
-						// assume we're targetting Cloudflare Workers
+					if (platform === 'cloudflare_workers') {
 						external.push('node:events', 'node:async_hooks', 'node:buffer', 'cloudflare:test')
 					}
 
@@ -97,7 +132,7 @@ buildCmd
 						external,
 					}
 
-					if (platform) {
+					if (platform !== 'cloudflare_workers') {
 						opts.platform = platform
 					}
 
@@ -106,3 +141,30 @@ buildCmd
 			])
 		}
 	)
+
+buildCmd
+	.command('bundle-lib-build-types')
+	.description('Separate command to build types (so that we can run them concurrently)')
+	.argument('<entrypoints...>', 'Entrypoint(s) of the app. e.g. src/index.ts')
+	.action(async (entryPoints) => {
+		const tsHelpers = await new TSHelpers().init()
+		const { ts } = tsHelpers
+		z.string().array().min(1).parse(entryPoints)
+
+		const tsconfig = ts.readConfigFile('./tsconfig.json', ts.sys.readFile)
+		if (tsconfig.error) {
+			throw new Error(`failed to read tsconfig: ${inspect(tsconfig)}`)
+		}
+
+		const tsCompOpts = {
+			...tsHelpers.getTSConfig(),
+			declaration: true,
+			declarationMap: true,
+			emitDeclarationOnly: true,
+			noEmit: false,
+			outDir: './dist/',
+		} satisfies TSCompilerOptions
+
+		const program = ts.createProgram(entryPoints, tsCompOpts)
+		program.emit()
+	})
