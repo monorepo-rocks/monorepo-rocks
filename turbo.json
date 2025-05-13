@@ -44,7 +44,7 @@
 			"outputLogs": "new-only"
 		},
 		"check": {
-			"dependsOn": ["build", "^check:types", "^check:lint", "check:types", "check:lint", "topo"],
+			"dependsOn": ["check:types", "check:lint", "topo"],
 			"outputLogs": "new-only"
 		},
 		"check:ci": {
