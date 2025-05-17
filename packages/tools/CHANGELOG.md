@@ -1,5 +1,12 @@
 # @repo/tools
 
+## 0.2.1
+
+### Patch Changes
+
+- d7748df: fix: remove runx-bundle-lib-build-types.ts
+- 8eb150a: chore: update build commands from workers-monorepo-template
+
 ## 0.2.0
 
 ### Minor Changes
