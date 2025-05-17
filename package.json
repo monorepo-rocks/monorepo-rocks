@@ -37,14 +37,5 @@
 		"typescript": "5.5.4",
 		"vitest": "3.1.2"
 	},
-	"packageManager": "pnpm@10.10.0",
-	"pnpm": {
-		"onlyBuiltDependencies": [
-			"core-js-pure",
-			"esbuild",
-			"sharp",
-			"unrs-resolver",
-			"workerd"
-		]
-	}
+	"packageManager": "pnpm@10.10.0"
 }
