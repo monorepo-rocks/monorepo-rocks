@@ -60,8 +60,8 @@ importers:
         specifier: 7.5.1
         version: 7.5.1(@types/node@22.15.19)
       '@jahands/cli-tools':
-        specifier: 0.10.8
-        version: 0.10.8(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.5.4)(zod@3.25.7)(zx@8.5.4)
+        specifier: 0.10.9
+        version: 0.10.9(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(zod@3.25.7)(zx@8.5.4)
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
@@ -194,8 +194,8 @@ importers:
         specifier: 14.0.0
         version: 14.0.0(commander@14.0.0)
       '@jahands/cli-tools':
-        specifier: 0.10.8
-        version: 0.10.8(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.5.4)(zod@3.25.7)(zx@8.5.4)
+        specifier: 0.10.9
+        version: 0.10.9(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(zod@3.25.7)(zx@8.5.4)
       '@repo/zod':
         specifier: workspace:*
         version: link:../zod
@@ -1056,12 +1056,11 @@ packages:
       '@types/node':
         optional: true
 
-  '@jahands/cli-tools@0.10.8':
-    resolution: {integrity: sha512-tNFFZI/Mzm9+gBTDIUKV9cQKVFAB5Nk1wj4JWnwoRpp+NxaC1CWJuBRl2PQ6mXzCgBnXC6+Wu0sKiYXGs7gWFQ==}
+  '@jahands/cli-tools@0.10.9':
+    resolution: {integrity: sha512-4qVrFIlPI8UZT9v0mnP46o/eekQYFl/5Q4/rUs68YL9yRTRJSnmS3TWPDfZJXF3n6CKk2O3U8dGfAXgKrzkivg==}
     peerDependencies:
-      '@commander-js/extra-typings': ^13.0.0
-      commander: ^13.0.0
-      typescript: ^5.5.4
+      '@commander-js/extra-typings': ^13.0.0 || ^14.0.0
+      commander: ^13.0.0 || ^14.0.0
       zod: ^3.25.7
       zx: ^8.3.0
 
@@ -4507,7 +4506,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.15.19
 
-  '@jahands/cli-tools@0.10.8(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.5.4)(zod@3.25.7)(zx@8.5.4)':
+  '@jahands/cli-tools@0.10.9(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(zod@3.25.7)(zx@8.5.4)':
     dependencies:
       '@commander-js/extra-typings': 14.0.0(commander@14.0.0)
       commander: 14.0.0

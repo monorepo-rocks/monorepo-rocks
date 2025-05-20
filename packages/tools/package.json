@@ -18,7 +18,7 @@
 	},
 	"dependencies": {
 		"@commander-js/extra-typings": "14.0.0",
-		"@jahands/cli-tools": "0.10.8",
+		"@jahands/cli-tools": "0.10.9",
 		"@repo/zod": "workspace:*",
 		"@types/bun": "1.2.13",
 		"@types/node": "22.15.19",
