@@ -22,14 +22,14 @@
 		"new-worker": "run-turbo-gen"
 	},
 	"devDependencies": {
-		"@changesets/cli": "2.29.2",
+		"@changesets/cli": "2.29.4",
 		"@ianvs/prettier-plugin-sort-imports": "4.4.1",
 		"@repo/eslint-config": "workspace:*",
 		"@repo/tools": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
 		"@repo/workspace-dependencies": "workspace:*",
-		"@turbo/gen": "2.5.2",
-		"npm-run-all2": "8.0.1",
+		"@turbo/gen": "2.5.3",
+		"npm-run-all2": "8.0.2",
 		"prettier": "3.5.3",
 		"prettier-plugin-packagejson": "2.5.10",
 		"syncpack": "13.0.4",

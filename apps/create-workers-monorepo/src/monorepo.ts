@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { confirm, input, select } from '@inquirer/prompts'
 import { cliError } from '@jahands/cli-tools/errors'
-import { z } from 'zod'
+import { z } from 'zod/v4'
 import { $, chalk, fs } from 'zx'
 
 import { getAvailableEditors } from './editor'

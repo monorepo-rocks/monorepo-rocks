@@ -17,19 +17,19 @@
 		"test": "run-vitest"
 	},
 	"dependencies": {
-		"@commander-js/extra-typings": "13.1.0",
-		"@jahands/cli-tools": "0.10.0",
+		"@commander-js/extra-typings": "14.0.0",
+		"@jahands/cli-tools": "0.10.8",
 		"@repo/zod": "workspace:*",
-		"@types/bun": "1.2.11",
-		"@types/node": "22.15.3",
+		"@types/bun": "1.2.13",
+		"@types/node": "22.15.19",
 		"cli-table3": "0.6.5",
-		"commander": "13.1.0",
+		"commander": "14.0.0",
 		"empathic": "1.1.0",
-		"esbuild": "0.25.3",
+		"esbuild": "0.25.4",
 		"memoize-one": "6.0.0",
-		"ts-pattern": "5.7.0",
+		"ts-pattern": "5.7.1",
 		"tsx": "4.19.4",
-		"zx": "8.5.3"
+		"zx": "8.5.4"
 	},
 	"devDependencies": {
 		"vitest": "3.1.2"
