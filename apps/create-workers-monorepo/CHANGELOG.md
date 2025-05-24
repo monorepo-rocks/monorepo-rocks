@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.5.2
+
+### Patch Changes
+
+- ac31858: feat: detect amp command for AmpCode
+
 ## 0.5.1
 
 ### Patch Changes
