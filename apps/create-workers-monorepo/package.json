@@ -50,6 +50,8 @@
 		"@types/fs-extra": "11.0.4",
 		"@types/node": "22.15.19",
 		"commander": "14.0.0",
+		"memoize-one": "6.0.0",
+		"p-filter": "4.1.0",
 		"ts-pattern": "5.7.1",
 		"vitest": "3.1.2",
 		"zod": "3.25.7",

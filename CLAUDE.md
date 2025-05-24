@@ -33,6 +33,7 @@ just cs                  # Create a changeset for versioning
 ## Architecture
 
 ### Directory Structure
+
 - `/apps/` - Individual Cloudflare Worker applications
 - `/packages/` - Shared code and configurations:
   - `hono-helpers` - Shared Hono middleware and utilities
@@ -42,25 +43,31 @@ just cs                  # Create a changeset for versioning
   - `workspace-dependencies` - Common dependencies (zod, zx, yaml)
 
 ### Key Patterns
+
 1. **Shared utilities**: Workers import from `@repo/*` packages
 2. **Centralized scripts**: All scripts reference binaries in `packages/tools/bin/`
 3. **Hono framework**: All workers use Hono with shared middleware
 4. **Testing**: Vitest with Cloudflare Workers pool configuration
 
 ### Creating New Workers
+
 Use `just new-worker` to scaffold a new worker. The generator will:
+
 - Create the worker in `/apps/` directory
 - Set up Hono with standard middleware
 - Configure Wrangler for local development and deployment
 - Add testing setup with Vitest
 
 ### Testing
+
 - Run all tests: `just test`
 - Run specific worker tests: `cd apps/worker-name && pnpm test`
 - Tests use Cloudflare Workers runtime via `@cloudflare/vitest-pool-workers`
 
 ### Deployment
+
 Workers are deployed using Wrangler. Ensure you have:
+
 - `CLOUDFLARE_ACCOUNT_ID` environment variable set
 - `CLOUDFLARE_API_TOKEN` with appropriate permissions
 - Worker names configured in each `wrangler.jsonc`

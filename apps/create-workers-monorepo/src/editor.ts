@@ -1,22 +1,31 @@
+import memoizeOne from 'memoize-one'
+import pFilter from 'p-filter'
+
+export type AIEditorCommand = 'cursor' | 'code' | 'windsurf'
+export type AIAssistantCommand = 'claude'
+export type AIAssistantExtension = 'ampcode'
+export type AIAssistant = AIEditorCommand | AIAssistantCommand | AIAssistantExtension
+
 interface Editor {
 	name: string
-	command: string
+	command: AIEditorCommand
 }
 
 const editors = [
 	{ name: 'Cursor', command: 'cursor' },
 	{ name: 'Visual Studio Code', command: 'code' },
+	{ name: 'Windsurf', command: 'windsurf' },
 ] as const satisfies Editor[]
 
-export async function getAvailableEditors(): Promise<Editor[]> {
-	const availableEditors: Editor[] = []
-	await Promise.all(
-		editors.map(async (editor) => {
-			if (await which(editor.command, { nothrow: true })) {
-				availableEditors.push(editor)
-			}
-		})
+export const getAvailableEditors = memoizeOne(async () => {
+	const availableEditors = await pFilter(
+		editors,
+		async (editor) => Boolean(await which(editor.command, { nothrow: true })),
+		{ concurrency: 10 }
 	)
-	availableEditors.sort((a, b) => a.name.localeCompare(b.name))
-	return availableEditors
-}
+	return availableEditors.sort((a, b) => a.name.localeCompare(b.name))
+})
+
+export const claudeExists = memoizeOne(async (): Promise<boolean> => {
+	return Boolean(await which('claude', { nothrow: true }))
+})

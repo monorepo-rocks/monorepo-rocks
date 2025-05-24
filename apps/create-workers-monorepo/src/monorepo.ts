@@ -1,11 +1,13 @@
 import path from 'node:path'
-import { confirm, input, select } from '@inquirer/prompts'
+import { checkbox, confirm, input, select } from '@inquirer/prompts'
 import { cliError } from '@jahands/cli-tools/errors'
 import { z } from 'zod/v4'
 import { $, chalk, fs } from 'zx'
 
-import { getAvailableEditors } from './editor'
+import { claudeExists, getAvailableEditors } from './editor'
 import { isDirEmpty } from './fs'
+
+import type { AIAssistant } from './editor'
 
 export async function ensurePrerequisites() {
 	if (!(await which('git', { nothrow: true }))) {
@@ -63,6 +65,21 @@ async function promptInstallDependencies(): Promise<boolean> {
 	})
 }
 
+async function promptAIAssistantRules(): Promise<AIAssistant[]> {
+	const [availableEditors, hasClaude] = await Promise.all([getAvailableEditors(), claudeExists()])
+	const editorCommands = availableEditors.map((e) => e.command)
+
+	return checkbox({
+		message: 'Add AI coding assistant rules?',
+		choices: [
+			{ name: 'Claude', value: 'claude', checked: hasClaude },
+			{ name: 'Cursor', value: 'cursor', checked: editorCommands.includes('cursor') },
+			{ name: 'WindSurf', value: 'windsurf', checked: editorCommands.includes('windsurf') },
+			{ name: 'AmpCode', value: 'ampcode', checked: false },
+		] satisfies Array<{ name: string; value: AIAssistant; checked: boolean }>,
+	})
+}
+
 export async function createMonorepo(opts: CreateMonorepoOptions) {
 	await ensurePrerequisites()
 
@@ -106,6 +123,27 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 		if (isDirEmpty(path.join(targetDir, '.github'))) {
 			fs.rmSync(path.join(targetDir, '.github'), { recursive: true, force: true })
 		}
+	}
+
+	// add AI assistant rules
+	const selectedRules = await promptAIAssistantRules()
+	if (selectedRules.length > 0) {
+		echo(chalk.dim(`Adding AI assistant rules: ${selectedRules.join(', ')}`))
+	}
+
+	// Remove unwanted AI assistant rules
+	const allRules = ['claude', 'cursor', 'windsurf', 'ampcode'] satisfies AIAssistant[]
+	const rulesToRemove = allRules.filter((rule) => !selectedRules.includes(rule))
+	for (const rule of rulesToRemove) {
+		const ruleFiles = {
+			claude: path.join(targetDir, 'CLAUDE.md'),
+			cursor: path.join(targetDir, '.cursor'),
+			windsurf: path.join(targetDir, '.windsurf'),
+			ampcode: path.join(targetDir, 'AGENT.md'),
+		}
+
+		const filePath = ruleFiles[rule as keyof typeof ruleFiles]
+		fs.rmSync(filePath, { recursive: true, force: true })
 	}
 
 	echo(chalk.dim(`Initializing git repository...`))
