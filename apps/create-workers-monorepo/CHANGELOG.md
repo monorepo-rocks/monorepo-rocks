@@ -1,5 +1,17 @@
 # create-workers-monorepo
 
+## 0.5.0
+
+### Minor Changes
+
+- 42e2147: feat: Add AI coding assistant rules
+
+### Patch Changes
+
+- be2804b: chore: update dependencies (zod, etc.)
+- bf36f95: chore: update deps
+- 347a85c: chore: update deps (@jahands/cli-tools)
+
 ## 0.4.3
 
 ### Patch Changes
