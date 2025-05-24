@@ -4,7 +4,7 @@ import { cliError } from '@jahands/cli-tools/errors'
 import { z } from 'zod/v4'
 import { $, chalk, fs } from 'zx'
 
-import { claudeExists, getAvailableEditors } from './editor'
+import { ampExists, claudeExists, getAvailableEditors } from './editor'
 import { isDirEmpty } from './fs'
 
 import type { AIAssistant } from './editor'
@@ -66,7 +66,11 @@ async function promptInstallDependencies(): Promise<boolean> {
 }
 
 async function promptAIAssistantRules(): Promise<AIAssistant[]> {
-	const [availableEditors, hasClaude] = await Promise.all([getAvailableEditors(), claudeExists()])
+	const [availableEditors, hasClaude, hasAmp] = await Promise.all([
+		getAvailableEditors(),
+		claudeExists(),
+		ampExists(),
+	])
 	const editorCommands = availableEditors.map((e) => e.command)
 
 	return checkbox({
@@ -75,7 +79,7 @@ async function promptAIAssistantRules(): Promise<AIAssistant[]> {
 			{ name: 'Claude', value: 'claude', checked: hasClaude },
 			{ name: 'Cursor', value: 'cursor', checked: editorCommands.includes('cursor') },
 			{ name: 'WindSurf', value: 'windsurf', checked: editorCommands.includes('windsurf') },
-			{ name: 'AmpCode', value: 'ampcode', checked: false },
+			{ name: 'AmpCode', value: 'amp', checked: hasAmp },
 		] satisfies Array<{ name: string; value: AIAssistant; checked: boolean }>,
 	})
 }
@@ -132,7 +136,7 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 	}
 
 	// Remove unwanted AI assistant rules
-	const allRules = ['claude', 'cursor', 'windsurf', 'ampcode'] satisfies AIAssistant[]
+	const allRules = ['claude', 'cursor', 'windsurf', 'amp'] satisfies AIAssistant[]
 	const rulesToRemove = allRules.filter((rule) => !selectedRules.includes(rule))
 	for (const rule of rulesToRemove) {
 		const ruleFiles = {
