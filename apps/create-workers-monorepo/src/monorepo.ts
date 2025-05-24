@@ -85,6 +85,7 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 
 	const name = opts.name ?? (await promptRepoName())
 	const useGitHubActions = await promptUseGitHubActions()
+	const selectedRules = await promptAIAssistantRules()
 
 	echo(chalk.blue(`Creating monorepo with name: ${chalk.white(name)}`))
 
@@ -126,7 +127,6 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 	}
 
 	// add AI assistant rules
-	const selectedRules = await promptAIAssistantRules()
 	if (selectedRules.length > 0) {
 		echo(chalk.dim(`Adding AI assistant rules: ${selectedRules.join(', ')}`))
 	}
