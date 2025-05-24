@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.5.1
+
+### Patch Changes
+
+- 86cd851: chore: ask for AI preferences before creating monorepo
+
 ## 0.5.0
 
 ### Minor Changes
