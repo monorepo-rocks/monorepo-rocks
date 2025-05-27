@@ -115,6 +115,18 @@ importers:
         specifier: workspace:*
         version: link:../../packages/typescript-config
 
+  apps/llm-rules:
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@repo/tools':
+        specifier: workspace:*
+        version: link:../../packages/tools
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+
   packages/eslint-config:
     devDependencies:
       '@types/eslint':

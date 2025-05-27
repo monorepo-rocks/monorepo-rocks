@@ -1,0 +1,50 @@
+{
+	"name": "llm-rules",
+	"version": "0.1.0",
+	"private": false,
+	"description": "LLM rules and instructions for AI coding assistants",
+	"keywords": [
+		"llm-rules",
+		"ai",
+		"coding assistant",
+		"rules"
+	],
+	"homepage": "https://github.com/monorepo-rocks/monorepo-rocks/tree/main/apps/llm-rules",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/monorepo-rocks/monorepo-rocks.git",
+		"directory": "apps/llm-rules"
+	},
+	"author": {
+		"name": "Jacob Hands",
+		"url": "https://twitter.com/jachands"
+	},
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": "./dist/llm-rules.cjs"
+	},
+	"main": "./dist/llm-rules.cjs",
+	"bin": "./dist/llm-rules.cjs",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "runx build lib ./src/bin/llm-rules.ts --platform=node --format=cjs --sourcemap=external --no-types",
+		"build:dev": "runx build lib ./src/bin/llm-rules.ts --platform=node --format=cjs --sourcemap=external --no-types --no-minify",
+		"check:lint": "run-eslint-workers",
+		"check:types": "run-tsc",
+		"prepublishOnly": "rm -f dist/*.map",
+		"start": "run-s -s build:dev start:run",
+		"start:run": "node ./dist/llm-rules.cjs",
+		"test": "run-vitest"
+	},
+	"devDependencies": {
+		"@repo/eslint-config": "workspace:*",
+		"@repo/tools": "workspace:*",
+		"@repo/typescript-config": "workspace:*"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}
