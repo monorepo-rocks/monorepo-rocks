@@ -1,3 +1,4 @@
 #!/usr/bin/env node
+import { runCLI } from '../cli.js'
 
-console.log('todo')
+void runCLI()

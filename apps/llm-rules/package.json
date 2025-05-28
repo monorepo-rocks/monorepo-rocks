@@ -22,7 +22,8 @@
 	"sideEffects": false,
 	"type": "module",
 	"exports": {
-		".": "./dist/llm-rules.cjs"
+		".": "./dist/llm-rules.cjs",
+		"./cli": "./src/cli.ts"
 	},
 	"main": "./dist/llm-rules.cjs",
 	"bin": "./dist/llm-rules.cjs",
