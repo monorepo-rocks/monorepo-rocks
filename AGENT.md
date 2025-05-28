@@ -7,7 +7,7 @@ This is a Cloudflare Workers monorepo using pnpm workspaces, Turborepo, and Hono
 ```bash
 # Main commands (via Just or pnpm)
 just test                    # Run all tests
-just test <worker-name>      # Run specific worker tests  
+just test <worker-name>      # Run specific worker tests
 pnpm --filter <worker-name> test  # Alternative single worker test
 just build                   # Build all
 just check                   # Lint, types, format check
