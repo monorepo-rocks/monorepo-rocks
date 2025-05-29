@@ -165,21 +165,21 @@ describe('MCP Server', () => {
 			expect(Array.isArray(tools)).toBe(true)
 			expect(tools.length).toBe(6)
 			
-			// Find typescript rule tool - should include globs in title
+			// Find typescript rule tool - should include globs in description
 			const typescriptTool = tools.find((tool: any) => tool.name === 'cursor_rule_typescript-style')
 			expect(typescriptTool).toBeDefined()
-			expect(typescriptTool.annotations.title).toContain('applies to **/*.ts,**/*.tsx')
+			expect(typescriptTool.description).toContain('applies to **/*.ts,**/*.tsx')
 			
 			// Find always-apply rule tool - should include always-apply flag  
 			const alwaysApplyTool = tools.find((tool: any) => tool.name === 'cursor_rule_always-apply')
 			expect(alwaysApplyTool).toBeDefined()
-			expect(alwaysApplyTool.annotations.title).toContain('always-apply')
+			expect(alwaysApplyTool.description).toContain('always-apply')
 			
 			// Find manual-only rule tool - should not have metadata annotations
 			const manualOnlyTool = tools.find((tool: any) => tool.name === 'cursor_rule_manual-only')
 			expect(manualOnlyTool).toBeDefined()
-			expect(manualOnlyTool.annotations.title).not.toContain('applies to')
-			expect(manualOnlyTool.annotations.title).not.toContain('always-apply')
+			expect(manualOnlyTool.description).not.toContain('applies to')
+			expect(manualOnlyTool.description).not.toContain('always-apply')
 		})
 	})
 

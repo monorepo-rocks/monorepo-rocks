@@ -26,7 +26,7 @@ export async function createMCPServer(workingDir: string = process.cwd()) {
 	for (const rule of rules) {
 		// Build description with metadata to help LLMs decide when to use this rule
 		let description = `Read Cursor rule: ${rule.frontmatter.description}`
-		
+
 		const metadata: string[] = []
 		if (rule.frontmatter.globs) {
 			metadata.push(`applies to ${rule.frontmatter.globs}`)
@@ -34,26 +34,21 @@ export async function createMCPServer(workingDir: string = process.cwd()) {
 		if (rule.frontmatter.alwaysApply) {
 			metadata.push('always-apply')
 		}
-		
+
 		if (metadata.length > 0) {
 			description += ` (${metadata.join(', ')})`
 		}
 
-		server.tool(
-			`cursor_rule_${rule.name}`,
-			{},
-			{ title: description },
-			async () => {
-				return {
-					content: [
-						{
-							type: 'text',
-							text: rule.content,
-						},
-					],
-				}
+		server.tool(`cursor_rule_${rule.name}`, description, {}, async () => {
+			return {
+				content: [
+					{
+						type: 'text',
+						text: rule.content,
+					},
+				],
 			}
-		)
+		})
 	}
 
 	return server
