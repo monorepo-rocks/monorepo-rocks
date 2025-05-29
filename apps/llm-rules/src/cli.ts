@@ -11,7 +11,10 @@ export const runCLI = () =>
 		.name('llm-rules')
 		.description('A local MCP server for LLM rules')
 		.version(version)
-		.option('-d, --dir <directory>', 'Working directory to scan for .cursor/rules (defaults to current directory)')
+		.option(
+			'-d, --dir <directory>',
+			'Working directory to scan for .cursor/rules (defaults to current directory)'
+		)
 		.action(async (options) => {
 			await startMCPServer(options.dir)
 		})

@@ -1,6 +1,7 @@
-import { describe, it, expect, assert } from 'vitest'
 import { join } from 'node:path'
-import { parseRulesFromDir, parseRuleFile } from './rule-parser.js'
+import { assert, describe, expect, it } from 'vitest'
+
+import { parseRuleFile, parseRulesFromDir } from './rule-parser.js'
 
 describe('Rule Parser', () => {
 	const fixturesDir = join(__dirname, 'test', 'fixtures')
@@ -9,16 +10,16 @@ describe('Rule Parser', () => {
 	describe('parseRulesFromDir', () => {
 		it('should find and parse all rules in directory', () => {
 			const rules = parseRulesFromDir(rulesDir)
-			
+
 			expect(rules).toHaveLength(5)
-			
-			const ruleNames = rules.map(r => r.name).sort()
+
+			const ruleNames = rules.map((r) => r.name).sort()
 			expect(ruleNames).toEqual([
 				'always-apply',
-				'api-design', 
+				'api-design',
 				'manual-only',
 				'react-components',
-				'typescript-style'
+				'typescript-style',
 			])
 		})
 
@@ -32,7 +33,7 @@ describe('Rule Parser', () => {
 		it('should parse TypeScript style rule correctly', () => {
 			const filePath = join(rulesDir, 'typescript-style.mdc')
 			const rule = parseRuleFile(filePath)
-			
+
 			assert(rule)
 			expect(rule.name).toBe('typescript-style')
 			expect(rule.filename).toBe('typescript-style.mdc')
@@ -46,7 +47,7 @@ describe('Rule Parser', () => {
 		it('should parse always-apply rule correctly', () => {
 			const filePath = join(rulesDir, 'always-apply.mdc')
 			const rule = parseRuleFile(filePath)
-			
+
 			assert(rule)
 			expect(rule.frontmatter.alwaysApply).toBe(true)
 			expect(rule.frontmatter.description).toBe('Project-wide coding standards that always apply')
@@ -55,7 +56,7 @@ describe('Rule Parser', () => {
 		it('should handle empty description gracefully', () => {
 			const filePath = join(rulesDir, 'manual-only.mdc')
 			const rule = parseRuleFile(filePath)
-			
+
 			assert(rule)
 			expect(rule.frontmatter.description).toBe('Database migration patterns and procedures')
 		})
@@ -63,7 +64,7 @@ describe('Rule Parser', () => {
 		it('should handle null globs field', () => {
 			const filePath = join(rulesDir, 'always-apply.mdc')
 			const rule = parseRuleFile(filePath)
-			
+
 			assert(rule)
 			expect(rule.frontmatter.globs).toBe(null)
 		})
@@ -76,16 +77,16 @@ describe('Rule Parser', () => {
 		it('should validate all fixture files have correct structure', () => {
 			const files = [
 				'typescript-style.mdc',
-				'react-components.mdc', 
+				'react-components.mdc',
 				'api-design.mdc',
 				'always-apply.mdc',
-				'manual-only.mdc'
+				'manual-only.mdc',
 			]
 
 			for (const file of files) {
 				const filePath = join(rulesDir, file)
 				const rule = parseRuleFile(filePath)
-				
+
 				assert(rule, `Failed to parse ${file}`)
 				expect(rule.name).toBe(file.replace('.mdc', ''))
 				expect(rule.frontmatter.description).toBeTruthy()
@@ -98,12 +99,12 @@ describe('Rule Parser', () => {
 	describe('Frontmatter Validation', () => {
 		it('should handle various frontmatter configurations', () => {
 			const rules = parseRulesFromDir(rulesDir)
-			
+
 			// Check that we have rules with different configurations
-			const alwaysApplyRule = rules.find(r => r.name === 'always-apply')
+			const alwaysApplyRule = rules.find((r) => r.name === 'always-apply')
 			expect(alwaysApplyRule?.frontmatter.alwaysApply).toBe(true)
-			
-			const typescriptRule = rules.find(r => r.name === 'typescript-style') 
+
+			const typescriptRule = rules.find((r) => r.name === 'typescript-style')
 			expect(typescriptRule?.frontmatter.globs).toBe('**/*.ts,**/*.tsx')
 			expect(typescriptRule?.frontmatter.alwaysApply).toBe(false)
 		})
@@ -111,7 +112,7 @@ describe('Rule Parser', () => {
 		it('should provide fallback description when empty', () => {
 			// All our test rules should have proper descriptions
 			const rules = parseRulesFromDir(rulesDir)
-			
+
 			for (const rule of rules) {
 				expect(rule.frontmatter.description).toBeTruthy()
 				expect(rule.frontmatter.description).not.toBe('Cursor rule') // Should not use fallback

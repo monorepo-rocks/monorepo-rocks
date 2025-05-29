@@ -36,8 +36,8 @@ The server expects Cursor rule files in MDC format with frontmatter:
 
 ```markdown
 ---
-description: "A brief description of what this rule covers"
-globs: ["**/*.ts", "**/*.tsx"]
+description: 'A brief description of what this rule covers'
+globs: ['**/*.ts', '**/*.tsx']
 alwaysApply: false
 ---
 

@@ -19,6 +19,7 @@ bunx llm-rules@latest --dir /path/to/your/repository
 ```
 
 The server will:
+
 - Scan the specified directory for `.cursor/rules/*.mdc` files
 - Create MCP tools named `cursor_rule_<filename>` for each rule
 - Extract descriptions from frontmatter to help LLMs understand when to use each tool
@@ -27,6 +28,7 @@ The server will:
 ### Tool Parameters
 
 Each generated tool accepts:
+
 - `include_frontmatter` (boolean, optional): Whether to include YAML frontmatter in the response
 
 ## Features

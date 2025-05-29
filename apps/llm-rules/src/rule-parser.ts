@@ -1,17 +1,19 @@
-import { readFileSync, readdirSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import matter from 'gray-matter'
 import { z } from 'zod/v4'
 
 export type RuleFrontmatter = z.infer<typeof RuleFrontmatter>
-export const RuleFrontmatter = z.object({
-	description: z.string().nullable().default(''),
-	globs: z.string().nullable().optional(),
-	alwaysApply: z.boolean().optional(),
-}).transform(data => ({
-	...data,
-	description: data.description || 'Cursor rule',
-}))
+export const RuleFrontmatter = z
+	.object({
+		description: z.string().nullable().default(''),
+		globs: z.string().nullable().optional(),
+		alwaysApply: z.boolean().optional(),
+	})
+	.transform((data) => ({
+		...data,
+		description: data.description || 'Cursor rule',
+	}))
 
 export type ParsedRule = z.infer<typeof ParsedRule>
 export const ParsedRule = z.object({
@@ -45,7 +47,7 @@ export function parseRuleFile(filePath: string): ParsedRule | null {
 	try {
 		const fullContent = readFileSync(filePath, 'utf-8')
 		const parsed = matter(fullContent)
-		
+
 		const frontmatterResult = RuleFrontmatter.safeParse(parsed.data)
 		if (!frontmatterResult.success) {
 			console.warn(`Invalid frontmatter in ${filePath}:`, frontmatterResult.error)
