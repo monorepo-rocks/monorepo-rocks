@@ -1,5 +1,11 @@
 # llm-rules
 
+## 0.2.4
+
+### Patch Changes
+
+- 1082542: chore: update readme
+
 ## 0.2.3
 
 ### Patch Changes
