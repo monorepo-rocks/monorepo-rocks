@@ -28,11 +28,6 @@ describe('MCP Server', () => {
 		},
 	})
 
-	beforeAll(async () => {
-		// Ensure the server is built
-		// The dist file should exist from the build process
-	})
-
 	describe('Server Startup', () => {
 		it('should start and find all test rules', async () => {
 			const result = await $({
