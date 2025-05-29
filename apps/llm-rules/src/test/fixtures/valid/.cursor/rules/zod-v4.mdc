@@ -5,20 +5,17 @@ alwaysApply: false
 ---
 # Zod v4 Coding Guidelines
 
-Use these rules when working with Zod for TypeScript schema validation. Copy this to your Cursor rules, Claude project instructions, or other AI coding assistant configuration.
-
 ## Important: Always Use Zod v4
 
-When working with Zod, **ALWAYS** use Zod v4 by importing from `'zod/v4'`. This repository uses a custom Zod package that provides Zod v4 functionality. Never use the default `'zod'` import, which is Zod v3.
+When working with Zod, **ALWAYS** use Zod v4 by importing from `'zod/v4'`. Never use the default `'zod'` import, which is Zod v3.
 
 ```typescript
-// ✅ CORRECT - Always use this in this repository
+// ✅ CORRECT - Always use this
 import { z } from "zod/v4"
 
 // ❌ WRONG - Never use these
 import { z } from "zod" // This is v3
 import { z } from "zod/v3" // Explicitly v3
-import { z } from "zod/v4" // Use zod/v4 instead
 ```
 
 ## Key Differences in Zod v4
@@ -382,7 +379,7 @@ const schema = z.string().register(myRegistry, { name: "username" })
 
 ## Summary of Critical Rules
 
-1. **ALWAYS** import from `'zod/v4'`, never from `'zod'` or `'zod/v4'`
+1. **ALWAYS** import from `'zod/v4'`, never from `'zod'`
 2. Use standalone functions for string formats (e.g., `z.email()` not `z.string().email()`)
 3. Use `error` parameter for custom messages, not `message` or `errorMap` - **but only when needed!**
 4. **Avoid redundant custom error messages** - Zod's defaults are excellent
@@ -426,9 +423,9 @@ type UserRegistration = z.infer<typeof userRegistrationSchema>
 
 ## Quick Migration Reference
 
-| Operation        | Zod v3                    | Zod v4 (This Repo)            |
+| Operation        | Zod v3                    | Zod v4                         |
 | ---------------- | ------------------------- | ------------------------------ |
-| Import           | `import { z } from "zod"` | `import { z } from "zod/v4"` |
+| Import           | `import { z } from "zod"` | `import { z } from "zod/v4"`   |
 | Email validation | `z.string().email()`      | `z.email()`                    |
 | URL validation   | `z.string().url()`        | `z.url()`                      |
 | Error message    | `{ message: "Error" }`    | `{ error: "Error" }`           |
@@ -440,4 +437,4 @@ type UserRegistration = z.infer<typeof userRegistrationSchema>
 | Function schema  | `.args().returns()`       | `{input: [...], output: ...}`  |
 | Record schema    | `z.record(valueType)`     | `z.record(keyType, valueType)` |
 
-Remember: When in doubt, refer to the official Zod v4 documentation and always import from `'zod/v4'` in this repository.
+Remember: When in doubt, refer to the official Zod v4 documentation and always import from `'zod/v4'`.
