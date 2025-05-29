@@ -31,9 +31,9 @@ describe('Rule Parser', () => {
 	})
 
 	describe('parseRuleFile', () => {
-		it('should parse TypeScript style rule correctly', () => {
+		it('should parse TypeScript style rule correctly', async () => {
 			const filePath = join(validRulesDir, 'typescript-style.mdc')
-			const rule = parseRuleFile(filePath)
+			const rule = await parseRuleFile(filePath)
 
 			assert(rule)
 			expect(rule.name).toBe('typescript-style')
@@ -45,49 +45,49 @@ describe('Rule Parser', () => {
 			expect(rule.fullContent).toContain('---')
 		})
 
-		it('should parse always-apply rule correctly', () => {
+		it('should parse always-apply rule correctly', async () => {
 			const filePath = join(validRulesDir, 'always-apply.mdc')
-			const rule = parseRuleFile(filePath)
+			const rule = await parseRuleFile(filePath)
 
 			assert(rule)
 			expect(rule.frontmatter.alwaysApply).toBe(true)
 			expect(rule.frontmatter.description).toBe('Project-wide coding standards that always apply')
 		})
 
-		it('should handle empty description gracefully', () => {
+		it('should handle empty description gracefully', async () => {
 			const filePath = join(validRulesDir, 'manual-only.mdc')
-			const rule = parseRuleFile(filePath)
+			const rule = await parseRuleFile(filePath)
 
 			assert(rule)
 			expect(rule.frontmatter.description).toBe('Database migration patterns and procedures')
 		})
 
-		it('should handle null globs field', () => {
+		it('should handle null globs field', async () => {
 			const filePath = join(validRulesDir, 'always-apply.mdc')
-			const rule = parseRuleFile(filePath)
+			const rule = await parseRuleFile(filePath)
 
 			assert(rule)
 			expect(rule.frontmatter.globs).toBe(null)
 		})
 
-		it('should return null for non-existent file', () => {
-			const rule = parseRuleFile('/nonexistent/file.mdc')
+		it('should return null for non-existent file', async () => {
+			const rule = await parseRuleFile('/nonexistent/file.mdc')
 			expect(rule).toBeNull()
 		})
 
-		it('should create descriptive fallback for missing description', () => {
+		it('should create descriptive fallback for missing description', async () => {
 			// Test with our empty frontmatter file
 			const filePath = join(invalidRulesDir, 'empty-frontmatter.mdc')
-			const rule = parseRuleFile(filePath)
+			const rule = await parseRuleFile(filePath)
 
 			assert(rule)
 			expect(rule.frontmatter.description).toBe('Coding guidelines and rules for empty frontmatter')
 			expect(rule.name).toBe('empty-frontmatter')
 		})
 
-		it('should handle unquoted glob patterns with asterisks', () => {
+		it('should handle unquoted glob patterns with asterisks', async () => {
 			const filePath = join(invalidRulesDir, 'unquoted-globs.mdc')
-			const rule = parseRuleFile(filePath)
+			const rule = await parseRuleFile(filePath)
 
 			assert(rule)
 			expect(rule.frontmatter.description).toBe('TypeScript style guide')
@@ -98,7 +98,7 @@ describe('Rule Parser', () => {
 			)
 		})
 
-		it('should validate all fixture files have correct structure', () => {
+		it('should validate all fixture files have correct structure', async () => {
 			const files = [
 				'typescript-style.mdc',
 				'react-components.mdc',
@@ -109,7 +109,7 @@ describe('Rule Parser', () => {
 
 			for (const file of files) {
 				const filePath = join(validRulesDir, file)
-				const rule = parseRuleFile(filePath)
+				const rule = await parseRuleFile(filePath)
 
 				assert(rule, `Failed to parse ${file}`)
 				expect(rule.name).toBe(file.replace('.mdc', ''))
@@ -162,8 +162,8 @@ describe('Rule Parser', () => {
 	})
 
 	describe('YAML edge cases', () => {
-		it('should handle unquoted glob patterns', () => {
-			const result = parseRuleFile(
+		it('should handle unquoted glob patterns', async () => {
+			const result = await parseRuleFile(
 				resolve(__dirname, 'test/fixtures/yaml-issues/.cursor/rules/unquoted-globs.mdc')
 			)
 			assert(result !== null)
@@ -172,8 +172,8 @@ describe('Rule Parser', () => {
 			expect(result.frontmatter.alwaysApply).toBe(false)
 		})
 
-		it('should handle quoted glob patterns normally', () => {
-			const result = parseRuleFile(
+		it('should handle quoted glob patterns normally', async () => {
+			const result = await parseRuleFile(
 				resolve(__dirname, 'test/fixtures/yaml-issues/.cursor/rules/quoted-globs.mdc')
 			)
 			assert(result !== null)

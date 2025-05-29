@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { glob } from 'zx'
 import matter from 'gray-matter'
@@ -32,7 +32,11 @@ export async function parseRulesFromDir(rulesDir: string): Promise<ParsedRule[]>
 	try {
 		const files = await glob('*.mdc', { cwd: rulesDir })
 
-		return files.map((file) => parseRuleFile(join(rulesDir, file))).filter((rule): rule is ParsedRule => rule !== null)
+		const results = await Promise.all(
+			files.map((file) => parseRuleFile(join(rulesDir, file)))
+		)
+		
+		return results.filter((rule): rule is ParsedRule => rule !== null)
 	} catch (error) {
 		console.warn(`Could not read rules directory: ${rulesDir}`, error)
 		return []
@@ -73,9 +77,9 @@ function sanitizeYamlFrontmatter(content: string): string {
 /**
  * Parse a single .mdc rule file
  */
-export function parseRuleFile(filePath: string): ParsedRule | null {
+export async function parseRuleFile(filePath: string): Promise<ParsedRule | null> {
 	try {
-		const fullContent = readFileSync(filePath, 'utf-8')
+		const fullContent = await readFile(filePath, 'utf-8')
 
 		// Try parsing as-is first, then with sanitization if it fails
 		let parsed: matter.GrayMatterFile<string>
