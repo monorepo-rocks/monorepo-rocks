@@ -4,7 +4,6 @@ export async function setup() {
 	console.log('Building CLI before running tests...')
 
 	try {
-		// Build the CLI
 		await $`pnpm turbo build -F llm-rules`
 		console.log('✅ CLI built successfully')
 	} catch (error) {
