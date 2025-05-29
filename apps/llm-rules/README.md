@@ -25,6 +25,34 @@ The server will:
 - Extract descriptions from frontmatter to help LLMs understand when to use each tool
 - Serve the rules through the MCP protocol on stdio
 
+### MCP Configuration
+
+To use with MCP clients, add to your `mcp.json` or similar configuration:
+
+```json
+{
+  "mcpServers": {
+    "llm-rules": {
+      "command": "npx",
+      "args": ["llm-rules@latest", "--dir", "/path/to/your/repository"]
+    }
+  }
+}
+```
+
+For Claude Desktop, add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "llm-rules": {
+      "command": "npx",
+      "args": ["llm-rules@latest", "--dir", "/path/to/your/repository"]
+    }
+  }
+}
+```
+
 ### Tool Parameters
 
 Each generated tool accepts:
