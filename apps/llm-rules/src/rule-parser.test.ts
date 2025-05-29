@@ -1,4 +1,4 @@
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { assert, describe, expect, it } from 'vitest'
 
 import { parseRuleFile, parseRulesFromDir } from './rule-parser.js'
@@ -85,6 +85,19 @@ describe('Rule Parser', () => {
 			expect(rule.name).toBe('empty-frontmatter')
 		})
 
+		it('should handle unquoted glob patterns with asterisks', () => {
+			const filePath = join(invalidRulesDir, 'unquoted-globs.mdc')
+			const rule = parseRuleFile(filePath)
+
+			assert(rule)
+			expect(rule.frontmatter.description).toBe('TypeScript style guide')
+			expect(rule.frontmatter.globs).toBe('*.ts,*.tsx')
+			expect(rule.frontmatter.alwaysApply).toBe(false)
+			expect(rule.content).toBe(
+				'# TypeScript Style Guide\n\nUse strict typing and proper interfaces.'
+			)
+		})
+
 		it('should validate all fixture files have correct structure', () => {
 			const files = [
 				'typescript-style.mdc',
@@ -137,12 +150,36 @@ describe('Rule Parser', () => {
 			// Test that invalid frontmatter files are filtered out
 			const rules = parseRulesFromDir(invalidRulesDir)
 
-			// Should parse empty frontmatter with fallback but skip invalid YAML
-			expect(rules).toHaveLength(1) // Only empty-frontmatter.mdc should parse
+			// Should parse empty frontmatter and YAML-sanitized files but skip truly invalid ones
+			expect(rules).toHaveLength(3) // empty-frontmatter.mdc, invalid-frontmatter.mdc, and unquoted-globs.mdc should all parse
 
 			const emptyRule = rules.find((r) => r.name === 'empty-frontmatter')
 			expect(emptyRule).toBeDefined()
-			expect(emptyRule?.frontmatter.description).toBe('Coding guidelines and rules for empty frontmatter') // Should use fallback
+			expect(emptyRule?.frontmatter.description).toBe(
+				'Coding guidelines and rules for empty frontmatter'
+			) // Should use fallback
+		})
+	})
+
+	describe('YAML edge cases', () => {
+		it('should handle unquoted glob patterns', () => {
+			const result = parseRuleFile(
+				resolve(__dirname, 'test/fixtures/yaml-issues/.cursor/rules/unquoted-globs.mdc')
+			)
+			assert(result !== null)
+			expect(result.name).toBe('unquoted-globs')
+			expect(result.frontmatter.globs).toBe('*.ts,*.tsx')
+			expect(result.frontmatter.alwaysApply).toBe(false)
+		})
+
+		it('should handle quoted glob patterns normally', () => {
+			const result = parseRuleFile(
+				resolve(__dirname, 'test/fixtures/yaml-issues/.cursor/rules/quoted-globs.mdc')
+			)
+			assert(result !== null)
+			expect(result.name).toBe('quoted-globs')
+			expect(result.frontmatter.description).toBe('TypeScript style guide')
+			expect(result.frontmatter.globs).toBe('*.ts,*.tsx')
 		})
 	})
 })

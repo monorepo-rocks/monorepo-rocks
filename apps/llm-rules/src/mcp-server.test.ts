@@ -107,16 +107,19 @@ describe('MCP Server', () => {
 				timeout: '5s',
 			})`echo ${exitPayload} | node ${serverPath} --dir ${invalidFixturesDir}`
 
-			// Should parse 1 valid rule (empty-frontmatter.mdc) and skip invalid ones
-			expect(result.stderr).toContain('Found 1 rules')
+			// Should parse 3 rules after YAML sanitization fixes most issues
+			expect(result.stderr).toContain('Found 3 rules')
 			expect(result.stderr).toContain('MCP server started and listening on stdio')
 
-			// Should show error message for invalid file but continue
-			expect(result.stderr).toContain('Error parsing rule file')
-			expect(result.stderr).toContain('invalid-frontmatter.mdc')
+			// Should show YAML sanitization warnings but successfully parse files
+			expect(result.stderr).toContain('YAML parsing failed')
+			expect(result.stderr).toContain('attempting to sanitize')
 
-			// Should not contain the invalid file in the rule list
-			expect(result.stderr).not.toContain('invalid-frontmatter:')
+			// Should contain the sanitized files in the rule list
+			expect(result.stderr).toContain('unquoted-globs: TypeScript style guide')
+			expect(result.stderr).toContain(
+				'invalid-frontmatter: Coding guidelines and rules for invalid frontmatter'
+			)
 
 			// Should handle it gracefully without crashing
 			expect(result.exitCode).toBe(0)

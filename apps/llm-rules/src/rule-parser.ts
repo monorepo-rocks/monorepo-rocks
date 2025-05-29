@@ -41,12 +41,53 @@ export function parseRulesFromDir(rulesDir: string): ParsedRule[] {
 }
 
 /**
+ * Sanitize YAML frontmatter to handle common issues like unquoted glob patterns
+ */
+function sanitizeYamlFrontmatter(content: string): string {
+	// Split into frontmatter and content parts
+	const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
+	if (!frontmatterMatch) {
+		return content
+	}
+
+	const [, frontmatter, markdownContent] = frontmatterMatch
+
+	// Fix common YAML issues
+	const sanitizedFrontmatter = frontmatter
+		// Quote glob patterns that contain asterisks (like *.ts,*.tsx)
+		.replace(/^(\s*globs:\s*)([^"'\n]*\*[^"'\n]*)$/gm, (_, prefix, value) => {
+			const trimmedValue = value.trim()
+			// Only quote if not already quoted and contains asterisk
+			if (
+				!trimmedValue.startsWith('"') &&
+				!trimmedValue.startsWith("'") &&
+				trimmedValue.includes('*')
+			) {
+				return `${prefix}"${trimmedValue}"`
+			}
+			return prefix + value
+		})
+
+	return `---\n${sanitizedFrontmatter}\n---\n${markdownContent}`
+}
+
+/**
  * Parse a single .mdc rule file
  */
 export function parseRuleFile(filePath: string): ParsedRule | null {
 	try {
 		const fullContent = readFileSync(filePath, 'utf-8')
-		const parsed = matter(fullContent)
+
+		// Try parsing as-is first, then with sanitization if it fails
+		let parsed: matter.GrayMatterFile<string>
+		try {
+			parsed = matter(fullContent)
+		} catch (yamlError) {
+			// If YAML parsing fails, try with sanitization
+			console.warn(`YAML parsing failed for ${filePath}, attempting to sanitize...`)
+			const sanitizedContent = sanitizeYamlFrontmatter(fullContent)
+			parsed = matter(sanitizedContent)
+		}
 
 		const frontmatterResult = RuleFrontmatter.safeParse(parsed.data)
 		if (!frontmatterResult.success) {
