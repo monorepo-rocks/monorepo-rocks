@@ -40,7 +40,7 @@ npx llm-rules@latest
 
 The `--dir` flag is optional and defaults to the current working directory.
 
-**Note:** When using the AmpCode extension for VSCode, Cursor, or Windsurf, the `--dir` flag is not needed as the extension automatically sets the working directory to your project root.
+**Note:** When using the AmpCode extension for VSCode/Cursor/Windsurf, the `--dir` flag is not needed as the extension automatically sets the working directory to your project root.
 
 **The server will:**
 
