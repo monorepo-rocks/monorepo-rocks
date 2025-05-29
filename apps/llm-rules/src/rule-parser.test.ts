@@ -75,6 +75,16 @@ describe('Rule Parser', () => {
 			expect(rule).toBeNull()
 		})
 
+		it('should create descriptive fallback for missing description', () => {
+			// Test with our empty frontmatter file
+			const filePath = join(invalidRulesDir, 'empty-frontmatter.mdc')
+			const rule = parseRuleFile(filePath)
+
+			assert(rule)
+			expect(rule.frontmatter.description).toBe('Coding guidelines and rules for empty frontmatter')
+			expect(rule.name).toBe('empty-frontmatter')
+		})
+
 		it('should validate all fixture files have correct structure', () => {
 			const files = [
 				'typescript-style.mdc',
@@ -119,7 +129,7 @@ describe('Rule Parser', () => {
 
 			for (const rule of rules) {
 				expect(rule.frontmatter.description).toBeTruthy()
-				expect(rule.frontmatter.description).not.toBe('Cursor rule') // Should not use fallback
+				expect(rule.frontmatter.description).not.toMatch(/^Coding guidelines and rules for/) // Should not use fallback
 			}
 		})
 
@@ -132,7 +142,7 @@ describe('Rule Parser', () => {
 
 			const emptyRule = rules.find((r) => r.name === 'empty-frontmatter')
 			expect(emptyRule).toBeDefined()
-			expect(emptyRule?.frontmatter.description).toBe('Cursor rule') // Should use fallback
+			expect(emptyRule?.frontmatter.description).toBe('Coding guidelines and rules for empty frontmatter') // Should use fallback
 		})
 	})
 })

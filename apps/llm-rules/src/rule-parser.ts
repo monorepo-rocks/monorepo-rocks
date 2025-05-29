@@ -12,7 +12,7 @@ export const RuleFrontmatter = z
 	})
 	.transform((data) => ({
 		...data,
-		description: data.description || 'Cursor rule',
+		description: data.description || '', // Will be handled in parseRuleFile
 	}))
 
 export type ParsedRule = z.infer<typeof ParsedRule>
@@ -57,10 +57,17 @@ export function parseRuleFile(filePath: string): ParsedRule | null {
 		const filename = filePath.split('/').pop() || filePath
 		const name = filename.replace('.mdc', '')
 
+		// Create a better fallback description if none provided
+		const frontmatter = frontmatterResult.data
+		if (!frontmatter.description) {
+			const humanReadableName = name.replace(/[-_]/g, ' ').toLowerCase()
+			frontmatter.description = `Coding guidelines and rules for ${humanReadableName}`
+		}
+
 		return {
 			filename,
 			name,
-			frontmatter: frontmatterResult.data,
+			frontmatter,
 			content: parsed.content.trim(),
 			fullContent,
 		}
