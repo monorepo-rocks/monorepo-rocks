@@ -105,16 +105,6 @@ Each generated tool takes no parameters and returns the rule content without fro
 - **Single .cursor/rules directory** - Only checks for `.cursor/rules/` at the directory specified by `--dir` (or current working directory). Does not recursively search subdirectories for additional `.cursor/rules/` folders.
 - **File changes require restart** - Changes to rule files require restarting the MCP server to be detected.
 
-## Features
-
-- Dynamic rule discovery from `.cursor/rules/` directories
-- MCP protocol compliance for integration with AI tools
-- Automatic tool generation with descriptive names
-- Frontmatter parsing for rule metadata
-- Smart tool descriptions that include file patterns and always-apply status
-- Token-efficient design - LLMs can see rule applicability without reading content
-- Comprehensive error handling and YAML sanitization
-
 ## Roadmap
 
 Future enhancements planned:
