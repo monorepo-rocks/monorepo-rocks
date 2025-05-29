@@ -24,7 +24,7 @@ export async function createMCPServer(workingDir: string = process.cwd()) {
 	})
 
 	// Generate tools dynamically from rules
-	rules.forEach((rule) => {
+	for (const rule of rules) {
 		server.tool(
 			`cursor_rule_${rule.name}`,
 			{
@@ -47,7 +47,7 @@ export async function createMCPServer(workingDir: string = process.cwd()) {
 				}
 			}
 		)
-	})
+	}
 
 	return server
 }
