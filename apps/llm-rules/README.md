@@ -31,12 +31,12 @@ To use with MCP clients, add to your `mcp.json` or similar configuration:
 
 ```json
 {
-  "mcpServers": {
-    "llm-rules": {
-      "command": "npx",
-      "args": ["llm-rules@latest", "--dir", "/path/to/your/repository"]
-    }
-  }
+	"mcpServers": {
+		"llm-rules": {
+			"command": "npx",
+			"args": ["llm-rules@latest", "--dir", "/path/to/your/repository"]
+		}
+	}
 }
 ```
 
@@ -44,12 +44,12 @@ For Claude Desktop, add to `claude_desktop_config.json`:
 
 ```json
 {
-  "mcpServers": {
-    "llm-rules": {
-      "command": "npx",
-      "args": ["llm-rules@latest", "--dir", "/path/to/your/repository"]
-    }
-  }
+	"mcpServers": {
+		"llm-rules": {
+			"command": "npx",
+			"args": ["llm-rules@latest", "--dir", "/path/to/your/repository"]
+		}
+	}
 }
 ```
 
