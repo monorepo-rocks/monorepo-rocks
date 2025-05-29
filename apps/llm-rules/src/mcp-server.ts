@@ -1,10 +1,8 @@
 import { join } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { z as z3 } from 'zod/v3'
 
 import { version } from '../package.json'
-import { fmt } from './format'
 import { parseRulesFromDir } from './rule-parser.js'
 
 /**
@@ -26,28 +24,31 @@ export async function createMCPServer(workingDir: string = process.cwd()) {
 
 	// Generate tools dynamically from rules
 	for (const rule of rules) {
+		// Build description with metadata to help LLMs decide when to use this rule
+		let description = `Read Cursor rule: ${rule.frontmatter.description}`
+		
+		const metadata: string[] = []
+		if (rule.frontmatter.globs) {
+			metadata.push(`applies to ${rule.frontmatter.globs}`)
+		}
+		if (rule.frontmatter.alwaysApply) {
+			metadata.push('always-apply')
+		}
+		
+		if (metadata.length > 0) {
+			description += ` (${metadata.join(', ')})`
+		}
+
 		server.tool(
 			`cursor_rule_${rule.name}`,
-			{
-				include_frontmatter: z3
-					.boolean()
-					.optional()
-					.default(false)
-					.describe(
-						fmt.trim(`
-							Whether to include YAML frontmatter (metadata like file patterns, always-apply status).
-							Set to true if you need to know when/where this rule applies, false for just the rule content.
-						`)
-					),
-			},
-			{ title: `Read Cursor rule: ${rule.frontmatter.description}` },
-			async ({ include_frontmatter }: { include_frontmatter?: boolean }) => {
-				const content = include_frontmatter ? rule.fullContent : rule.content
+			{},
+			{ title: description },
+			async () => {
 				return {
 					content: [
 						{
 							type: 'text',
-							text: content,
+							text: rule.content,
 						},
 					],
 				}
