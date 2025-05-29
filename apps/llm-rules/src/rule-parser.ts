@@ -1,28 +1,28 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import matter from 'gray-matter'
-import { z } from 'zod/v4'
+import { z as z3 } from 'zod/v3'
 import { glob } from 'zx'
 
-export type RuleFrontmatter = z.infer<typeof RuleFrontmatter>
-export const RuleFrontmatter = z
+export type RuleFrontmatter = z3.infer<typeof RuleFrontmatter>
+export const RuleFrontmatter = z3
 	.object({
-		description: z.string().nullable().default(''),
-		globs: z.string().nullable().optional(),
-		alwaysApply: z.boolean().optional(),
+		description: z3.string().nullable().default(''),
+		globs: z3.string().nullable().optional(),
+		alwaysApply: z3.boolean().optional(),
 	})
 	.transform((data) => ({
 		...data,
 		description: data.description || '', // Will be handled in parseRuleFile
 	}))
 
-export type ParsedRule = z.infer<typeof ParsedRule>
-export const ParsedRule = z.object({
-	filename: z.string(),
-	name: z.string(),
+export type ParsedRule = z3.infer<typeof ParsedRule>
+export const ParsedRule = z3.object({
+	filename: z3.string(),
+	name: z3.string(),
 	frontmatter: RuleFrontmatter,
-	content: z.string(),
-	fullContent: z.string(),
+	content: z3.string(),
+	fullContent: z3.string(),
 })
 
 /**
