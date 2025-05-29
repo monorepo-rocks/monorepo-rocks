@@ -4,8 +4,6 @@ import { describe, expect, it } from 'vitest'
 
 import 'zx/globals'
 
-
-
 describe('MCP Server', () => {
 	const fixturesDir = join(__dirname, 'test', 'fixtures')
 	const validFixturesDir = join(fixturesDir, 'valid')
@@ -145,10 +143,10 @@ describe('MCP Server', () => {
 			const result = await $({
 				timeout: '5s',
 			})`echo ${toolsListPayload} | node ${serverPath} --dir ${validFixturesDir}`
-			
+
 			// Parse the JSON response to check tool descriptions
-			const lines = result.stdout.split('\n').filter(line => line.trim())
-			const responseLines = lines.filter(line => {
+			const lines = result.stdout.split('\n').filter((line) => line.trim())
+			const responseLines = lines.filter((line) => {
 				try {
 					const parsed = JSON.parse(line)
 					return parsed.result && parsed.result.tools
@@ -156,25 +154,25 @@ describe('MCP Server', () => {
 					return false
 				}
 			})
-			
+
 			expect(responseLines.length).toBeGreaterThan(0)
-			
+
 			const response = JSON.parse(responseLines[0])
 			const tools = response.result.tools
-			
+
 			expect(Array.isArray(tools)).toBe(true)
 			expect(tools.length).toBe(6)
-			
+
 			// Find typescript rule tool - should include globs in description
 			const typescriptTool = tools.find((tool: any) => tool.name === 'cursor_rule_typescript-style')
 			expect(typescriptTool).toBeDefined()
 			expect(typescriptTool.description).toContain('applies to **/*.ts,**/*.tsx')
-			
-			// Find always-apply rule tool - should include always-apply flag  
+
+			// Find always-apply rule tool - should include always-apply flag
 			const alwaysApplyTool = tools.find((tool: any) => tool.name === 'cursor_rule_always-apply')
 			expect(alwaysApplyTool).toBeDefined()
 			expect(alwaysApplyTool.description).toContain('always-apply')
-			
+
 			// Find manual-only rule tool - should not have metadata annotations
 			const manualOnlyTool = tools.find((tool: any) => tool.name === 'cursor_rule_manual-only')
 			expect(manualOnlyTool).toBeDefined()

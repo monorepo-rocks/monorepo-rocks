@@ -16,13 +16,13 @@ describe('Rule Parser', () => {
 
 			const ruleNames = rules.map((r) => r.name).sort()
 			expect(ruleNames).toEqual([
-			'always-apply',
-			'api-design',
-			'manual-only',
-			'react-components',
-			'typescript-style',
-			 'zod-v4',
-		])
+				'always-apply',
+				'api-design',
+				'manual-only',
+				'react-components',
+				'typescript-style',
+				'zod-v4',
+			])
 		})
 
 		it('should return empty array for non-existent directory', async () => {
