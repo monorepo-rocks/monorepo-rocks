@@ -4,6 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z as z3 } from 'zod/v3'
 
 import { version } from '../package.json'
+import { fmt } from './format'
 import { parseRulesFromDir } from './rule-parser.js'
 
 /**
@@ -32,7 +33,12 @@ export async function createMCPServer(workingDir: string = process.cwd()) {
 					.boolean()
 					.optional()
 					.default(false)
-					.describe('Whether to include YAML frontmatter in the response'),
+					.describe(
+						fmt.trim(`
+							Whether to include YAML frontmatter (metadata like file patterns, always-apply status).
+							Set to true if you need to know when/where this rule applies, false for just the rule content.
+						`)
+					),
 			},
 			{ title: `Read Cursor rule: ${rule.frontmatter.description}` },
 			async ({ include_frontmatter }: { include_frontmatter?: boolean }) => {
