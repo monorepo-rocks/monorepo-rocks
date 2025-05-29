@@ -1,31 +1,118 @@
 # llm-rules
 
-## WIP!!!
-
-[![npm version](https://badge.fury.io/js/llm-rules.svg)](https://badge.fury.io/js/llm-rules)
-
-A collection of LLM rules and instructions for AI coding assistants to help with code generation, best practices, and project-specific guidelines. Also provides functionality to dynamically load rules files from within repositories.
+A Model Context Protocol (MCP) server that provides tools for accessing Cursor rules found in `.cursor/rules/*.mdc` files within a repository. This allows AI tools like Claude and other LLM assistants to access and use Cursor rules through the MCP protocol.
 
 ## Overview
 
-This package provides structured rules and instructions that can be used by AI coding assistants like Cursor, GitHub Copilot, and other LLM-powered development tools to better understand project conventions, coding standards, and specific requirements. It can also dynamically load and parse rules files from within repositories, such as `.cursor/rules` files and other AI assistant configuration files.
+This package creates an MCP server that dynamically discovers Cursor rule files and exposes them as callable tools. Each rule file becomes a tool that can be invoked to retrieve the rule content, with descriptions automatically extracted from the frontmatter.
+
+### Why use this?
+
+Instead of loading all Cursor rules into your AI assistant's context at once, this MCP server allows tools like AmpCode and Claude Code to dynamically load only the rules that are relevant to your current task. This approach offers several benefits:
+
+- **More flexible than static files** - Unlike `AGENT.md` or `CLAUDE.md` which are always loaded, Cursor rules include descriptions that tell the LLM exactly when to use them
+- **Reduced context size** - Only relevant rules are loaded, leaving more space for your actual code and conversation
+- **Better performance** - Smaller context means faster responses and lower token usage
+- **Smarter rule selection** - Tool descriptions include file patterns (`globs`) and always-apply status, helping AI assistants choose the right rules automatically
+- **Scalability** - Add as many rules as needed without bloating the initial context
+- **Real-time updates** - Changes to rule files are immediately available without restarting your AI assistant
 
 ## Usage
 
-To use these rules in your project:
+Start the MCP server:
 
 ```bash
-npm install llm-rules
+# Using npx
+npx llm-rules@latest --dir /path/to/your/repository
+
+# Using bunx
+bunx llm-rules@latest --dir /path/to/your/repository
+
+# Or from the current working directory (--dir is optional)
+npx llm-rules@latest
 ```
 
-The rules can be integrated into your development workflow to provide consistent AI assistance across your codebase. The package can also dynamically discover and load rules files from your repository structure.
+The `--dir` flag is optional and defaults to the current working directory. **Note:** When using the AmpCode extension for VSCode, Cursor, or Windsurf, the `--dir` flag is not needed as the extension automatically sets the working directory to your project root.
 
-## Features
+The server will:
 
-- Project-specific coding guidelines
-- Best practice recommendations
-- Structured instructions for AI assistants
-- Dynamic loading of rules files from repositories (e.g., Cursor rules, AI assistant configs)
-- Extensible rule system
+- Scan the specified directory (or current directory) for `.cursor/rules/*.mdc` files
+- Create MCP tools named `cursor_rule_<filename>` for each rule
+- Extract descriptions and metadata from frontmatter to help LLMs understand when to use each tool
+- Include file patterns (`globs`) and always-apply status in tool descriptions for better context
+- Serve the rules through the MCP protocol on stdio
 
-For more information on implementing LLM rules in your development workflow, see the documentation.
+### MCP Configuration
+
+To use with MCP clients, add to your `mcp.json` or similar configuration:
+
+```json
+{
+	"mcpServers": {
+		"llm-rules": {
+			"command": "npx",
+			"args": ["llm-rules@latest", "--dir", "/path/to/your/repository"]
+		}
+	}
+}
+```
+
+**AmpCode Extension Users:** If you're using the AmpCode extension, you can omit `--dir`:
+
+![](./docs/images/ampcode-mcp.jpg)
+
+For Claude Desktop, add to `claude_desktop_config.json`:
+
+```json
+{
+	"mcpServers": {
+		"llm-rules": {
+			"command": "npx",
+			"args": ["llm-rules@latest", "--dir", "/path/to/your/repository"]
+		}
+	}
+}
+```
+
+### Example Rule
+
+Here's an example Cursor rule file (`.cursor/rules/zod-v4.mdc`):
+
+```markdown
+---
+description: Zod v4 Coding Guidelines. ALWAYS read this when using Zod
+globs:
+alwaysApply: false
+---
+
+# Zod v4 Coding Guidelines
+
+## Important: Always Use Zod v4
+
+When working with Zod, **ALWAYS** use Zod v4 by importing from `'zod/v4'`. Never use the default `'zod'` import, which is Zod v3.
+```
+
+This creates a tool named `cursor_rule_zod-v4` with the description "Read Cursor rule: Zod v4 Coding Guidelines. ALWAYS read this when using Zod". The LLM can see from the description that this rule should be loaded when working with Zod.
+
+See [the complete example](./src/test/fixtures/valid/.cursor/rules/zod-v4.mdc) for the full rule content.
+
+### Tool Parameters
+
+Each generated tool takes no parameters and returns the rule content without frontmatter. Tool descriptions automatically include metadata from frontmatter (file patterns, always-apply status) to help LLMs choose relevant rules without reading their content first.
+
+## Limitations
+
+- **Single .cursor/rules directory** - Only checks for `.cursor/rules/` at the directory specified by `--dir` (or current working directory). Does not recursively search subdirectories for additional `.cursor/rules/` folders.
+- **File changes require restart** - Changes to rule files require restarting the MCP server to be detected.
+
+## Roadmap
+
+Future enhancements planned:
+
+- **Auto-reload after rule changes** - Automatically detect and reload rule files when they change, eliminating the need to restart the server
+- **Dynamic project directory tool** - Add an MCP tool to set the project directory dynamically, removing the need for the `--dir` flag
+- **Nested cursor rules support** - Load `.cursor/rules/` directories from subdirectories and expose them contextually based on the current working location
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
