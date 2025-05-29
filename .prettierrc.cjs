@@ -46,6 +46,12 @@ const config = {
 				useTabs: false,
 			},
 		},
+		{
+			files: 'README.md',
+			options: {
+				useTabs: false,
+			},
+		},
 	],
 }
 
