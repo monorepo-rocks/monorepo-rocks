@@ -15,11 +15,12 @@ export const runCLI = () =>
 			'-d, --dir <directory>',
 			'Working directory to scan for .cursor/rules (defaults to current directory)'
 		)
+		.option('--exit-after-start', 'Exit immediately after starting (for testing)', false)
 		.action(async (options) => {
 			await startMCPServer(options.dir)
+			if (options.exitAfterStart) {
+				process.exit(0)
+			}
 		})
-
-		// Don't hang for unresolved promises
-		.hook('postAction', () => process.exit(0))
 		.parseAsync()
 		.catch(catchProcessError())

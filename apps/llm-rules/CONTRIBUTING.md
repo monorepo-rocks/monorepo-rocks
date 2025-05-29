@@ -46,9 +46,33 @@ alwaysApply: false
 Your rule content goes here...
 ```
 
+## Testing the CLI
+
+### Quick Testing
+
+For development testing, use the `--exit-after-start` flag to verify rule discovery without the server hanging:
+
+```bash
+# Build and test rule discovery
+pnpm build
+node ./dist/llm-rules.cjs --dir /path/to/test/repo --exit-after-start
+```
+
+### Full Server Testing
+
+To test the full MCP server functionality:
+
+```bash
+# Start the server (will keep running)
+node ./dist/llm-rules.cjs --dir /path/to/test/repo
+
+# In another terminal, send MCP requests
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node ./dist/llm-rules.cjs --dir /path/to/test/repo
+```
+
 ## Making Changes
 
 1. Make your changes
 2. Run tests: `pnpm test`
 3. Build: `pnpm build`
-4. Test the CLI: `node ./dist/llm-rules.cjs --dir /path/to/test/repo`
+4. Test rule discovery: `node ./dist/llm-rules.cjs --dir /path/to/test/repo --exit-after-start`
