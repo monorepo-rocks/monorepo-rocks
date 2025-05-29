@@ -97,7 +97,6 @@ describe('MCP Server', () => {
 				timeout: '5s',
 			})`echo ${exitPayload} | node ${serverPath} --dir /nonexistent`
 
-			expect(result.stderr).toContain('Could not read rules directory')
 			expect(result.stderr).toContain('Found 0 rules')
 		})
 

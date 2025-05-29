@@ -11,7 +11,7 @@ import { parseRulesFromDir } from './rule-parser.js'
  */
 export async function createMCPServer(workingDir: string = process.cwd()) {
 	const rulesDir = join(workingDir, '.cursor', 'rules')
-	const rules = parseRulesFromDir(rulesDir)
+	const rules = await parseRulesFromDir(rulesDir)
 
 	console.error(`Found ${rules.length} rules in ${rulesDir}`)
 	rules.forEach((rule) => {

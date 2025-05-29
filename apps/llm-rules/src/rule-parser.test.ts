@@ -9,8 +9,8 @@ describe('Rule Parser', () => {
 	const invalidRulesDir = join(fixturesDir, 'invalid', '.cursor', 'rules')
 
 	describe('parseRulesFromDir', () => {
-		it('should find and parse all rules in directory', () => {
-			const rules = parseRulesFromDir(validRulesDir)
+		it('should find and parse all rules in directory', async () => {
+			const rules = await parseRulesFromDir(validRulesDir)
 
 			expect(rules).toHaveLength(5)
 
@@ -24,8 +24,8 @@ describe('Rule Parser', () => {
 			])
 		})
 
-		it('should return empty array for non-existent directory', () => {
-			const rules = parseRulesFromDir('/nonexistent/path')
+		it('should return empty array for non-existent directory', async () => {
+			const rules = await parseRulesFromDir('/nonexistent/path')
 			expect(rules).toEqual([])
 		})
 	})
@@ -121,8 +121,8 @@ describe('Rule Parser', () => {
 	})
 
 	describe('Frontmatter Validation', () => {
-		it('should handle various frontmatter configurations', () => {
-			const rules = parseRulesFromDir(validRulesDir)
+		it('should handle various frontmatter configurations', async () => {
+			const rules = await parseRulesFromDir(validRulesDir)
 
 			// Check that we have rules with different configurations
 			const alwaysApplyRule = rules.find((r) => r.name === 'always-apply')
@@ -133,9 +133,9 @@ describe('Rule Parser', () => {
 			expect(typescriptRule?.frontmatter.alwaysApply).toBe(false)
 		})
 
-		it('should not use fallback for fixture files', () => {
+		it('should not use fallback for fixture files', async () => {
 			// All our test fixture rules should have proper descriptions (not using fallback)
-			const rules = parseRulesFromDir(validRulesDir)
+			const rules = await parseRulesFromDir(validRulesDir)
 
 			// Should only have valid rules
 			expect(rules).toHaveLength(5)
@@ -146,9 +146,9 @@ describe('Rule Parser', () => {
 			}
 		})
 
-		it('should handle invalid frontmatter and provide fallback', () => {
+		it('should handle invalid frontmatter and provide fallback', async () => {
 			// Test that invalid frontmatter files are filtered out
-			const rules = parseRulesFromDir(invalidRulesDir)
+			const rules = await parseRulesFromDir(invalidRulesDir)
 
 			// Should parse empty frontmatter and YAML-sanitized files but skip truly invalid ones
 			expect(rules).toHaveLength(3) // empty-frontmatter.mdc, invalid-frontmatter.mdc, and unquoted-globs.mdc should all parse

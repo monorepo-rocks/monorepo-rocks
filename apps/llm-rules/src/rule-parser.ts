@@ -1,5 +1,6 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { glob } from 'zx'
 import matter from 'gray-matter'
 import { z } from 'zod/v4'
 
@@ -27,13 +28,11 @@ export const ParsedRule = z.object({
 /**
  * Find and parse all .mdc files in .cursor/rules directory
  */
-export function parseRulesFromDir(rulesDir: string): ParsedRule[] {
+export async function parseRulesFromDir(rulesDir: string): Promise<ParsedRule[]> {
 	try {
-		const files = readdirSync(rulesDir)
-			.filter((file) => file.endsWith('.mdc'))
-			.map((file) => join(rulesDir, file))
+		const files = await glob('*.mdc', { cwd: rulesDir })
 
-		return files.map(parseRuleFile).filter((rule): rule is ParsedRule => rule !== null)
+		return files.map((file) => parseRuleFile(join(rulesDir, file))).filter((rule): rule is ParsedRule => rule !== null)
 	} catch (error) {
 		console.warn(`Could not read rules directory: ${rulesDir}`, error)
 		return []
