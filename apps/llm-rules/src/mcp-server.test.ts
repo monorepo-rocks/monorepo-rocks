@@ -8,7 +8,9 @@ describe('MCP Server', () => {
 	const fixturesDir = join(__dirname, 'test', 'fixtures')
 	const validFixturesDir = join(fixturesDir, 'valid')
 	const invalidFixturesDir = join(fixturesDir, 'invalid')
+
 	const serverPath = join(__dirname, '../dist/llm-rules.cjs')
+
 	const exitPayload = '{"jsonrpc":"2.0","method":"exit","id":1}'
 	const toolsListPayload = JSON.stringify({
 		jsonrpc: '2.0',
