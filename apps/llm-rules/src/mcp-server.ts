@@ -1,7 +1,9 @@
+import { join } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod/v4'
-import { join } from 'node:path'
+
+import { version } from '../package.json'
 import { parseRulesFromDir } from './rule-parser.js'
 
 /**
@@ -10,15 +12,15 @@ import { parseRulesFromDir } from './rule-parser.js'
 export async function createMCPServer(workingDir: string = process.cwd()) {
 	const rulesDir = join(workingDir, '.cursor', 'rules')
 	const rules = parseRulesFromDir(rulesDir)
-	
+
 	console.error(`Found ${rules.length} rules in ${rulesDir}`)
-	rules.forEach(rule => {
+	rules.forEach((rule) => {
 		console.error(`  - ${rule.name}: ${rule.frontmatter.description}`)
 	})
 
 	const server = new McpServer({
 		name: 'llm-rules',
-		version: '1.0.0',
+		version,
 	})
 
 	// Generate tools dynamically from rules
@@ -27,7 +29,11 @@ export async function createMCPServer(workingDir: string = process.cwd()) {
 			`cursor_rule_${rule.name}`,
 			`Read Cursor rule: ${rule.frontmatter.description}`,
 			{
-				include_frontmatter: z.boolean().optional().default(false).describe('Whether to include YAML frontmatter in the response'),
+				include_frontmatter: z
+					.boolean()
+					.optional()
+					.default(false)
+					.describe('Whether to include YAML frontmatter in the response'),
 			},
 			async ({ include_frontmatter }: { include_frontmatter?: boolean }) => {
 				const content = include_frontmatter ? rule.fullContent : rule.content
