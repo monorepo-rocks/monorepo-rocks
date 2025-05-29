@@ -115,6 +115,14 @@ Each generated tool takes no parameters and returns the rule content without fro
 - Token-efficient design - LLMs can see rule applicability without reading content
 - Comprehensive error handling and YAML sanitization
 
+## Roadmap
+
+Future enhancements planned:
+
+- **Auto-reload after rule changes** - Automatically detect and reload rule files when they change, eliminating the need to restart the server
+- **Dynamic project directory tool** - Add an MCP tool to set the project directory dynamically, removing the need for the `--dir` flag
+- **Nested cursor rules support** - Load `.cursor/rules/` directories from subdirectories and expose them contextually based on the current working location
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
