@@ -1,31 +1,46 @@
 # llm-rules
 
-## WIP!!!
-
-[![npm version](https://badge.fury.io/js/llm-rules.svg)](https://badge.fury.io/js/llm-rules)
-
-A collection of LLM rules and instructions for AI coding assistants to help with code generation, best practices, and project-specific guidelines. Also provides functionality to dynamically load rules files from within repositories.
+A Model Context Protocol (MCP) server that provides tools for accessing Cursor rules found in `.cursor/rules/*.mdc` files within a repository. This allows AI tools like Claude and other LLM assistants to access and use Cursor rules through the MCP protocol.
 
 ## Overview
 
-This package provides structured rules and instructions that can be used by AI coding assistants like Cursor, GitHub Copilot, and other LLM-powered development tools to better understand project conventions, coding standards, and specific requirements. It can also dynamically load and parse rules files from within repositories, such as `.cursor/rules` files and other AI assistant configuration files.
+This package creates an MCP server that dynamically discovers Cursor rule files and exposes them as callable tools. Each rule file becomes a tool that can be invoked to retrieve the rule content, with descriptions automatically extracted from the frontmatter.
+
+## Installation
+
+```bash
+pnpm install
+pnpm build
+```
 
 ## Usage
 
-To use these rules in your project:
+Start the MCP server:
 
 ```bash
-npm install llm-rules
+./dist/llm-rules.cjs --dir /path/to/your/repository
 ```
 
-The rules can be integrated into your development workflow to provide consistent AI assistance across your codebase. The package can also dynamically discover and load rules files from your repository structure.
+The server will:
+- Scan the specified directory for `.cursor/rules/*.mdc` files
+- Create MCP tools named `cursor_rule_<filename>` for each rule
+- Extract descriptions from frontmatter to help LLMs understand when to use each tool
+- Serve the rules through the MCP protocol on stdio
+
+### Tool Parameters
+
+Each generated tool accepts:
+- `include_frontmatter` (boolean, optional): Whether to include YAML frontmatter in the response
 
 ## Features
 
-- Project-specific coding guidelines
-- Best practice recommendations
-- Structured instructions for AI assistants
-- Dynamic loading of rules files from repositories (e.g., Cursor rules, AI assistant configs)
-- Extensible rule system
+- Dynamic rule discovery from `.cursor/rules/` directories
+- MCP protocol compliance for integration with AI tools
+- Automatic tool generation with descriptive names
+- Frontmatter parsing for rule metadata
+- Optional frontmatter inclusion in responses
+- Comprehensive error handling
 
-For more information on implementing LLM rules in your development workflow, see the documentation.
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
