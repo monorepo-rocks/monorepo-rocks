@@ -4,8 +4,8 @@ import { readFile } from 'node:fs/promises'
 import 'zx/globals'
 
 describe('MCP Server', () => {
-	const fixturesDir = join(__dirname, 'fixtures')
-	const serverPath = join(__dirname, '../../dist/llm-rules.cjs')
+	const fixturesDir = join(__dirname, 'test', 'fixtures')
+	const serverPath = join(__dirname, '../dist/llm-rules.cjs')
 
 	beforeAll(async () => {
 		// Ensure the server is built

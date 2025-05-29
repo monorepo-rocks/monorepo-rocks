@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { join } from 'node:path'
-import { parseRulesFromDir, parseRuleFile } from '../rule-parser.js'
+import { parseRulesFromDir, parseRuleFile } from './rule-parser.js'
 
 describe('Rule Parser', () => {
-	const fixturesDir = join(__dirname, 'fixtures')
+	const fixturesDir = join(__dirname, 'test', 'fixtures')
 	const rulesDir = join(fixturesDir, '.cursor', 'rules')
 
 	describe('parseRulesFromDir', () => {
