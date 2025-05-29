@@ -15,7 +15,9 @@ env:
 jobs:
   check:
     name: Check
-    runs-on: blacksmith-4vcpu-ubuntu-2204
+    runs-on:
+      - self-hosted
+      - X64
     timeout-minutes: 10
     concurrency: ${{ github.workflow }}
     steps:
@@ -23,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - name: Setup Node.js
-        uses: useblacksmith/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: lts/*
       - name: Install Dependencies
