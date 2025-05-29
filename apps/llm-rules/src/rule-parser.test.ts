@@ -12,16 +12,17 @@ describe('Rule Parser', () => {
 		it('should find and parse all rules in directory', async () => {
 			const rules = await parseRulesFromDir(validRulesDir)
 
-			expect(rules).toHaveLength(5)
+			expect(rules).toHaveLength(6)
 
 			const ruleNames = rules.map((r) => r.name).sort()
 			expect(ruleNames).toEqual([
-				'always-apply',
-				'api-design',
-				'manual-only',
-				'react-components',
-				'typescript-style',
-			])
+			'always-apply',
+			'api-design',
+			'manual-only',
+			'react-components',
+			'typescript-style',
+			 'zod-v4',
+		])
 		})
 
 		it('should return empty array for non-existent directory', async () => {
@@ -105,6 +106,7 @@ describe('Rule Parser', () => {
 				'api-design.mdc',
 				'always-apply.mdc',
 				'manual-only.mdc',
+				'zod-v4.mdc',
 			]
 
 			for (const file of files) {
@@ -138,7 +140,7 @@ describe('Rule Parser', () => {
 			const rules = await parseRulesFromDir(validRulesDir)
 
 			// Should only have valid rules
-			expect(rules).toHaveLength(5)
+			expect(rules).toHaveLength(6)
 
 			for (const rule of rules) {
 				expect(rule.frontmatter.description).toBeTruthy()

@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { z } from 'zod/v4'
+import { z } from 'zod/v3'
 
 import { version } from '../package.json'
 import { parseRulesFromDir } from './rule-parser.js'
@@ -27,7 +27,6 @@ export async function createMCPServer(workingDir: string = process.cwd()) {
 	rules.forEach((rule) => {
 		server.tool(
 			`cursor_rule_${rule.name}`,
-			`Read Cursor rule: ${rule.frontmatter.description}`,
 			{
 				include_frontmatter: z
 					.boolean()
@@ -35,6 +34,7 @@ export async function createMCPServer(workingDir: string = process.cwd()) {
 					.default(false)
 					.describe('Whether to include YAML frontmatter in the response'),
 			},
+			{ title: `Read Cursor rule: ${rule.frontmatter.description}` },
 			async ({ include_frontmatter }: { include_frontmatter?: boolean }) => {
 				const content = include_frontmatter ? rule.fullContent : rule.content
 				return {

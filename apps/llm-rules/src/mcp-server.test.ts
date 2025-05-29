@@ -34,7 +34,7 @@ describe('MCP Server', () => {
 				timeout: '5s',
 			})`echo ${exitPayload} | node ${serverPath} --dir ${validFixturesDir}`
 
-			expect(result.stderr).toContain('Found 5 rules')
+			expect(result.stderr).toContain('Found 6 rules')
 			expect(result.stderr).toContain('MCP server started and listening on stdio')
 		})
 
