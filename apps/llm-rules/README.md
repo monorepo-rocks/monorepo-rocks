@@ -17,6 +17,12 @@ Instead of loading all Cursor rules into your AI assistant's context at once, th
 - **Scalability** - Add as many rules as needed without bloating the initial context
 - **Real-time updates** - Changes to rule files are immediately available without restarting your AI assistant
 
+## Demo
+
+![MCP Server Demo](docs/images/demo.jpg)
+
+_Example showing AmpCode automatically using the `cursor_rule_zod-v4` tool when working with Zod, ensuring proper v4 imports are used._
+
 ## Usage
 
 Start the MCP server:
