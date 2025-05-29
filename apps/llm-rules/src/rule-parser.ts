@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { glob } from 'zx'
 import matter from 'gray-matter'
 import { z } from 'zod/v4'
+import { glob } from 'zx'
 
 export type RuleFrontmatter = z.infer<typeof RuleFrontmatter>
 export const RuleFrontmatter = z
@@ -32,10 +32,8 @@ export async function parseRulesFromDir(rulesDir: string): Promise<ParsedRule[]>
 	try {
 		const files = await glob('*.mdc', { cwd: rulesDir })
 
-		const results = await Promise.all(
-			files.map((file) => parseRuleFile(join(rulesDir, file)))
-		)
-		
+		const results = await Promise.all(files.map((file) => parseRuleFile(join(rulesDir, file))))
+
 		return results.filter((rule): rule is ParsedRule => rule !== null)
 	} catch (error) {
 		console.warn(`Could not read rules directory: ${rulesDir}`, error)
