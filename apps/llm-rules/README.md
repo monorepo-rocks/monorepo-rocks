@@ -6,19 +6,16 @@ A Model Context Protocol (MCP) server that provides tools for accessing Cursor r
 
 This package creates an MCP server that dynamically discovers Cursor rule files and exposes them as callable tools. Each rule file becomes a tool that can be invoked to retrieve the rule content, with descriptions automatically extracted from the frontmatter.
 
-## Installation
-
-```bash
-pnpm install
-pnpm build
-```
-
 ## Usage
 
 Start the MCP server:
 
 ```bash
-./dist/llm-rules.cjs --dir /path/to/your/repository
+# Using npx
+npx llm-rules@latest --dir /path/to/your/repository
+
+# Using bunx
+bunx llm-rules@latest --dir /path/to/your/repository
 ```
 
 The server will:

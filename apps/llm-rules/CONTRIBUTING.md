@@ -51,4 +51,4 @@ Your rule content goes here...
 1. Make your changes
 2. Run tests: `pnpm test`
 3. Build: `pnpm build`
-4. Test the CLI: `./dist/llm-rules.cjs --dir /path/to/test/repo`
+4. Test the CLI: `node ./dist/llm-rules.cjs --dir /path/to/test/repo`
