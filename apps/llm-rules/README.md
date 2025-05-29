@@ -38,9 +38,11 @@ bunx llm-rules@latest --dir /path/to/your/repository
 npx llm-rules@latest
 ```
 
-The `--dir` flag is optional and defaults to the current working directory. **Note:** When using the AmpCode extension for VSCode, Cursor, or Windsurf, the `--dir` flag is not needed as the extension automatically sets the working directory to your project root.
+The `--dir` flag is optional and defaults to the current working directory.
 
-The server will:
+**Note:** When using the AmpCode extension for VSCode, Cursor, or Windsurf, the `--dir` flag is not needed as the extension automatically sets the working directory to your project root.
+
+**The server will:**
 
 - Scan the specified directory (or current directory) for `.cursor/rules/*.mdc` files
 - Create MCP tools named `cursor_rule_<filename>` for each rule
