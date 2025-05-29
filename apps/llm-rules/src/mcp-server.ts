@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { z } from 'zod/v3'
+import { z as z3 } from 'zod/v3'
 
 import { version } from '../package.json'
 import { parseRulesFromDir } from './rule-parser.js'
@@ -28,7 +28,7 @@ export async function createMCPServer(workingDir: string = process.cwd()) {
 		server.tool(
 			`cursor_rule_${rule.name}`,
 			{
-				include_frontmatter: z
+				include_frontmatter: z3
 					.boolean()
 					.optional()
 					.default(false)
