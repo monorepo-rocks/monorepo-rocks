@@ -1,5 +1,11 @@
 # llm-rules
 
+## 0.2.2
+
+### Patch Changes
+
+- a6a23be: chore: add demo to readme
+
 ## 0.2.1
 
 ### Patch Changes
