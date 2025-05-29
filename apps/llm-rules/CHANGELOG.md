@@ -1,5 +1,11 @@
 # llm-rules
 
+## 0.2.1
+
+### Patch Changes
+
+- 13805cb: chore: update readme
+
 ## 0.2.0
 
 ### Minor Changes
