@@ -133,6 +133,12 @@ importers:
 
   apps/llm-rules:
     devDependencies:
+      '@commander-js/extra-typings':
+        specifier: 14.0.0
+        version: 14.0.0(commander@14.0.0)
+      '@jahands/cli-tools':
+        specifier: 0.10.10
+        version: 0.10.10(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.5.4)(zod@3.25.7)(zx@8.5.4)
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
@@ -142,6 +148,15 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
+      commander:
+        specifier: 14.0.0
+        version: 14.0.0
+      zod:
+        specifier: 3.25.7
+        version: 3.25.7
+      zx:
+        specifier: 8.5.4
+        version: 8.5.4
 
   packages/eslint-config:
     devDependencies:
