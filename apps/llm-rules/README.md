@@ -100,6 +100,11 @@ See [the complete example](./src/test/fixtures/valid/.cursor/rules/zod-v4.mdc) f
 
 Each generated tool takes no parameters and returns the rule content without frontmatter. Tool descriptions automatically include metadata from frontmatter (file patterns, always-apply status) to help LLMs choose relevant rules without reading their content first.
 
+## Limitations
+
+- **Single .cursor/rules directory** - Only checks for `.cursor/rules/` at the directory specified by `--dir` (or current working directory). Does not recursively search subdirectories for additional `.cursor/rules/` folders.
+- **File changes require restart** - Changes to rule files require restarting the MCP server to be detected.
+
 ## Features
 
 - Dynamic rule discovery from `.cursor/rules/` directories
@@ -113,7 +118,3 @@ Each generated tool takes no parameters and returns the rule content without fro
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
-
-```
-
-```
