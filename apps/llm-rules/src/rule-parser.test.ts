@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, assert } from 'vitest'
 import { join } from 'node:path'
 import { parseRulesFromDir, parseRuleFile } from './rule-parser.js'
 
@@ -33,39 +33,39 @@ describe('Rule Parser', () => {
 			const filePath = join(rulesDir, 'typescript-style.mdc')
 			const rule = parseRuleFile(filePath)
 			
-			expect(rule).toBeDefined()
-			expect(rule!.name).toBe('typescript-style')
-			expect(rule!.filename).toBe('typescript-style.mdc')
-			expect(rule!.frontmatter.description).toBe('TypeScript coding standards and style guide')
-			expect(rule!.frontmatter.globs).toBe('**/*.ts,**/*.tsx')
-			expect(rule!.frontmatter.alwaysApply).toBe(false)
-			expect(rule!.content).toContain('# TypeScript Style Guide')
-			expect(rule!.fullContent).toContain('---')
+			assert(rule)
+			expect(rule.name).toBe('typescript-style')
+			expect(rule.filename).toBe('typescript-style.mdc')
+			expect(rule.frontmatter.description).toBe('TypeScript coding standards and style guide')
+			expect(rule.frontmatter.globs).toBe('**/*.ts,**/*.tsx')
+			expect(rule.frontmatter.alwaysApply).toBe(false)
+			expect(rule.content).toContain('# TypeScript Style Guide')
+			expect(rule.fullContent).toContain('---')
 		})
 
 		it('should parse always-apply rule correctly', () => {
 			const filePath = join(rulesDir, 'always-apply.mdc')
 			const rule = parseRuleFile(filePath)
 			
-			expect(rule).toBeDefined()
-			expect(rule!.frontmatter.alwaysApply).toBe(true)
-			expect(rule!.frontmatter.description).toBe('Project-wide coding standards that always apply')
+			assert(rule)
+			expect(rule.frontmatter.alwaysApply).toBe(true)
+			expect(rule.frontmatter.description).toBe('Project-wide coding standards that always apply')
 		})
 
 		it('should handle empty description gracefully', () => {
 			const filePath = join(rulesDir, 'manual-only.mdc')
 			const rule = parseRuleFile(filePath)
 			
-			expect(rule).toBeDefined()
-			expect(rule!.frontmatter.description).toBe('Database migration patterns and procedures')
+			assert(rule)
+			expect(rule.frontmatter.description).toBe('Database migration patterns and procedures')
 		})
 
 		it('should handle null globs field', () => {
 			const filePath = join(rulesDir, 'always-apply.mdc')
 			const rule = parseRuleFile(filePath)
 			
-			expect(rule).toBeDefined()
-			expect(rule!.frontmatter.globs).toBe(null)
+			assert(rule)
+			expect(rule.frontmatter.globs).toBe(null)
 		})
 
 		it('should return null for non-existent file', () => {
@@ -86,11 +86,11 @@ describe('Rule Parser', () => {
 				const filePath = join(rulesDir, file)
 				const rule = parseRuleFile(filePath)
 				
-				expect(rule, `Failed to parse ${file}`).toBeDefined()
-				expect(rule!.name).toBe(file.replace('.mdc', ''))
-				expect(rule!.frontmatter.description).toBeTruthy()
-				expect(rule!.content.length).toBeGreaterThan(0)
-				expect(rule!.fullContent).toContain('---')
+				assert(rule, `Failed to parse ${file}`)
+				expect(rule.name).toBe(file.replace('.mdc', ''))
+				expect(rule.frontmatter.description).toBeTruthy()
+				expect(rule.content.length).toBeGreaterThan(0)
+				expect(rule.fullContent).toContain('---')
 			}
 		})
 	})
