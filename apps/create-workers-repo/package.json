@@ -15,6 +15,7 @@
 		"url": "https://github.com/monorepo-rocks/monorepo-rocks.git",
 		"directory": "apps/create-workers-repo"
 	},
+	"license": "MIT",
 	"author": {
 		"name": "Jacob Hands",
 		"url": "https://twitter.com/jachands"
