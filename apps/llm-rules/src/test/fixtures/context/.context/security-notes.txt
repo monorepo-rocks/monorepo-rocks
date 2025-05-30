@@ -1,0 +1,6 @@
+Security reminders for all developers:
+
+- Never log sensitive data
+- Validate all user inputs
+- Use parameterized queries
+- Keep dependencies updated

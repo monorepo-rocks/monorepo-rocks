@@ -1,0 +1,8 @@
+{
+	"clientContext": {
+		"includeFiles": ["*"],
+		"excludeFiles": ["context-config.json", "**/*.private.md"],
+		"ignoreGlobalContext": false,
+		"ignoreAncestorContext": false
+	}
+}

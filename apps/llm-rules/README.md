@@ -1,14 +1,14 @@
 # llm-rules
 
-A Model Context Protocol (MCP) server that provides tools for accessing Cursor rules found in `.cursor/rules/*.mdc` files within a repository. This allows AI tools like Claude and other LLM assistants to access and use Cursor rules through the MCP protocol.
+A Model Context Protocol (MCP) server that provides tools for accessing both Cursor rules (`.cursor/rules/*.mdc`) and client-hosted context files (`.context/*`) within a repository. This allows AI tools like Claude and other LLM assistants to access and use context-aware coding guidelines through the MCP protocol.
 
 ## Overview
 
-This package creates an MCP server that dynamically discovers Cursor rule files and exposes them as callable tools. Each rule file becomes a tool that can be invoked to retrieve the rule content, with descriptions automatically extracted from the frontmatter.
+This package creates an MCP server that dynamically discovers both Cursor rule files and client-hosted context files, exposing them as callable tools. Each file becomes a tool that can be invoked to retrieve the content, with descriptions automatically extracted from the frontmatter to help AI assistants choose relevant context.
 
 ### Why use this?
 
-Instead of loading all Cursor rules into your AI assistant's context at once, this MCP server allows tools like AmpCode and Claude Code to dynamically load only the rules that are relevant to your current task. This approach offers several benefits:
+Instead of loading all context files into your AI assistant at once, this MCP server allows tools like AmpCode and Claude Code to dynamically load only the context that's relevant to your current task. This approach offers several benefits:
 
 - **More flexible than static files** - Unlike `AGENT.md` or `CLAUDE.md` which are always loaded, Cursor rules include descriptions that tell the LLM exactly when to use them
 - **Reduced context size** - Only relevant rules are loaded, leaving more space for your actual code and conversation
@@ -44,11 +44,16 @@ The `--dir` flag is optional and defaults to the current working directory.
 
 **The server will:**
 
-- Scan the specified directory (or current directory) for `.cursor/rules/*.mdc` files
-- Create MCP tools named `cursor_rule_<filename>` for each rule
+- Scan the specified directory (or current directory) for:
+  - `.cursor/rules/*.mdc` files (Cursor rules)
+  - `.context/*.md`, `.context/*.mdc`, `.context/*.txt` files (client-hosted context)
+- Create MCP tools for each file:
+  - `cursor_rule_<filename>` for Cursor rules
+  - `context_<filename>` for client-hosted context files
 - Extract descriptions and metadata from frontmatter to help LLMs understand when to use each tool
-- Include file patterns (`globs`) and always-apply status in tool descriptions for better context
-- Serve the rules through the MCP protocol on stdio
+- Include file patterns (`appliesTo`/`globs`), trigger types, and source information in tool descriptions
+- Support client-hosted context configuration via `.context/context-config.json`
+- Serve the content through the MCP protocol on stdio
 
 ### MCP Configuration
 
@@ -82,7 +87,7 @@ For Claude Desktop, add to `claude_desktop_config.json`:
 }
 ```
 
-### Example Rule
+### Example Cursor Rule
 
 Here's an example Cursor rule file (`.cursor/rules/zod-v4.mdc`):
 
@@ -104,22 +109,73 @@ This creates a tool named `cursor_rule_zod-v4` with the description "Read Cursor
 
 See [the complete example](./src/test/fixtures/valid/.cursor/rules/zod-v4.mdc) for the full rule content.
 
+### Example Client-Hosted Context
+
+The server also supports the [Client-hosted Context specification](./docs/specs/local-context-support.md). Here's an example context file (`.context/typescript-conventions.md`):
+
+```markdown
+---
+description: 'TypeScript coding conventions and best practices'
+appliesTo: ['**/*.ts', '**/*.tsx']
+trigger: pattern
+---
+
+# TypeScript Conventions
+
+- Use strict type checking
+- Prefer interfaces over types for object shapes
+- Use descriptive variable names
+- Always use async/await over Promises
+```
+
+This creates a tool named `context_typescript-conventions` with the description "Read context: TypeScript coding conventions and best practices (applies to **/\*.ts,**/\*.tsx, trigger: pattern, source: static)". The LLM can see this should be loaded when working with TypeScript files.
+
+**Context Configuration**
+
+You can customize context loading with `.context/context-config.json`:
+
+```json
+{
+  "clientContext": {
+    "includeFiles": ["*"],
+    "excludeFiles": ["context-config.json", "**/*.private.md"],
+    "ignoreGlobalContext": false,
+    "ignoreAncestorContext": false
+  }
+}
+```
+
+**Supported Context File Formats:**
+
+- **Markdown files** (`.md`, `.mdc`) - Support frontmatter with properties like `description`, `appliesTo`, `trigger`
+- **Text files** (`.txt`) - Plain text without frontmatter
+- **Trigger types**: `always` (always loaded), `pattern` (loaded for matching files), `agent` (available for AI to choose), `manual` (explicit reference only)
+
 ### Tool Parameters
 
-Each generated tool takes no parameters and returns the rule content without frontmatter. Tool descriptions automatically include metadata from frontmatter (file patterns, always-apply status) to help LLMs choose relevant rules without reading their content first.
+Each generated tool takes no parameters and returns the content without frontmatter. Tool descriptions automatically include metadata from frontmatter to help LLMs choose relevant context without reading content first:
+
+- **Cursor rules**: Include `globs` patterns and `always-apply` status
+- **Client-hosted context**: Include `appliesTo` patterns, `trigger` type, and `source` information
 
 ## Limitations
 
-- **Single .cursor/rules directory** - Only checks for `.cursor/rules/` at the directory specified by `--dir` (or current working directory). Does not recursively search subdirectories for additional `.cursor/rules/` folders.
-- **File changes require restart** - Changes to rule files require restarting the MCP server to be detected.
+- **Single-level directory scanning** - Only checks for files at the directory specified by `--dir`:
+  - `.cursor/rules/` for Cursor rules
+  - `.context/` for client-hosted context
+  - Does not recursively search subdirectories
+- **File changes require restart** - Changes to files require restarting the MCP server to be detected
+- **Basic client-hosted context support** - Currently supports static directory context only (no dynamic subdirectory context yet)
 
 ## Roadmap
 
 Future enhancements planned:
 
-- **Auto-reload after rule changes** - Automatically detect and reload rule files when they change, eliminating the need to restart the server
+- **Auto-reload after file changes** - Automatically detect and reload files when they change, eliminating the need to restart the server
 - **Dynamic project directory tool** - Add an MCP tool to set the project directory dynamically, removing the need for the `--dir` flag
-- **Nested cursor rules support** - Load `.cursor/rules/` directories from subdirectories and expose them contextually based on the current working location
+- **Nested directory support** - Load context files from subdirectories and expose them contextually based on the current working location
+- **Full client-hosted context spec** - Complete implementation including dynamic subdirectory context, global context, and configuration merging
+- **Pattern-based filtering** - Apply `includeFiles`/`excludeFiles` glob patterns from context configuration
 
 ## Contributing
 

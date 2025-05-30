@@ -34,7 +34,7 @@ describe('MCP Server', () => {
 				timeout: '5s',
 			})`echo ${exitPayload} | node ${serverPath} --dir ${validFixturesDir}`
 
-			expect(result.stderr).toContain('Found 6 rules')
+			expect(result.stderr).toContain('Found 6 Cursor rules')
 			expect(result.stderr).toContain('MCP server started and listening on stdio')
 		})
 
@@ -97,7 +97,7 @@ describe('MCP Server', () => {
 				timeout: '5s',
 			})`echo ${exitPayload} | node ${serverPath} --dir /nonexistent`
 
-			expect(result.stderr).toContain('Found 0 rules')
+			expect(result.stderr).toContain('Found 0 Cursor rules')
 		})
 
 		it('should handle invalid frontmatter gracefully', async () => {
@@ -107,7 +107,7 @@ describe('MCP Server', () => {
 			})`echo ${exitPayload} | node ${serverPath} --dir ${invalidFixturesDir}`
 
 			// Should parse 3 rules after YAML sanitization fixes most issues
-			expect(result.stderr).toContain('Found 3 rules')
+			expect(result.stderr).toContain('Found 3 Cursor rules')
 			expect(result.stderr).toContain('MCP server started and listening on stdio')
 
 			// Should show YAML sanitization warnings but successfully parse files
@@ -161,7 +161,7 @@ describe('MCP Server', () => {
 			const tools = response.result.tools
 
 			expect(Array.isArray(tools)).toBe(true)
-			expect(tools.length).toBe(6)
+			expect(tools.length).toBe(6) // 6 cursor rules + 0 context files in valid fixtures
 
 			// Find typescript rule tool - should include globs in description
 			const typescriptTool = tools.find((tool: any) => tool.name === 'cursor_rule_typescript-style')
