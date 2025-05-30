@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
 import matter from 'gray-matter'
 import { z as z3 } from 'zod/v3'
 import { glob } from 'zx'
