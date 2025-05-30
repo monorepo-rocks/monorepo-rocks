@@ -34,7 +34,7 @@
 	"scripts": {
 		"build": "runx build lib ./src/bin/llm-rules.ts --platform=node --format=cjs --sourcemap=external --no-types",
 		"build:dev": "runx build lib ./src/bin/llm-rules.ts --platform=node --format=cjs --sourcemap=external --no-types --no-minify",
-		"check:lint": "run-eslint-workers",
+		"check:lint": "run-eslint",
 		"check:types": "run-tsc",
 		"prepublishOnly": "rm -f dist/*.map",
 		"start": "run-s -s build:dev start:run",

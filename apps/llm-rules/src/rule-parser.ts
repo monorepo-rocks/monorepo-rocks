@@ -83,7 +83,7 @@ export async function parseRuleFile(filePath: string): Promise<ParsedRule | null
 		let parsed: matter.GrayMatterFile<string>
 		try {
 			parsed = matter(fullContent)
-		} catch (yamlError) {
+		} catch {
 			// If YAML parsing fails, try with sanitization
 			console.warn(`YAML parsing failed for ${filePath}, attempting to sanitize...`)
 			const sanitizedContent = sanitizeYamlFrontmatter(fullContent)

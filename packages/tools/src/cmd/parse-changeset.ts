@@ -1,4 +1,5 @@
 import { Command } from '@commander-js/extra-typings'
+import { cd, chalk, echo } from 'zx'
 
 import { getRepoRoot } from '../path'
 
@@ -9,7 +10,9 @@ export const parseChangesetCmd = new Command('parse-changeset')
 	.action(async (path, { stripPackages, verbose }) => {
 		const repoRoot = getRepoRoot()
 		cd(repoRoot)
-		verbose && echo(chalk.blue(`Parsing changeset from ${path}`))
+		if (verbose) {
+			echo(chalk.blue(`Parsing changeset from ${path}`))
+		}
 		let changeset = await Bun.file(path).text()
 		if (stripPackages) {
 			const lines = changeset.split('\n')
