@@ -666,8 +666,7 @@ Replace `"check:lint": "run-eslint-default"` or `"check:lint": "run-eslint-worke
 - [ ] Updated turbo generator templates
 - [ ] Updated VS Code settings
 - [ ] Updated documentation files
-- [ ] Tested linting works: `run-eslint`
-- [ ] Verified auto-fix works: `FIX_ESLINT=1 run-eslint`
+- [ ] Tested linting works: `pnpm run-eslint`
 
 ## Common Issues and Solutions
 
