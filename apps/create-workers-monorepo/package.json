@@ -53,6 +53,7 @@
 		"commander": "14.0.0",
 		"memoize-one": "6.0.0",
 		"p-filter": "4.1.0",
+		"p-map": "7.0.3",
 		"ts-pattern": "5.7.1",
 		"vitest": "3.1.2",
 		"zod": "3.25.7",

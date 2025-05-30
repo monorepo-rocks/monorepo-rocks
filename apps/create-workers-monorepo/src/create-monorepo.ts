@@ -1,8 +1,8 @@
 import path from 'node:path'
 import { checkbox, confirm, input, select } from '@inquirer/prompts'
 import { cliError } from '@jahands/cli-tools/errors'
+import pMap from 'p-map'
 import { z } from 'zod/v4'
-import { $, chalk, fs } from 'zx'
 
 import { ampExists, claudeExists, getAvailableEditors } from './editor'
 import { isDirEmpty } from './fs'
@@ -16,6 +16,29 @@ export async function ensurePrerequisites() {
 }
 
 export const RepoName = z.string().regex(/^(?!\.+$)(?!_+$)[a-z0-9-_.]+$/i)
+
+async function cleanupTemplateFiles(targetDir: string) {
+	// clean up template files
+	await fs.rm(path.join(targetDir, '.docs'), { recursive: true, force: true })
+
+	// remove all CHANGELOG.md files
+	const changelogFiles = await glob('**/CHANGELOG.md', { cwd: targetDir })
+	for (const file of changelogFiles) {
+		await fs.rm(path.join(targetDir, file), { force: true })
+	}
+
+	// remove LICENSE (users may want to add their own)
+	await fs.rm(path.join(targetDir, 'LICENSE'), { force: true })
+
+	// remove all .changeset/*.md files except README.md
+	const changesetFiles = await glob(['.changeset/*.md', '!README.md'], {
+		cwd: targetDir,
+		gitignore: true,
+	})
+	await pMap(changesetFiles, async (file) => {
+		await fs.rm(path.join(targetDir, file), { force: true })
+	})
+}
 
 export interface CreateMonorepoOptions {
 	name?: string
@@ -37,7 +60,7 @@ async function promptRepoName(): Promise<string> {
 						return `Directory "${trimmedValue}" already exists and is not empty. Please choose a different name or remove the existing directory.`
 					}
 				} catch (e) {
-					// Handle potential errors reading the directory (e.g., permissions)
+					// handle potential errors reading the directory (e.g., permissions)
 					return `Could not check directory "${trimmedValue}": ${e instanceof Error ? e.message : String(e)}`
 				}
 			}
@@ -110,23 +133,24 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 
 	try {
 		await $`git clone --depth 1 ${templateUrl} ${targetDir}`.quiet()
-		fs.rmSync(path.join(targetDir, '.git'), { recursive: true, force: true })
+		await fs.rm(path.join(targetDir, '.git'), { recursive: true, force: true })
+		await cleanupTemplateFiles(targetDir)
 	} catch (e) {
-		// Clean up the target directory if it was created by this script
+		// clean up the target directory if it was created by this script
 		if (!fs.existsSync(path.resolve(process.cwd(), name))) {
 			// only remove the directory if it was created by this script
 			if (!dirExisted) {
-				fs.rmSync(targetDir, { recursive: true, force: true })
+				await fs.rm(targetDir, { recursive: true, force: true })
 			}
 		}
 		throw cliError(`Failed to create monorepo: ${e instanceof Error ? e.message : String(e)}`)
 	}
 
 	if (!useGitHubActions) {
-		fs.rmSync(path.join(targetDir, '.github/workflows'), { recursive: true, force: true })
+		await fs.rm(path.join(targetDir, '.github/workflows'), { recursive: true, force: true })
 		// delete the .github directory if it's empty
 		if (isDirEmpty(path.join(targetDir, '.github'))) {
-			fs.rmSync(path.join(targetDir, '.github'), { recursive: true, force: true })
+			await fs.rm(path.join(targetDir, '.github'), { recursive: true, force: true })
 		}
 	}
 
@@ -135,7 +159,7 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 		echo(chalk.dim(`Adding AI assistant rules: ${selectedRules.join(', ')}`))
 	}
 
-	// Remove unwanted AI assistant rules
+	// remove unwanted AI assistant rules
 	const allRules = ['claude', 'cursor', 'windsurf', 'amp'] satisfies AIAssistant[]
 	const rulesToRemove = allRules.filter((rule) => !selectedRules.includes(rule))
 	for (const rule of rulesToRemove) {
@@ -147,7 +171,7 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 		}
 
 		const filePath = ruleFiles[rule as keyof typeof ruleFiles]
-		fs.rmSync(filePath, { recursive: true, force: true })
+		await fs.rm(filePath, { recursive: true, force: true })
 	}
 
 	echo(chalk.dim(`Initializing git repository...`))
