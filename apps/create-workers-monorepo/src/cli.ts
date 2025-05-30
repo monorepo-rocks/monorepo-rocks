@@ -5,7 +5,7 @@ import { validateArg } from '@jahands/cli-tools/args'
 import { catchProcessError } from '@jahands/cli-tools/proc'
 
 import { version } from '../package.json'
-import { createMonorepo, RepoName } from './monorepo'
+import { createMonorepo, RepoName } from './create-monorepo'
 
 export const runCLI = () =>
 	program
