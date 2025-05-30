@@ -26,43 +26,46 @@ This guide provides step-by-step instructions for migrating a repository based o
 
 #### 1.1 Update packages/eslint-config/package.json
 
-Replace the entire file with:
+**Important:** Do NOT change the `version` field - keep whatever version is currently there.
+
+Update the `exports` field to:
 
 ```json
-{
-	"name": "@repo/eslint-config",
-	"version": "0.2.3",
-	"private": true,
-	"sideEffects": false,
-	"exports": {
-		".": "./src/default.config.ts",
-		"./react": "./src/react.config.ts"
-	},
-	"devDependencies": {
-		"@eslint/compat": "1.2.9",
-		"@eslint/js": "9.27.0",
-		"@types/eslint": "9.6.1",
-		"@types/node": "22.15.27",
-		"@typescript-eslint/eslint-plugin": "8.32.1",
-		"@typescript-eslint/parser": "8.32.1",
-		"eslint": "9.27.0",
-		"eslint-config-prettier": "10.1.5",
-		"eslint-config-turbo": "2.5.3",
-		"eslint-import-resolver-typescript": "4.4.1",
-		"eslint-plugin-astro": "1.3.1",
-		"eslint-plugin-import": "2.31.0",
-		"eslint-plugin-jsx-a11y": "6.10.2",
-		"eslint-plugin-only-warn": "1.1.0",
-		"eslint-plugin-react": "7.37.5",
-		"eslint-plugin-react-hooks": "5.2.0",
-		"eslint-plugin-unused-imports": "4.1.4",
-		"jiti": "2.4.2",
-		"typescript": "5.5.4",
-		"typescript-eslint": "8.33.0",
-		"vitest": "3.1.4"
-	}
+"exports": {
+	".": "./src/default.config.ts",
+	"./react": "./src/react.config.ts"
 }
 ```
+
+Replace the `devDependencies` field with:
+
+```json
+"devDependencies": {
+	"@eslint/compat": "1.2.9",
+	"@eslint/js": "9.27.0",
+	"@types/eslint": "9.6.1",
+	"@types/node": "22.15.27",
+	"@typescript-eslint/eslint-plugin": "8.32.1",
+	"@typescript-eslint/parser": "8.32.1",
+	"eslint": "9.27.0",
+	"eslint-config-prettier": "10.1.5",
+	"eslint-config-turbo": "2.5.3",
+	"eslint-import-resolver-typescript": "4.4.1",
+	"eslint-plugin-astro": "1.3.1",
+	"eslint-plugin-import": "2.31.0",
+	"eslint-plugin-jsx-a11y": "6.10.2",
+	"eslint-plugin-only-warn": "1.1.0",
+	"eslint-plugin-react": "7.37.5",
+	"eslint-plugin-react-hooks": "5.2.0",
+	"eslint-plugin-unused-imports": "4.1.4",
+	"jiti": "2.4.2",
+	"typescript": "5.5.4",
+	"typescript-eslint": "8.33.0",
+	"vitest": "3.1.4"
+}
+```
+
+Remove the old `files` field if it exists (it's no longer needed with the new exports).
 
 #### 1.2 Create packages/eslint-config/src/ directory structure
 
@@ -585,7 +588,9 @@ In all package.json files, replace either:
 ```json
 "check:lint": "run-eslint-default"
 ```
+
 OR:
+
 ```json
 "check:lint": "run-eslint-workers"
 ```
@@ -601,7 +606,7 @@ With:
 Update template files in `turbo/generators/templates/`:
 
 - `fetch-worker/package.json.hbs`
-- `fetch-worker-vite/package.json.hbs`  
+- `fetch-worker-vite/package.json.hbs`
 - `package/package.json.hbs`
 
 Replace `"check:lint": "run-eslint-default"` or `"check:lint": "run-eslint-workers"` with `"check:lint": "run-eslint"`
