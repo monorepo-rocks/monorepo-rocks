@@ -1,5 +1,13 @@
 # create-workers-repo
 
+## 0.3.8
+
+### Patch Changes
+
+- e463724: chore: add license
+- Updated dependencies [e463724]
+  - create-workers-monorepo@0.5.3
+
 ## 0.3.7
 
 ### Patch Changes

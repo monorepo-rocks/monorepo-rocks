@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.5.3
+
+### Patch Changes
+
+- e463724: chore: add license
+
 ## 0.5.2
 
 ### Patch Changes
