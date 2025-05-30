@@ -51,7 +51,7 @@
 		"@repo/typescript-config": "workspace:*",
 		"commander": "14.0.0",
 		"gray-matter": "4.0.3",
-		"vitest": "3.1.2",
+		"vitest": "3.1.4",
 		"zod": "3.25.7",
 		"zx": "8.5.4"
 	},
