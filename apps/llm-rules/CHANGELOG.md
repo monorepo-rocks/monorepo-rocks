@@ -1,5 +1,11 @@
 # llm-rules
 
+## 0.2.5
+
+### Patch Changes
+
+- e463724: chore: add license
+
 ## 0.2.4
 
 ### Patch Changes
