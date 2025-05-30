@@ -13,7 +13,6 @@ describe('context-parser', () => {
 
 		// Check typescript-conventions.md
 		const tsContext = contexts.find((c) => c.name === 'typescript-conventions')
-		expect(tsContext).toBeDefined()
 		assert(tsContext)
 		expect(tsContext.frontmatter.description).toBe(
 			'TypeScript coding conventions and best practices'
