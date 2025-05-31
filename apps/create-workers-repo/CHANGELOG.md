@@ -1,5 +1,17 @@
 # create-workers-repo
 
+## 0.3.9
+
+### Patch Changes
+
+- a1e9531: chore: update deps
+- a1e9531: chore: upgrade to eslint 9
+- Updated dependencies [e9b5509]
+- Updated dependencies [a1e9531]
+- Updated dependencies [555ea67]
+- Updated dependencies [a1e9531]
+  - create-workers-monorepo@0.6.0
+
 ## 0.3.8
 
 ### Patch Changes
