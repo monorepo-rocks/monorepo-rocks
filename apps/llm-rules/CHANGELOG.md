@@ -1,5 +1,13 @@
 # llm-rules
 
+## 0.2.6
+
+### Patch Changes
+
+- 3361c0d: chore: update zod 4 rules
+- a1e9531: chore: update deps
+- a1e9531: chore: upgrade to eslint 9
+
 ## 0.2.5
 
 ### Patch Changes
