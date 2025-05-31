@@ -34,7 +34,7 @@
 	"scripts": {
 		"build": "runx build lib ./src/bin/create-workers-monorepo.ts --platform=node --format=cjs --sourcemap=external --no-types",
 		"build:dev": "runx build lib ./src/bin/create-workers-monorepo.ts --platform=node --format=cjs --sourcemap=external --no-types --no-minify",
-		"check:lint": "run-eslint-workers",
+		"check:lint": "run-eslint",
 		"check:types": "run-tsc",
 		"prepublishOnly": "rm -f dist/*.map",
 		"start": "run-s -s build:dev start:run",
@@ -49,13 +49,13 @@
 		"@repo/tools": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
 		"@types/fs-extra": "11.0.4",
-		"@types/node": "22.15.19",
+		"@types/node": "22.15.27",
 		"commander": "14.0.0",
 		"memoize-one": "6.0.0",
 		"p-filter": "4.1.0",
 		"p-map": "7.0.3",
 		"ts-pattern": "5.7.1",
-		"vitest": "3.1.2",
+		"vitest": "3.1.4",
 		"zod": "3.25.7",
 		"zx": "8.5.4"
 	}

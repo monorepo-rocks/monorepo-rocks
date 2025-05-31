@@ -12,7 +12,7 @@
 		"bin": "bin"
 	},
 	"scripts": {
-		"check:lint": "run-eslint-workers",
+		"check:lint": "run-eslint",
 		"check:types": "run-tsc",
 		"test": "run-vitest"
 	},
@@ -21,7 +21,7 @@
 		"@jahands/cli-tools": "0.10.10",
 		"@repo/zod": "workspace:*",
 		"@types/bun": "1.2.13",
-		"@types/node": "22.15.19",
+		"@types/node": "22.15.27",
 		"cli-table3": "0.6.5",
 		"commander": "14.0.0",
 		"empathic": "1.1.0",
@@ -32,6 +32,6 @@
 		"zx": "8.5.4"
 	},
 	"devDependencies": {
-		"vitest": "3.1.2"
+		"vitest": "3.1.4"
 	}
 }

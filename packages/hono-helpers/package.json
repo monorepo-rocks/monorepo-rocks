@@ -6,7 +6,7 @@
 	"type": "module",
 	"main": "src/index.ts",
 	"scripts": {
-		"check:lint": "run-eslint-workers",
+		"check:lint": "run-eslint",
 		"check:types": "run-tsc",
 		"test": "run-vitest"
 	},
@@ -23,6 +23,6 @@
 		"@repo/eslint-config": "workspace:*",
 		"@repo/tools": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
-		"vitest": "3.1.2"
+		"vitest": "3.1.4"
 	}
 }
