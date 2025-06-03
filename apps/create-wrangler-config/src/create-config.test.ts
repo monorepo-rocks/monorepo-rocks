@@ -1,7 +1,7 @@
 import fs from 'node:fs'
-import os from 'node:os'
-import path from 'node:path'
+import * as pkg from 'empathic/package'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import z from 'zod/v4'
 
 import { buildWranglerConfig, formatWranglerConfig } from './config-builder.js'
 import { hasExistingWranglerConfig, writeWranglerConfig } from './fs.js'
@@ -12,7 +12,10 @@ describe('create-config integration', () => {
 
 	beforeEach(async () => {
 		originalCwd = process.cwd()
-		tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'create-wrangler-config-test-'))
+		tempDir = z
+			.string()
+			.min(1, { error: 'Failed to create temp directory' })
+			.parse(pkg.cache(`create-config-test/run-${Date.now()}`, { create: true }))
 		process.chdir(tempDir)
 	})
 
