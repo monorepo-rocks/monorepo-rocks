@@ -1,0 +1,27 @@
+# Augment Guidelines
+
+## Code Formatting
+
+### Indentation
+
+- **ALWAYS use TABS instead of SPACES** for indentation in TypeScript files (_.ts, _.tsx)
+- This is critical for compatibility with the project's auto-formatter (Prettier)
+- The project's `.prettierrc.cjs` is configured with `useTabs: true`
+- Auto-formatter will convert spaces to tabs, which can cause formatting conflicts
+
+### File Types Affected
+
+- `*.ts` - TypeScript files
+- `*.tsx` - TypeScript React files
+- All other TypeScript-related files
+
+### Why This Matters
+
+- The project uses Prettier with `useTabs: true` configuration
+- Code edits using spaces will be automatically converted to tabs by the formatter
+- This ensures consistency across the codebase and prevents formatting conflicts
+- Maintains compatibility with the existing codebase standards
+
+### Reminder
+
+When making any code changes to TypeScript files, ensure all indentation uses tabs, not spaces.
