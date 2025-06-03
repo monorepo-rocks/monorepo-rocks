@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.6.1
+
+### Patch Changes
+
+- f6ce031: fix: update rule list
+
 ## 0.6.0
 
 ### Minor Changes

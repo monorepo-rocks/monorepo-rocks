@@ -1,5 +1,12 @@
 # create-workers-repo
 
+## 0.3.10
+
+### Patch Changes
+
+- Updated dependencies [f6ce031]
+  - create-workers-monorepo@0.6.1
+
 ## 0.3.9
 
 ### Patch Changes
