@@ -45,6 +45,42 @@ When making any code changes to TypeScript files, ensure all indentation uses ta
 
 - `*.md` - Markdown files
 
+### Numbered Lists
+
+- **Numbered list items ALWAYS have a blank line after the number/title**
+- Sub-items under numbered lists are indented with 3 spaces (not 2 or 4)
+- This is enforced by the auto-formatter and causes str-replace failures if not matched exactly
+
+### JSON in Code Blocks
+
+- **JSON code blocks may have trailing commas** added by the auto-formatter
+- **Indentation in JSON blocks uses 2 spaces** consistently
+- Always check for trailing commas when editing JSON examples in markdown
+
+### Auto-Formatter Patterns
+
+The auto-formatter makes these specific changes that cause str-replace mismatches:
+
+1. **Adds blank lines after numbered list headers**:
+
+   ```markdown
+   1. **Item Title**
+
+      - Sub-item (note the blank line above)
+   ```
+
+2. **Standardizes JSON formatting**:
+
+   ```jsonc
+   {
+   	"key": "value", // May add trailing comma
+   }
+   ```
+
+3. **Consistent spacing in lists**:
+   - Uses exactly 3 spaces for sub-items under numbered lists
+   - Uses 2 spaces for regular bullet point sub-items
+
 ### Example
 
 ```markdown
@@ -55,4 +91,13 @@ Content starts here with proper spacing.
 ## Section Heading
 
 More content with proper spacing after the heading.
+
+1. **Numbered Item**
+
+   - Sub-item with 3 spaces indentation
+   - Another sub-item
+
+2. **Second Item**
+
+   - More sub-items
 ```
