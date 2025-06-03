@@ -25,3 +25,28 @@
 ### Reminder
 
 When making any code changes to TypeScript files, ensure all indentation uses tabs, not spaces.
+
+## Markdown Formatting
+
+### Headings
+
+- **ALWAYS add a newline after headings** in markdown files (*.md)
+- This ensures proper spacing and readability in markdown documents
+- Apply this rule to all heading levels (H1 through H6)
+
+### File Types Affected
+
+- `*.md` - Markdown files
+- `*.markdown` - Markdown files (alternative extension)
+
+### Example
+
+```markdown
+# Main Heading
+
+Content starts here with proper spacing.
+
+## Section Heading
+
+More content with proper spacing after the heading.
+```
