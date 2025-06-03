@@ -118,6 +118,48 @@ importers:
         specifier: workspace:*
         version: link:../../packages/typescript-config
 
+  apps/create-wrangler-config:
+    devDependencies:
+      '@commander-js/extra-typings':
+        specifier: 14.0.0
+        version: 14.0.0(commander@14.0.0)
+      '@inquirer/prompts':
+        specifier: 7.5.1
+        version: 7.5.1(@types/node@22.15.27)
+      '@jahands/cli-tools':
+        specifier: 0.10.10
+        version: 0.10.10(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.5.4)(zod@3.25.7)(zx@8.5.4)
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@repo/tools':
+        specifier: workspace:*
+        version: link:../../packages/tools
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@types/fs-extra':
+        specifier: 11.0.4
+        version: 11.0.4
+      '@types/node':
+        specifier: 22.15.27
+        version: 22.15.27
+      commander:
+        specifier: 14.0.0
+        version: 14.0.0
+      empathic:
+        specifier: 1.1.0
+        version: 1.1.0
+      vitest:
+        specifier: 3.1.4
+        version: 3.1.4(@types/node@22.15.27)(jiti@2.4.2)(tsx@4.19.4)(yaml@2.8.0)
+      zod:
+        specifier: 3.25.7
+        version: 3.25.7
+      zx:
+        specifier: 8.5.4
+        version: 8.5.4
+
   apps/llm-rules:
     devDependencies:
       '@commander-js/extra-typings':
