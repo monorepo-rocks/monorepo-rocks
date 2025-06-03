@@ -48,6 +48,7 @@ cd my-worker-project && npm create wrangler-config@latest
 **Requirement**: Before creating any files, check for existing Wrangler configuration files.
 
 **Behavior**:
+
 - Check for existence of: `wrangler.jsonc`, `wrangler.json`, `wrangler.toml`
 - If any exist, exit with warning message: "Wrangler configuration already exists. This tool only creates new configuration files."
 - Exit code: 1
@@ -57,6 +58,7 @@ cd my-worker-project && npm create wrangler-config@latest
 **Requirement**: Detect package manager and ensure wrangler is available as a dependency.
 
 **Detection Logic**:
+
 1. Check for lock files in order of preference:
    - `bun.lockb` or `bun.lock` → Bun
    - `pnpm-lock.yaml` → pnpm
@@ -65,6 +67,7 @@ cd my-worker-project && npm create wrangler-config@latest
    - Default to npm if no lock file found
 
 **Wrangler Dependency Check**:
+
 1. If `package.json` exists:
    - Parse dependencies and devDependencies
    - If `wrangler` not found, prompt to install as devDependency
@@ -76,11 +79,13 @@ cd my-worker-project && npm create wrangler-config@latest
 **Required Prompts**:
 
 1. **Worker Name**
+
    - Prompt: "What is your Worker name?"
    - Validation: Must be valid identifier (alphanumeric, hyphens, underscores)
    - Default: Directory name (sanitized)
 
 2. **Entry Point**
+
    - Prompt: "What is your main entry file?"
    - Default: Auto-detect from common patterns:
      - `src/index.ts` (if exists)
@@ -90,6 +95,7 @@ cd my-worker-project && npm create wrangler-config@latest
      - Default to `src/index.ts`
 
 3. **Compatibility Date**
+
    - Prompt: "Compatibility date (YYYY-MM-DD)?"
    - Default: Current date
    - Validation: Valid date format, not in future
@@ -102,6 +108,7 @@ cd my-worker-project && npm create wrangler-config@latest
 **Optional Prompts**:
 
 5. **Account ID**
+
    - Prompt: "Cloudflare Account ID (optional)?"
    - Help text: "Find this in your Cloudflare dashboard"
    - Can be skipped
@@ -115,6 +122,7 @@ cd my-worker-project && npm create wrangler-config@latest
 **Output**: Generate `wrangler.jsonc` with collected configuration.
 
 **Base Configuration Structure**:
+
 ```jsonc
 {
   "name": "worker-name",
@@ -123,29 +131,31 @@ cd my-worker-project && npm create wrangler-config@latest
   // Optional fields based on prompts
   "account_id": "...",
   "assets": {
-    "directory": "./public"
-  }
+    "directory": "./public",
+  },
 }
 ```
 
 **Environment Support**:
 If staging environment requested:
+
 ```jsonc
 {
   "name": "worker-name",
-  "main": "src/index.ts", 
+  "main": "src/index.ts",
   "compatibility_date": "2024-01-15",
   "env": {
     "staging": {
-      "name": "worker-name-staging"
-    }
-  }
+      "name": "worker-name-staging",
+    },
+  },
 }
 ```
 
 ### 5. Success Output
 
 **Completion Message**:
+
 ```
 ✅ Created wrangler.jsonc successfully!
 
@@ -162,12 +172,14 @@ Documentation: https://developers.cloudflare.com/workers/
 ### Architecture
 
 **Scaffolding Pattern**: Follow `apps/llm-rules` structure:
+
 - `src/bin/create-wrangler-config.ts` - CLI entry point
 - `src/cli.ts` - CLI setup and argument parsing
 - `src/create-config.ts` - Main configuration logic
 - `package.json` with proper bin configuration
 
 **Dependencies**:
+
 - `zx` for shell commands (package manager detection/installation)
 - `zod` v4 for data validation/parsing
 - `@inquirer/prompts` for interactive prompts (following `create-workers-monorepo` pattern)
@@ -176,16 +188,19 @@ Documentation: https://developers.cloudflare.com/workers/
 **Key Modules**:
 
 1. **Package Manager Detection** (`src/package-manager.ts`)
+
    - Detect package manager from lock files
    - Check for wrangler dependency
    - Install wrangler if needed
 
 2. **Configuration Builder** (`src/config-builder.ts`)
+
    - Zod schemas for configuration validation
    - Generate wrangler.jsonc content
    - Handle environment configurations
 
 3. **File System Utils** (`src/fs-utils.ts`)
+
    - Check for existing config files
    - Detect common file patterns
    - Write configuration file
@@ -214,16 +229,19 @@ Documentation: https://developers.cloudflare.com/workers/
 ### Phase 2 Features
 
 1. **Advanced Configuration Options**
+
    - KV namespace setup
    - D1 database configuration
    - R2 bucket configuration
    - Custom domains/routes
 
 2. **Template Support**
+
    - Pre-built configuration templates
    - Framework-specific configurations (Hono, Itty Router, etc.)
 
 3. **Migration Support**
+
    - Convert from wrangler.toml to wrangler.jsonc
    - Upgrade existing configurations
 

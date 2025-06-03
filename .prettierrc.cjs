@@ -47,7 +47,7 @@ const config = {
 			},
 		},
 		{
-			files: 'README.md',
+			files: '*.md',
 			options: {
 				useTabs: false,
 			},
