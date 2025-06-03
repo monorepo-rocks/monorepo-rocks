@@ -160,17 +160,17 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 	}
 
 	// remove unwanted AI assistant rules
-	const allRules = ['claude', 'cursor', 'windsurf', 'amp'] satisfies AIAssistant[]
+	const allRules = ['claude', 'cursor', 'windsurf', 'amp'] as const satisfies AIAssistant[]
 	const rulesToRemove = allRules.filter((rule) => !selectedRules.includes(rule))
 	for (const rule of rulesToRemove) {
 		const ruleFiles = {
 			claude: path.join(targetDir, 'CLAUDE.md'),
 			cursor: path.join(targetDir, '.cursor'),
 			windsurf: path.join(targetDir, '.windsurf'),
-			ampcode: path.join(targetDir, 'AGENT.md'),
-		}
+			amp: path.join(targetDir, 'AGENT.md'),
+		} as const
 
-		const filePath = ruleFiles[rule as keyof typeof ruleFiles]
+		const filePath = ruleFiles[rule]
 		await fs.rm(filePath, { recursive: true, force: true })
 	}
 
