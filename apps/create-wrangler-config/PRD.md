@@ -81,41 +81,20 @@ cd my-worker-project && npm create wrangler-config@latest
 1. **Worker Name**
 
    - Prompt: "What is your Worker name?"
-   - Validation: Must be valid identifier (alphanumeric, hyphens, underscores)
-   - Default: Directory name (sanitized)
+   - Validation: Must be valid identifier (alphanumeric, hyphens only, max 54 characters)
+   - Default: Sanitized name from package.json (if exists), otherwise sanitized directory name
 
 2. **Entry Point**
 
-   - Prompt: "What is your main entry file?"
-   - Default: Auto-detect from common patterns:
-     - `src/index.ts` (if exists)
-     - `src/index.js` (if exists)
-     - `index.ts` (if exists)
-     - `index.js` (if exists)
-     - Default to `src/index.ts`
+   - Prompt: "What is your main entry file? (optional)"
+   - Default: None (empty)
+   - If no entry point specified, omit from wrangler.jsonc
 
-3. **Compatibility Date**
-
-   - Prompt: "Compatibility date (YYYY-MM-DD)?"
-   - Default: Current date
-   - Validation: Valid date format, not in future
-
-4. **Assets Directory** (if provided as argument or detected)
+3. **Assets Directory**
    - If assets directory argument provided, use it
    - Otherwise, check for common static directories: `public`, `static`, `assets`, `dist`
    - If found, prompt: "Serve static assets from [directory]?"
-
-**Optional Prompts**:
-
-5. **Account ID**
-
-   - Prompt: "Cloudflare Account ID (optional)?"
-   - Help text: "Find this in your Cloudflare dashboard"
-   - Can be skipped
-
-6. **Environment Configuration**
-   - Prompt: "Set up staging environment?"
-   - If yes, prompt for staging-specific settings
+   - If none detected, prompt: "Do you have static assets to serve? (directory path, or leave empty)"
 
 ### 4. Configuration Generation
 
@@ -126,28 +105,23 @@ cd my-worker-project && npm create wrangler-config@latest
 ```jsonc
 {
   "name": "worker-name",
-  "main": "src/index.ts",
   "compatibility_date": "2024-01-15",
-  // Optional fields based on prompts
-  "account_id": "...",
-  "assets": {
-    "directory": "./public",
-  },
+  // Optional fields based on prompts:
+  // "main": "src/index.ts" (only if specified)
+  // "assets": { "directory": "./public", "binding": "ASSETS" } (only if assets specified)
 }
 ```
 
-**Environment Support**:
-If staging environment requested:
+**With Assets Configuration**:
+If assets directory is specified:
 
 ```jsonc
 {
   "name": "worker-name",
-  "main": "src/index.ts",
   "compatibility_date": "2024-01-15",
-  "env": {
-    "staging": {
-      "name": "worker-name-staging",
-    },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
   },
 }
 ```
@@ -160,8 +134,8 @@ If staging environment requested:
 ✅ Created wrangler.jsonc successfully!
 
 Next steps:
-1. Implement your Worker in src/index.ts
-2. Test locally: npx wrangler dev
+1. Implement your Worker code
+2. Develop locally: npx wrangler dev
 3. Deploy: npx wrangler deploy
 
 Documentation: https://developers.cloudflare.com/workers/
@@ -184,6 +158,8 @@ Documentation: https://developers.cloudflare.com/workers/
 - `zod` v4 for data validation/parsing
 - `@inquirer/prompts` for interactive prompts (following `create-workers-monorepo` pattern)
 - `@commander-js/extra-typings` for CLI argument parsing
+- `@types/fs-extra` for file system type definitions
+- `empathic` for temp directory utilities in tests
 
 **Key Modules**:
 
@@ -197,9 +173,8 @@ Documentation: https://developers.cloudflare.com/workers/
 
    - Zod schemas for configuration validation
    - Generate wrangler.jsonc content
-   - Handle environment configurations
 
-3. **File System Utils** (`src/fs-utils.ts`)
+3. **File System Operations** (`src/fs.ts`)
 
    - Check for existing config files
    - Detect common file patterns
@@ -209,6 +184,11 @@ Documentation: https://developers.cloudflare.com/workers/
    - Interactive configuration prompts
    - Input validation
    - Default value logic
+
+**Important Notes**:
+
+- `src/bin/create-wrangler-config.ts` must contain `import 'zx/globals'` to provide global access to fs and other utilities
+- Never use 'utils' in file or directory names (use `fs.ts` not `fs-utils.ts`)
 
 ### Error Handling
 
@@ -221,7 +201,8 @@ Documentation: https://developers.cloudflare.com/workers/
 
 - Unit tests for configuration generation
 - Integration tests for CLI flow
-- Mock file system operations
+- Use fixtures in `test/fixtures` directory instead of mocking
+- Tests that create files should use temp directories from `empathic` pkg.cache({ create: true })
 - Test package manager detection logic
 
 ## Future Enhancements
@@ -230,22 +211,15 @@ Documentation: https://developers.cloudflare.com/workers/
 
 1. **Advanced Configuration Options**
 
-   - KV namespace setup
-   - D1 database configuration
-   - R2 bucket configuration
    - Custom domains/routes
+   - Environment-specific configurations
 
-2. **Template Support**
-
-   - Pre-built configuration templates
-   - Framework-specific configurations (Hono, Itty Router, etc.)
-
-3. **Migration Support**
+2. **Migration Support**
 
    - Convert from wrangler.toml to wrangler.jsonc
    - Upgrade existing configurations
 
-4. **Integration Features**
+3. **Integration Features**
    - Git repository initialization
    - TypeScript configuration setup
    - ESLint/Prettier configuration
@@ -259,7 +233,7 @@ Documentation: https://developers.cloudflare.com/workers/
 
 ## Dependencies
 
-- Node.js 18+
+- Node.js 20+ (18 is EOL)
 - npm/yarn/pnpm/bun for package management
 - Cloudflare account (for deployment, not required for config generation)
 
