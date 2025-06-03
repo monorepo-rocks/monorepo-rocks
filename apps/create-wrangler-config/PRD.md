@@ -76,29 +76,50 @@ cd my-worker-project && npm create wrangler-config@latest
 
 ### 3. Interactive Configuration Prompts
 
-**Required Prompts**:
+**Step 1: Worker Name**
 
-1. **Worker Name**
+- Prompt: "What is your Worker name?"
+- Validation: Must be valid identifier (alphanumeric, hyphens only, max 54 characters)
+- Default: Sanitized name from package.json (if exists), otherwise sanitized directory name
 
-   - Prompt: "What is your Worker name?"
-   - Validation: Must be valid identifier (alphanumeric, hyphens only, max 54 characters)
-   - Default: Sanitized name from package.json (if exists), otherwise sanitized directory name
+**Step 2: Feature Selection (Checkbox)**
 
-2. **Entry Point**
+Present a checkbox list of features to configure:
 
-   - Prompt: "What is your main entry file? (optional)"
-   - Default: Auto-detect if `src/index.ts` or `index.ts` exists, otherwise none (empty)
-   - If no entry point specified, omit from wrangler.jsonc
+- Prompt: "Which features do you want to configure for your Worker?"
+- Use `@inquirer/prompts` checkbox for multi-select
+- Auto-detect and pre-check features based on project structure
 
-3. **Assets Directory**
-   - If assets directory argument provided, use it
-   - Otherwise, check for common static directories: `public`, `static`, `assets`, `dist`
-   - If found, prompt: "Serve static assets from [directory]?"
-   - If none detected, prompt: "Do you have static assets to serve? (directory path, or leave empty)"
+**Feature Detection & Defaults**:
+
+1. **Entry Point** - Auto-checked if `src/index.ts` or `index.ts` exists
+2. **Static Assets** - Auto-checked if assets directory argument provided OR common directories detected (`public`, `static`, `assets`, `dist`)
+
+**Checkbox Options**:
+
+```
+☑ Entry Point (Worker code execution)
+☑ Static Assets (Serve static files)
+```
+
+**Step 3: Feature-Specific Configuration**
+
+Based on selected checkboxes, prompt for specific details:
+
+**If "Entry Point" selected**:
+
+- Prompt: "What is your main entry file?"
+- Default: Auto-detected file (`src/index.ts` or `index.ts`) or `src/index.ts`
+
+**If "Static Assets" selected**:
+
+- If assets directory argument provided, use it
+- If auto-detected directory, prompt: "Serve static assets from [detected-directory]?"
+- Otherwise prompt: "Static assets directory path:"
 
 ### 4. Configuration Generation
 
-**Output**: Generate `wrangler.jsonc` with collected configuration.
+**Output**: Generate `wrangler.jsonc` with selected features.
 
 **Base Configuration Structure**:
 
@@ -106,17 +127,17 @@ cd my-worker-project && npm create wrangler-config@latest
 {
   "name": "worker-name",
   "compatibility_date": "2024-01-15", // Always today's date
-  // Optional fields based on prompts:
-  // "main": "src/index.ts" (only if specified or auto-detected)
-  // "observability": { "enabled": true } (only if entrypoint exists)
-  // "assets": { "directory": "./public" } (if assets specified but no entrypoint)
-  // "assets": { "directory": "./public", "binding": "ASSETS" } (if assets AND entrypoint)
+  // Optional fields based on selected features:
+  // "main": "src/index.ts" (if Entry Point selected)
+  // "observability": { "enabled": true } (if Entry Point selected)
+  // "assets": { "directory": "./public" } (if Static Assets selected but no Entry Point)
+  // "assets": { "directory": "./public", "binding": "ASSETS" } (if both selected)
 }
 ```
 
-**Assets Configuration Examples**:
+**Configuration Examples by Feature Selection**:
 
-Assets directory only (no entrypoint):
+**Static Assets only** (Entry Point not selected):
 
 ```jsonc
 {
@@ -128,7 +149,20 @@ Assets directory only (no entrypoint):
 }
 ```
 
-Assets directory with entrypoint:
+**Entry Point only** (Static Assets not selected):
+
+```jsonc
+{
+  "name": "worker-name",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-01-15",
+  "observability": {
+    "enabled": true,
+  },
+}
+```
+
+**Both Entry Point and Static Assets** selected:
 
 ```jsonc
 {
@@ -145,16 +179,12 @@ Assets directory with entrypoint:
 }
 ```
 
-Entrypoint only (no assets):
+**Neither selected** (minimal config):
 
 ```jsonc
 {
   "name": "worker-name",
-  "main": "src/index.ts",
   "compatibility_date": "2024-01-15",
-  "observability": {
-    "enabled": true,
-  },
 }
 ```
 
