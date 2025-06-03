@@ -74,6 +74,11 @@
 				"name": "llm-rules",
 				"command": "${workspaceFolder}/.vscode/bin/bun",
 				"args": ["x", "llm-rules@latest", "--dir", "${workspaceFolder}"]
+			},
+			{
+				"name": "cloudflare-docs",
+				"command": "${workspaceFolder}/.vscode/bin/bun",
+				"args": ["x", "mcp-remote@latest", "https://docs.mcp.cloudflare.com/sse"]
 			}
 		]
 	}
