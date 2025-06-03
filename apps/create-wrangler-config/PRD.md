@@ -87,7 +87,7 @@ cd my-worker-project && npm create wrangler-config@latest
 2. **Entry Point**
 
    - Prompt: "What is your main entry file? (optional)"
-   - Default: None (empty)
+   - Default: Auto-detect if `src/index.ts` or `index.ts` exists, otherwise none (empty)
    - If no entry point specified, omit from wrangler.jsonc
 
 3. **Assets Directory**
@@ -105,19 +105,34 @@ cd my-worker-project && npm create wrangler-config@latest
 ```jsonc
 {
   "name": "worker-name",
-  "compatibility_date": "2024-01-15",
+  "compatibility_date": "2024-01-15", // Always today's date
   // Optional fields based on prompts:
-  // "main": "src/index.ts" (only if specified)
-  // "assets": { "directory": "./public", "binding": "ASSETS" } (only if assets specified)
+  // "main": "src/index.ts" (only if specified or auto-detected)
+  // "assets": { "directory": "./public" } (if assets specified but no entrypoint)
+  // "assets": { "directory": "./public", "binding": "ASSETS" } (if assets AND entrypoint)
 }
 ```
 
-**With Assets Configuration**:
-If assets directory is specified:
+**Assets Configuration Examples**:
+
+Assets directory only (no entrypoint):
 
 ```jsonc
 {
   "name": "worker-name",
+  "compatibility_date": "2024-01-15",
+  "assets": {
+    "directory": "./public",
+  },
+}
+```
+
+Assets directory with entrypoint:
+
+```jsonc
+{
+  "name": "worker-name",
+  "main": "src/index.ts",
   "compatibility_date": "2024-01-15",
   "assets": {
     "directory": "./public",
