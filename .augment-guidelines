@@ -4,7 +4,7 @@
 
 ### Indentation
 
-- **ALWAYS use TABS instead of SPACES** for indentation in TypeScript files (_.ts, _.tsx)
+- **ALWAYS use TABS instead of SPACES** for indentation in TypeScript files (.ts, .tsx)
 - This is critical for compatibility with the project's auto-formatter (Prettier)
 - The project's `.prettierrc.cjs` is configured with `useTabs: true`
 - Auto-formatter will convert spaces to tabs, which can cause formatting conflicts
@@ -30,14 +30,20 @@ When making any code changes to TypeScript files, ensure all indentation uses ta
 
 ### Headings
 
-- **ALWAYS add a newline after headings** in markdown files (*.md)
+- **ALWAYS add a newline after headings** in markdown files (.md)
 - This ensures proper spacing and readability in markdown documents
 - Apply this rule to all heading levels (H1 through H6)
+
+### Indentation
+
+- **ALWAYS use SPACES instead of TABS** for indentation in markdown files (.md)
+- This includes code snippets within markdown files
+- Use 2 or 4 spaces for consistent indentation depending on context
+- Markdown parsers and renderers work more reliably with spaces
 
 ### File Types Affected
 
 - `*.md` - Markdown files
-- `*.markdown` - Markdown files (alternative extension)
 
 ### Example
 
