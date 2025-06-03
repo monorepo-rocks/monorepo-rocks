@@ -1,5 +1,17 @@
 # create-workers-monorepo
 
+## 0.6.0
+
+### Minor Changes
+
+- e9b5509: feat: remove various files from template
+
+### Patch Changes
+
+- a1e9531: chore: update deps
+- 555ea67: chore: rename monorepo.ts -> create-monorepo.ts
+- a1e9531: chore: upgrade to eslint 9
+
 ## 0.5.3
 
 ### Patch Changes
