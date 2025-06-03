@@ -213,6 +213,7 @@ Documentation: https://developers.cloudflare.com/workers/
 - `src/cli.ts` - CLI setup and argument parsing
 - `src/create-config.ts` - Main configuration logic
 - `package.json` with proper bin configuration
+- `tsconfig.json` - Must use exact same settings as `apps/llm-rules` (extends `@repo/typescript-config/lib.json`)
 
 **Dependencies**:
 
