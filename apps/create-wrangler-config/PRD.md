@@ -108,6 +108,7 @@ cd my-worker-project && npm create wrangler-config@latest
   "compatibility_date": "2024-01-15", // Always today's date
   // Optional fields based on prompts:
   // "main": "src/index.ts" (only if specified or auto-detected)
+  // "observability": { "enabled": true } (only if entrypoint exists)
   // "assets": { "directory": "./public" } (if assets specified but no entrypoint)
   // "assets": { "directory": "./public", "binding": "ASSETS" } (if assets AND entrypoint)
 }
@@ -134,9 +135,25 @@ Assets directory with entrypoint:
   "name": "worker-name",
   "main": "src/index.ts",
   "compatibility_date": "2024-01-15",
+  "observability": {
+    "enabled": true,
+  },
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
+  },
+}
+```
+
+Entrypoint only (no assets):
+
+```jsonc
+{
+  "name": "worker-name",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-01-15",
+  "observability": {
+    "enabled": true,
   },
 }
 ```
