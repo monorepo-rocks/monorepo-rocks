@@ -29,22 +29,13 @@ export async function createWranglerConfig(options: CreateWranglerConfigOptions)
 		)
 	}
 
-	// Step 2: Package manager detection and wrangler installation
-	const packageManager = await detectPackageManager()
-	echo(chalk.dim(`Detected package manager: ${packageManager}`))
-
-	if (fs.existsSync('package.json') && !hasWranglerDependency()) {
-		echo(chalk.dim('Installing wrangler as a dev dependency...'))
-		await installWrangler(packageManager)
-	}
-
-	// Step 3: Interactive configuration prompts
+	// Step 2: Interactive configuration prompts
 	echo('') // Empty line for spacing
 
 	const workerName = await promptWorkerName()
 	const selectedFeatures = await promptFeatureSelection(options.assetsDirectory)
 
-	// Step 4: Feature-specific configuration
+	// Step 3: Feature-specific configuration
 	const configOptions: WorkerConfigOptions = {
 		name: workerName,
 		features: selectedFeatures,
@@ -58,7 +49,7 @@ export async function createWranglerConfig(options: CreateWranglerConfigOptions)
 		configOptions.assetsDirectory = await promptAssetsDirectory(options.assetsDirectory)
 	}
 
-	// Step 5: Generate and write configuration
+	// Step 4: Generate and write configuration
 	echo('') // Empty line for spacing
 	echo(chalk.blue('Generating wrangler.jsonc configuration...'))
 
@@ -66,6 +57,15 @@ export async function createWranglerConfig(options: CreateWranglerConfigOptions)
 	const configContent = formatWranglerConfig(config)
 
 	await writeWranglerConfig(configContent)
+
+	// Step 5: Package manager detection and wrangler installation
+	const packageManager = await detectPackageManager()
+	echo(chalk.dim(`Detected package manager: ${packageManager}`))
+
+	if (fs.existsSync('package.json') && !hasWranglerDependency()) {
+		echo(chalk.dim('Installing wrangler as a dev dependency...'))
+		await installWrangler(packageManager)
+	}
 
 	// Step 6: Success output
 	echo(chalk.green('✅ Created wrangler.jsonc successfully!'))
