@@ -1,5 +1,11 @@
 # create-wrangler-config
 
+## 0.2.1
+
+### Patch Changes
+
+- 4b82f6c: chore: install wrangler after generating config
+
 ## 0.2.0
 
 ### Minor Changes
