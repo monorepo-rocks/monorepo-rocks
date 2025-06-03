@@ -1,7 +1,47 @@
 import { describe, expect, it } from 'vitest'
-import { buildWranglerConfig, formatWranglerConfig, type WorkerConfigOptions } from './config-builder.js'
+
+import { buildWranglerConfig, formatWranglerConfig, WorkerName } from './config-builder.js'
+
+import type { WorkerConfigOptions } from './config-builder.js'
 
 describe('config-builder', () => {
+	describe('WorkerName schema', () => {
+		it('should validate valid worker names', () => {
+			expect(WorkerName.parse('my-worker')).toBe('my-worker')
+			expect(WorkerName.parse('worker123')).toBe('worker123')
+			expect(WorkerName.parse('test-worker-app')).toBe('test-worker-app')
+			expect(WorkerName.parse('a')).toBe('a') // Single character
+		})
+
+		it('should reject names with invalid characters', () => {
+			expect(() => WorkerName.parse('my_worker')).toThrow()
+			expect(() => WorkerName.parse('my worker')).toThrow()
+			expect(() => WorkerName.parse('my@worker')).toThrow()
+			expect(() => WorkerName.parse('MyWorker')).toThrow() // Uppercase
+		})
+
+		it('should reject names starting or ending with hyphens', () => {
+			expect(() => WorkerName.parse('-my-worker')).toThrow(
+				'Worker name cannot start or end with a hyphen'
+			)
+			expect(() => WorkerName.parse('my-worker-')).toThrow(
+				'Worker name cannot start or end with a hyphen'
+			)
+			expect(() => WorkerName.parse('-my-worker-')).toThrow(
+				'Worker name cannot start or end with a hyphen'
+			)
+		})
+
+		it('should reject empty names', () => {
+			expect(() => WorkerName.parse('')).toThrow('Worker name cannot be empty')
+		})
+
+		it('should reject names that are too long', () => {
+			const longName = 'a'.repeat(55)
+			expect(() => WorkerName.parse(longName)).toThrow('Worker name cannot exceed 54 characters')
+		})
+	})
+
 	describe('buildWranglerConfig', () => {
 		it('should build config with entry point only', () => {
 			const options: WorkerConfigOptions = {

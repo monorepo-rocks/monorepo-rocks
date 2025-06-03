@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+
 import { sanitizeWorkerName } from './fs.js'
 
 describe('fs utilities', () => {
@@ -37,10 +38,16 @@ describe('fs utilities', () => {
 			expect(sanitizeWorkerName(longName)).toHaveLength(54)
 		})
 
-		it('should provide fallback for empty names', () => {
-			expect(sanitizeWorkerName('')).toBe('my-worker')
-			expect(sanitizeWorkerName('___')).toBe('my-worker')
-			expect(sanitizeWorkerName('---')).toBe('my-worker')
+		it('should throw error for empty names', () => {
+			expect(() => sanitizeWorkerName('')).toThrow(
+				'Cannot sanitize worker name "" - results in empty string'
+			)
+			expect(() => sanitizeWorkerName('___')).toThrow(
+				'Cannot sanitize worker name "___" - results in empty string'
+			)
+			expect(() => sanitizeWorkerName('---')).toThrow(
+				'Cannot sanitize worker name "---" - results in empty string'
+			)
 		})
 	})
 })

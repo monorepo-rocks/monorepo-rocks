@@ -22,7 +22,7 @@ export const PackageJson = z.object({
  * Detect the package manager based on lock files
  * @returns the detected package manager
  */
-export function detectPackageManager(): PackageManager {
+export async function detectPackageManager(): Promise<PackageManager> {
 	// Check for lock files in order of preference
 	if (fs.existsSync('bun.lockb') || fs.existsSync('bun.lock')) {
 		return 'bun'
@@ -36,7 +36,7 @@ export function detectPackageManager(): PackageManager {
 	if (fs.existsSync('package-lock.json')) {
 		return 'npm'
 	}
-	
+
 	// Default to npm if no lock file found
 	return 'npm'
 }
@@ -49,14 +49,14 @@ export function hasWranglerDependency(): boolean {
 	if (!fs.existsSync('package.json')) {
 		return false
 	}
-	
+
 	try {
 		const content = fs.readFileSync('package.json', 'utf8')
 		const pkg = PackageJson.parse(JSON.parse(content))
-		
+
 		const deps = pkg.dependencies || {}
 		const devDeps = pkg.devDependencies || {}
-		
+
 		return 'wrangler' in deps || 'wrangler' in devDeps
 	} catch {
 		return false
@@ -68,17 +68,15 @@ export function hasWranglerDependency(): boolean {
  * @param packageManager - The package manager to use
  */
 export async function installWrangler(packageManager: PackageManager): Promise<void> {
-	echo(chalk.dim('Installing wrangler as a dev dependency...'))
-	
 	const commands = {
 		bun: ['bun', 'add', '--dev', 'wrangler'],
 		pnpm: ['pnpm', 'add', '--save-dev', 'wrangler'],
 		yarn: ['yarn', 'add', '--dev', 'wrangler'],
 		npm: ['npm', 'install', '--save-dev', 'wrangler'],
 	}
-	
+
 	const command = commands[packageManager]
-	await $`${command}`.verbose()
-	
+	await $`${command}`.quiet()
+
 	echo(chalk.green('✅ Wrangler installed successfully!'))
 }
