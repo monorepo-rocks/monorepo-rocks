@@ -86,14 +86,16 @@ cd my-worker-project && npm create wrangler-config@latest
 
 Present a checkbox list of features to configure:
 
-- Prompt: "Which features do you want to configure for your Worker?"
+- Prompt: "Which features do you want to configure for your Worker? (Select at least one)"
 - Use `@inquirer/prompts` checkbox for multi-select
 - Auto-detect and pre-check features based on project structure
+- **Validation**: At least one option must be selected (Entry Point OR Static Assets)
 
 **Feature Detection & Defaults**:
 
 1. **Entry Point** - Auto-checked if `src/index.ts` or `index.ts` exists
 2. **Static Assets** - Auto-checked if assets directory argument provided OR common directories detected (`public`, `static`, `assets`, `dist`)
+3. **Fallback**: If neither detected, auto-check "Entry Point" as default
 
 **Checkbox Options**:
 
@@ -101,6 +103,11 @@ Present a checkbox list of features to configure:
 ☑ Entry Point (Worker code execution)
 ☑ Static Assets (Serve static files)
 ```
+
+**Validation Logic**:
+
+- If user deselects all options, show error: "You must select at least one feature (Entry Point or Static Assets)"
+- Re-prompt until at least one option is selected
 
 **Step 3: Feature-Specific Configuration**
 
@@ -179,14 +186,7 @@ Based on selected checkboxes, prompt for specific details:
 }
 ```
 
-**Neither selected** (minimal config):
-
-```jsonc
-{
-  "name": "worker-name",
-  "compatibility_date": "2024-01-15",
-}
-```
+**Note**: A configuration with neither Entry Point nor Static Assets is not valid for Cloudflare Workers. At least one must be selected.
 
 ### 5. Success Output
 
