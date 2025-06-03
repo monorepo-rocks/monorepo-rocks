@@ -9,13 +9,18 @@ import { createWranglerConfig } from './create-config.js'
 export const runCLI = () =>
 	program
 		.name('create-wrangler-config')
-		.description('CLI tool for quickly setting up a wrangler.jsonc configuration file for Cloudflare Workers projects')
+		.description(
+			'CLI tool for quickly setting up a wrangler.jsonc configuration file for Cloudflare Workers projects'
+		)
 		.version(version)
-		.argument('[assets-directory]', 'Path to directory containing static assets to be served by the Worker')
+		.argument(
+			'[assets-directory]',
+			'Path to directory containing static assets to be served by the Worker'
+		)
 		.action(async (assetsDirectory) => {
 			echo(chalk.bold.cyan(`👋 Welcome to create-wrangler-config v${version}!`))
 			echo(chalk.dim("Let's set up your Cloudflare Workers configuration...\n"))
-			
+
 			try {
 				await createWranglerConfig({ assetsDirectory })
 			} catch (e) {
