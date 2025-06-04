@@ -5,6 +5,12 @@ set -euo pipefail
 # This helps when VS Code extensions or MCP servers need to run bun
 # but the PATH doesn't include mise shims
 
+# If .zshenv is available, it should load homebrew/mise,
+# but we'll load them explicitly below just in case.
+if [[ -f "$HOME/.zshenv" ]]; then
+	source "$HOME/.zshenv"
+fi
+
 # Add Homebrew to PATH if it exists (prepend first, so it has lower priority)
 HOMEBREW_PATH="/opt/homebrew/bin"
 if [[ ":$PATH:" != *":$HOMEBREW_PATH:"* ]] && [[ -d "$HOMEBREW_PATH" ]]; then
@@ -16,6 +22,8 @@ MISE_SHIMS_DIR="$HOME/.local/share/mise/shims"
 if [[ ":$PATH:" != *":$MISE_SHIMS_DIR:"* ]] && [[ -d "$MISE_SHIMS_DIR" ]]; then
 	export PATH="$MISE_SHIMS_DIR:$PATH"
 fi
+
+echo "${NODE_EXTRA_CA_CERTS:-}" >>/Users/jhands/src/workers/test.txt
 
 # Execute bun with all passed arguments
 exec bun "$@"
