@@ -23,7 +23,5 @@ if [[ ":$PATH:" != *":$MISE_SHIMS_DIR:"* ]] && [[ -d "$MISE_SHIMS_DIR" ]]; then
 	export PATH="$MISE_SHIMS_DIR:$PATH"
 fi
 
-echo "${NODE_EXTRA_CA_CERTS:-}" >>/Users/jhands/src/workers/test.txt
-
 # Execute bun with all passed arguments
 exec bun "$@"
