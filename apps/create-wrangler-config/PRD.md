@@ -53,11 +53,17 @@ cd my-worker-project && npm create wrangler-config@latest
 - If any exist, exit with warning message: "Wrangler configuration already exists. This tool only creates new configuration files."
 - Exit code: 1
 
-### 2. Package Manager Detection & Wrangler Installation
+### 2. Interactive Configuration Flow
 
-**Requirement**: Detect package manager and ensure wrangler is available as a dependency.
+**Requirement**: Guide users through configuration prompts first, then handle dependency installation.
 
-**Detection Logic**:
+**Process Flow**:
+
+1. **Configuration Prompts**: Complete all interactive prompts for Worker setup
+2. **Configuration Generation**: Create and write `wrangler.jsonc` file
+3. **Package Manager Detection & Installation**: Detect package manager and install dependencies
+
+**Package Manager Detection Logic**:
 
 1. Check for lock files in order of preference:
    - `bun.lockb` or `bun.lock` → Bun
@@ -66,11 +72,11 @@ cd my-worker-project && npm create wrangler-config@latest
    - `package-lock.json` → npm
    - Default to npm if no lock file found
 
-**Wrangler Dependency Check**:
+**Wrangler Dependency Installation**:
 
 1. If `package.json` exists:
    - Parse dependencies and devDependencies
-   - If `wrangler` not found, prompt to install as devDependency
+   - If `wrangler` not found, automatically install as devDependency
    - Use detected package manager for installation
 2. If no `package.json`, skip dependency management
 
@@ -79,8 +85,13 @@ cd my-worker-project && npm create wrangler-config@latest
 **Step 1: Worker Name**
 
 - Prompt: "What is your Worker name?"
-- Validation: Must be valid identifier (alphanumeric, hyphens only, max 54 characters)
+- Validation: Must be valid identifier with strict rules:
+  - Alphanumeric characters and hyphens only
+  - Maximum 54 characters
+  - Cannot start or end with a hyphen
+  - Cannot be empty
 - Default: Sanitized name from package.json (if exists), otherwise sanitized directory name
+- Error Handling: If sanitization fails (results in empty string), throws descriptive error
 
 **Step 2: Feature Selection (Checkbox)**
 
