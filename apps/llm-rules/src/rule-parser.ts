@@ -99,11 +99,15 @@ export async function parseRuleFile(filePath: string): Promise<ParsedRule | null
 		const filename = filePath.split('/').pop() || filePath
 		const name = filename.replace('.mdc', '')
 
-		// Create a better fallback description if none provided
 		const frontmatter = frontmatterResult.data
-		if (!frontmatter.description) {
-			const humanReadableName = name.replace(/[-_]/g, ' ').toLowerCase()
-			frontmatter.description = `Coding guidelines and rules for ${humanReadableName}`
+
+		// Filter out "manual" rules that don't have a description
+		// These rules should never be auto-added by the LLM
+		const hasDescription = frontmatter.description && frontmatter.description.trim() !== ''
+
+		if (!hasDescription) {
+			console.warn(`Ignoring manual rule ${filename}: missing description`)
+			return null
 		}
 
 		return {

@@ -9,9 +9,10 @@ describe('Rule Parser', () => {
 	const invalidRulesDir = join(fixturesDir, 'invalid', '.cursor', 'rules')
 
 	describe('parseRulesFromDir', () => {
-		it('should find and parse all rules in directory', async () => {
+		it('should find and parse all rules with descriptions', async () => {
 			const rules = await parseRulesFromDir(validRulesDir)
 
+			// All rules in valid directory have descriptions, so all should be included
 			expect(rules).toHaveLength(6)
 
 			const ruleNames = rules.map((r) => r.name).sort()
@@ -76,14 +77,13 @@ describe('Rule Parser', () => {
 			expect(rule).toBeNull()
 		})
 
-		it('should create descriptive fallback for missing description', async () => {
+		it('should filter out rules without descriptions', async () => {
 			// Test with our empty frontmatter file
 			const filePath = join(invalidRulesDir, 'empty-frontmatter.mdc')
 			const rule = await parseRuleFile(filePath)
 
-			assert(rule)
-			expect(rule.frontmatter.description).toBe('Coding guidelines and rules for empty frontmatter')
-			expect(rule.name).toBe('empty-frontmatter')
+			// Should return null because it has no description (manual rule)
+			expect(rule).toBeNull()
 		})
 
 		it('should handle unquoted glob patterns with asterisks', async () => {
@@ -148,18 +148,32 @@ describe('Rule Parser', () => {
 			}
 		})
 
-		it('should handle invalid frontmatter and provide fallback', async () => {
-			// Test that invalid frontmatter files are filtered out
+		it('should filter out manual rules without descriptions', async () => {
+			// Test that rules without descriptions are considered "manual" and filtered out
+			const filePath = join(invalidRulesDir, 'empty-frontmatter.mdc')
+			const rule = await parseRuleFile(filePath)
+
+			expect(rule).toBeNull()
+		})
+
+		it('should filter out rules without descriptions', async () => {
+			// Test that rules without descriptions are filtered out
 			const rules = await parseRulesFromDir(invalidRulesDir)
 
-			// Should parse empty frontmatter and YAML-sanitized files but skip truly invalid ones
-			expect(rules).toHaveLength(3) // empty-frontmatter.mdc, invalid-frontmatter.mdc, and unquoted-globs.mdc should all parse
+			// All files in invalid directory should be filtered out:
+			// - empty-frontmatter.mdc: no description
+			// - invalid-frontmatter.mdc: broken YAML that can't be sanitized
+			// - unquoted-globs.mdc: YAML parsing issues that result in empty frontmatter
+			expect(rules).toHaveLength(0)
 
 			const emptyRule = rules.find((r) => r.name === 'empty-frontmatter')
-			expect(emptyRule).toBeDefined()
-			expect(emptyRule?.frontmatter.description).toBe(
-				'Coding guidelines and rules for empty frontmatter'
-			) // Should use fallback
+			expect(emptyRule).toBeUndefined() // Should be filtered out
+
+			const invalidRule = rules.find((r) => r.name === 'invalid-frontmatter')
+			expect(invalidRule).toBeUndefined() // Should be filtered out
+
+			const unquotedRule = rules.find((r) => r.name === 'unquoted-globs')
+			expect(unquotedRule).toBeUndefined() // Should be filtered out
 		})
 	})
 
