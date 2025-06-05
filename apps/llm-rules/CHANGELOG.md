@@ -1,5 +1,11 @@
 # llm-rules
 
+## 0.2.7
+
+### Patch Changes
+
+- 1ee0835: fix: filter out rules without descriptions
+
 ## 0.2.6
 
 ### Patch Changes
