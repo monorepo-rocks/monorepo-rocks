@@ -107,13 +107,14 @@ describe('MCP Server', () => {
 			})`echo ${exitPayload} | node ${serverPath} --dir ${invalidFixturesDir}`
 
 			// Should parse only 1 rule (unquoted-globs) after filtering out manual rules
+			// Rules need descriptions with at least 10 characters
 			expect(result.stderr).toContain('Found 1 rules')
 			expect(result.stderr).toContain('MCP server started and listening on stdio')
 
-			// Should show warnings for filtered rules
-			expect(result.stderr).toContain('Ignoring manual rule')
+			// Should show warnings for filtered rules (must be at least 10 characters)
+			expect(result.stderr).toContain('missing description (must be at least 10 characters)')
 
-			// Should contain the successfully parsed rule
+			// Should contain the successfully parsed rule (has valid description)
 			expect(result.stderr).toContain('unquoted-globs: TypeScript style guide')
 
 			// Should handle it gracefully without crashing

@@ -9,10 +9,10 @@ describe('Rule Parser', () => {
 	const invalidRulesDir = join(fixturesDir, 'invalid', '.cursor', 'rules')
 
 	describe('parseRulesFromDir', () => {
-		it('should find and parse all rules with descriptions', async () => {
+		it('should find and parse all rules with valid descriptions', async () => {
 			const rules = await parseRulesFromDir(validRulesDir)
 
-			// All rules in valid directory have descriptions, so all should be included
+			// All rules in valid directory have descriptions with at least 10 characters, so all should be included
 			expect(rules).toHaveLength(6)
 
 			const ruleNames = rules.map((r) => r.name).sort()
@@ -77,7 +77,7 @@ describe('Rule Parser', () => {
 			expect(rule).toBeNull()
 		})
 
-		it('should filter out rules without descriptions', async () => {
+		it('should filter out rules without valid descriptions', async () => {
 			// Test with our empty frontmatter file
 			const filePath = join(invalidRulesDir, 'empty-frontmatter.mdc')
 			const rule = await parseRuleFile(filePath)
@@ -148,16 +148,26 @@ describe('Rule Parser', () => {
 			}
 		})
 
-		it('should filter out manual rules without descriptions', async () => {
-			// Test that rules without descriptions are considered "manual" and filtered out
+		it('should filter out manual rules without valid descriptions', async () => {
+			// Test that rules without valid descriptions (at least 10 characters) are considered "manual" and filtered out
 			const filePath = join(invalidRulesDir, 'empty-frontmatter.mdc')
 			const rule = await parseRuleFile(filePath)
 
 			expect(rule).toBeNull()
 		})
 
-		it('should filter out rules without descriptions', async () => {
-			// Test that rules without descriptions are filtered out
+		it('should require descriptions to be at least 10 characters', async () => {
+			// Test that descriptions must be at least 10 characters long
+			// All valid rules should have descriptions >= 10 characters
+			const rules = await parseRulesFromDir(validRulesDir)
+
+			for (const rule of rules) {
+				expect(rule.frontmatter.description.length).toBeGreaterThanOrEqual(10)
+			}
+		})
+
+		it('should filter out rules without valid descriptions', async () => {
+			// Test that rules without valid descriptions (at least 10 characters) are filtered out
 			const rules = await parseRulesFromDir(invalidRulesDir)
 
 			// All files in invalid directory should be filtered out:
