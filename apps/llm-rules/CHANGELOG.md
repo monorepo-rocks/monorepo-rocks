@@ -1,5 +1,11 @@
 # llm-rules
 
+## 0.2.8
+
+### Patch Changes
+
+- 0e3fe34: fix: require at least 10 characters in Cursor rule descriptions
+
 ## 0.2.7
 
 ### Patch Changes
