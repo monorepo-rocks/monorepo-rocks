@@ -1,5 +1,11 @@
 # llm-rules
 
+## 0.2.9
+
+### Patch Changes
+
+- cd492ec: chore: update deps (zod)
+
 ## 0.2.8
 
 ### Patch Changes

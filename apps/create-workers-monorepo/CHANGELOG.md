@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.6.2
+
+### Patch Changes
+
+- cd492ec: chore: update deps (zod)
+
 ## 0.6.1
 
 ### Patch Changes

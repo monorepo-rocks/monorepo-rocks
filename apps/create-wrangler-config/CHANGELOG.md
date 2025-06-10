@@ -1,5 +1,11 @@
 # create-wrangler-config
 
+## 0.2.2
+
+### Patch Changes
+
+- cd492ec: chore: update deps (zod)
+
 ## 0.2.1
 
 ### Patch Changes
