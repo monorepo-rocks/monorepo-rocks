@@ -16,7 +16,7 @@
 		"test": "run-vitest"
 	},
 	"dependencies": {
-		"zod": "3.25.7"
+		"zod": "3.25.57"
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",

@@ -18,7 +18,7 @@
 		"workers-tagged-logger": "0.11.2"
 	},
 	"devDependencies": {
-		"@cloudflare/vitest-pool-workers": "0.8.24",
+		"@cloudflare/vitest-pool-workers": "0.8.30",
 		"@cloudflare/workers-types": "4.20250519.0",
 		"@repo/eslint-config": "workspace:*",
 		"@repo/tools": "workspace:*",
