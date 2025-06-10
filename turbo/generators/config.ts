@@ -91,4 +91,40 @@ export default function generator(plop: PlopTypes.NodePlopAPI): void {
 			return actions
 		},
 	})
+
+	plop.setGenerator('new-package', {
+		description: 'Create a new package in the packages/ directory',
+		// gather information from the user
+		prompts: [
+			{
+				type: 'input',
+				name: 'name',
+				message: 'name of package',
+			},
+			{
+				type: 'input',
+				name: 'description',
+				message: 'description of package',
+			},
+		],
+		// perform actions based on the prompts
+		actions: (data: any) => {
+			const answers = data as Answers
+			process.chdir(answers.turbo.paths.root)
+
+			const actions: PlopTypes.Actions = [
+				{
+					type: 'addMany',
+					base: 'templates/package',
+					destination: `packages/{{ slug name }}`,
+					templateFiles: ['templates/package/**/**.hbs'],
+				},
+				{ type: 'pnpmInstall' },
+				{ type: 'pnpmFix' },
+				{ type: 'pnpmInstall' },
+			]
+
+			return actions
+		},
+	})
 }

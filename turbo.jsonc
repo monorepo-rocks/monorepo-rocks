@@ -59,6 +59,13 @@
 			],
 			"outputLogs": "new-only"
 		},
+		"test:ci": {
+			"dependsOn": ["build", "topo"],
+			"outputLogs": "new-only"
+		},
+		"//#test:ci": {
+			"outputLogs": "new-only"
+		},
 		"//#check:deps": {
 			"outputLogs": "new-only"
 		},

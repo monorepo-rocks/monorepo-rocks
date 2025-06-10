@@ -23,6 +23,7 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
       - uses: pnpm/action-setup@v4
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -30,7 +31,5 @@ jobs:
           node-version: lts/*
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile --child-concurrency=10
-      - name: Check
-        run: pnpm check:ci
-      - name: Test
-        run: pnpm test:ci
+      - name: Check & Test
+        run: pnpm turbo check:ci

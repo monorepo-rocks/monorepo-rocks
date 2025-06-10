@@ -1,0 +1,48 @@
+{
+	"name": "{{ slug name }}",
+	"version": "0.1.0",
+	"private": false,
+	"description": "{{ description }}",
+	"keywords": [],
+	"homepage": "https://github.com/jahands/workers-packages/tree/main/packages/{{ slug name }}",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jahands/workers-packages.git",
+		"directory": "packages/{{ slug name }}"
+	},
+	"license": "MIT",
+	"author": {
+		"name": "Jacob Hands",
+		"url": "https://github.com/jahands"
+	},
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "runx build tsc ./src/index.ts",
+		"check:exports": "runx check --exports",
+		"check:lint": "run-eslint",
+		"check:types": "run-tsc",
+		"test": "run-vitest"
+	},
+	"devDependencies": {
+		"@repo/tools": "workspace:*",
+		"@repo/typescript-config": "workspace:*",
+		"typescript": "5.5.4",
+		"vitest": "3.1.4",
+		"zod": "3.25.7",
+		"zx": "8.5.4"
+	}
+}

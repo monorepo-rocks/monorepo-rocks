@@ -1,6 +1,8 @@
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
 	// https://www.totaltypescript.com/how-to-create-an-npm-package#32-set-up-a-tsconfigjson
+	"include": ["${configDir}/**/*.ts", "${configDir}/**/*.tsx"],
+	"exclude": ["${configDir}/node_modules/", "${configDir}/dist/", "${configDir}/eslint.config.ts"],
 	"compilerOptions": {
 		// Base Options:
 		"esModuleInterop": true,
@@ -22,7 +24,6 @@
 		"module": "ES2022",
 		"moduleResolution": "bundler",
 		"outDir": "dist",
-		// "rootDir": "src",
 		"sourceMap": true,
 
 		// AND if you're building for a library:
