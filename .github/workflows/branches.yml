@@ -30,7 +30,5 @@ jobs:
           node-version: lts/*
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile --child-concurrency=10
-      - name: Check
-        run: pnpm check:ci
-      - name: Test
-        run: pnpm test:ci
+      - name: Check & Test
+        run: bun turbo check:ci
