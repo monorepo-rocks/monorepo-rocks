@@ -1,5 +1,11 @@
 # dagger-env
 
+## 0.2.1
+
+### Patch Changes
+
+- f3c6014: fix: actually export dagger-env
+
 ## 0.2.0
 
 ### Minor Changes
