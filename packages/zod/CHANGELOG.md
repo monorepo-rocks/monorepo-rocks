@@ -1,5 +1,11 @@
 # @repo/zod
 
+## 0.1.3
+
+### Patch Changes
+
+- cd492ec: chore: update deps (zod)
+
 ## 0.1.2
 
 ### Patch Changes

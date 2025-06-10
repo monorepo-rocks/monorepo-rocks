@@ -1,5 +1,13 @@
 # @repo/hono-helpers
 
+## 0.1.4
+
+### Patch Changes
+
+- cd492ec: chore: update deps (zod)
+- Updated dependencies [cd492ec]
+  - @repo/zod@0.1.3
+
 ## 0.1.3
 
 ### Patch Changes
