@@ -7,3 +7,4 @@ vitest.config.ts.timestamp*
 vite.config.ts.timestamp*
 worker-configuration.d.ts
 **/dist/**
+.claude/*.json
