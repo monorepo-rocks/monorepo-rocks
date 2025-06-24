@@ -13,7 +13,7 @@ export interface RunDaggerCommandConfig<T extends DaggerEnvConfig = DaggerEnvCon
 	/** 1Password item ID */
 	opItem: string
 	/** 1Password sections to include for secrets */
-	opSections: Array<{ id: string; label: string }>
+	opSections: Array<{ label: string; id: string }>
 	/** Commands that should include Docker socket if available */
 	dockerCommands?: string[]
 	/** Hook to run before executing the command (e.g., vendor file setup) */
