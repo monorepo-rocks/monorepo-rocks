@@ -65,7 +65,12 @@ export class DaggerEnv<T extends DaggerEnvConfig> {
 		secretNames?: string[]
 	): Promise<(con: Container) => Container> {
 		const isSecret = (obj: any): obj is Secret =>
-			obj && typeof obj === 'object' && 'id' in obj && 'plaintext' in obj
+			obj &&
+			typeof obj === 'object' &&
+			'id' in obj &&
+			'plaintext' in obj &&
+			typeof obj.id === 'function' &&
+			typeof obj.plaintext === 'function'
 
 		const opts = isSecret(daggerOptions)
 			? await this.parseDaggerOptions(daggerOptions)
