@@ -1,5 +1,13 @@
 # @repo/workspace-dependencies
 
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [4943347]
+  - @repo/zod@0.1.4
+  - @repo/tools@0.3.1
+
 ## 0.1.5
 
 ### Patch Changes
