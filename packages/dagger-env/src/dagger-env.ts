@@ -22,13 +22,11 @@ export type DaggerEnvConfig = {
 /**
  * Inferred options type from config
  */
-export type DaggerOptionsFromConfig<T extends DaggerEnvConfig> = z.infer<
-	z.ZodObject<{
-		args: T['args']
-		env: T['env']
-		secrets: T['secrets']
-	}>
->
+export type DaggerOptionsFromConfig<T extends DaggerEnvConfig> = {
+	args: z.infer<T['args']>
+	env: z.infer<T['env']>
+	secrets: z.infer<T['secrets']>
+}
 
 /**
  * Reusable Dagger environment abstraction
