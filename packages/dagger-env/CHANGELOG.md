@@ -1,5 +1,11 @@
 # dagger-env
 
+## 0.4.1
+
+### Patch Changes
+
+- 70ac37f: chore: change order of opSection params
+
 ## 0.4.0
 
 ### Minor Changes
