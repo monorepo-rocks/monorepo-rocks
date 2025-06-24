@@ -1,5 +1,11 @@
 # @repo/zod
 
+## 0.1.4
+
+### Patch Changes
+
+- 4943347: chore: update deps (zod)
+
 ## 0.1.3
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @repo/tools
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [4943347]
+  - @repo/zod@0.1.4
+
 ## 0.3.0
 
 ### Minor Changes

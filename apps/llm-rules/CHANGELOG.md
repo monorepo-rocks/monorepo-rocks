@@ -1,5 +1,11 @@
 # llm-rules
 
+## 0.2.10
+
+### Patch Changes
+
+- 4943347: chore: update deps (zod)
+
 ## 0.2.9
 
 ### Patch Changes
