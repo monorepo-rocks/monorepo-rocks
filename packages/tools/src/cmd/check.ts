@@ -15,15 +15,19 @@ export const checkCmd = new Command('check')
 	.option('-t, --types', 'Check for TypeScript issues')
 	.option('-f, --format', 'Check for formatting issues with prettier')
 
+	// Non-default checks
+	.option('-e, --exports', 'Checks package exports')
+
+	// Turbo flags
 	.option('--continue', 'Use --continue when executing turbo commands', false)
 
-	.action(async ({ root, deps, lint, types, format, continue: useContinue }) => {
+	.action(async ({ root, deps, lint, types, format, exports, continue: useContinue }) => {
 		const repoRoot = getRepoRoot()
 		if (root) {
 			cd(repoRoot)
 		}
 		// Run all if none are selected
-		if (!deps && !lint && !types && !format) {
+		if (!deps && !lint && !types && !format && !exports) {
 			deps = true
 			lint = true
 			types = true
@@ -49,6 +53,7 @@ export const checkCmd = new Command('check')
 			lint: ['run-eslint'],
 			types: ['turbo', turboFlags, 'check:types'].flat(),
 			format: ['pnpm', 'check:format'],
+			exports: ['attw', '--pack', '.', '--profile=esm-only'],
 		} as const satisfies { [key: string]: string[] }
 
 		type TableRow = [string, string, string, string]
@@ -117,6 +122,16 @@ export const checkCmd = new Command('check')
 					'Root',
 				] satisfies TableRow)
 			})
+		}
+
+		if (exports) {
+			const exitCode = await $`${checks.exports}`.exitCode
+			table.push([
+				'exports',
+				checks.exports.join(' '),
+				getOutcome(exitCode),
+				'Root',
+			] satisfies TableRow)
 		}
 
 		echo(table.toString())

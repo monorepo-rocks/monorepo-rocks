@@ -26,6 +26,12 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./op": {
+			"import": {
+				"types": "./dist/op.d.ts",
+				"default": "./dist/op.js"
+			}
 		}
 	},
 	"main": "./dist/index.js",
@@ -34,7 +40,7 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "runx build tsc ./src/index.ts",
+		"build": "runx build tsc ./src/index.ts ./src/op.ts",
 		"check:exports": "runx check --exports",
 		"check:lint": "run-eslint",
 		"check:types": "run-tsc",

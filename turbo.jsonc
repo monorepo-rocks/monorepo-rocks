@@ -52,6 +52,7 @@
 				"//#check:format",
 				"//#check:deps",
 				"check:types",
+				"check:exports",
 				"//#check:lint:all",
 				"//#test:ci",
 				"test:ci",
@@ -71,6 +72,10 @@
 		},
 		"check:types": {
 			"dependsOn": ["build", "^check:types", "topo"],
+			"outputLogs": "new-only"
+		},
+		"check:exports": {
+			"dependsOn": ["^check:exports", "check:types"],
 			"outputLogs": "new-only"
 		},
 		"check:lint": {
