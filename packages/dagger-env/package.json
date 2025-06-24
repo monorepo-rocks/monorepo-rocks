@@ -32,6 +32,12 @@
 				"types": "./dist/op.d.ts",
 				"default": "./dist/op.js"
 			}
+		},
+		"./run": {
+			"import": {
+				"types": "./dist/run-dagger-cmd.d.ts",
+				"default": "./dist/run-dagger-cmd.js"
+			}
 		}
 	},
 	"main": "./dist/index.js",
@@ -40,11 +46,14 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "runx build tsc ./src/index.ts ./src/op.ts",
+		"build": "runx build tsc ./src/index.ts ./src/op.ts ./src/run-dagger-cmd.ts",
 		"check:exports": "runx check --exports",
 		"check:lint": "run-eslint",
 		"check:types": "run-tsc",
 		"test": "run-vitest"
+	},
+	"dependencies": {
+		"zx": "8.5.4"
 	},
 	"devDependencies": {
 		"@dagger.io/dagger": "0.18.9",
@@ -52,7 +61,9 @@
 		"@repo/typescript-config": "workspace:*",
 		"typescript": "5.5.4",
 		"vitest": "3.1.4",
-		"zod": "3.25.57",
-		"zx": "8.5.4"
+		"zod": "3.25.57"
+	},
+	"peerDependencies": {
+		"zod": "^3.25.67"
 	}
 }

@@ -203,6 +203,10 @@ importers:
         version: 8.5.4
 
   packages/dagger-env:
+    dependencies:
+      zx:
+        specifier: 8.5.4
+        version: 8.5.4
     devDependencies:
       '@dagger.io/dagger':
         specifier: 0.18.9
@@ -222,9 +226,6 @@ importers:
       zod:
         specifier: 3.25.57
         version: 3.25.57
-      zx:
-        specifier: 8.5.4
-        version: 8.5.4
 
   packages/eslint-config:
     devDependencies:
