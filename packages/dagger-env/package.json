@@ -61,9 +61,9 @@
 		"@repo/typescript-config": "workspace:*",
 		"typescript": "5.5.4",
 		"vitest": "3.1.4",
-		"zod": "3.25.57"
+		"zod": "3.25.67"
 	},
 	"peerDependencies": {
-		"zod": "^3.25.67"
+		"zod": "3.25.67"
 	}
 }
