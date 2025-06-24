@@ -1,5 +1,11 @@
 # @repo/tools
 
+## 0.3.0
+
+### Minor Changes
+
+- 352d201: feat: add check --exports option
+
 ## 0.2.3
 
 ### Patch Changes
