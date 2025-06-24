@@ -1,5 +1,11 @@
 # dagger-env
 
+## 0.3.0
+
+### Minor Changes
+
+- 352d201: feat: add 1Password schema to dagger-env
+
 ## 0.2.1
 
 ### Patch Changes
