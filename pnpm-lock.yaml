@@ -9,7 +9,7 @@ importers:
   .:
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.18.2
+        specifier: 0.18.2
         version: 0.18.2
       '@changesets/cli':
         specifier: 2.29.4

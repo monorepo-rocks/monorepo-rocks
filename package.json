@@ -23,7 +23,7 @@
 		"new-worker": "run-turbo-gen"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "0.18.2",
 		"@changesets/cli": "2.29.4",
 		"@ianvs/prettier-plugin-sort-imports": "4.4.1",
 		"@repo/eslint-config": "workspace:*",
