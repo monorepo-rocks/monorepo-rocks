@@ -1,5 +1,11 @@
 # dagger-env
 
+## 0.4.2
+
+### Patch Changes
+
+- ccae119: fix: use range for Zod peer dependency
+
 ## 0.4.1
 
 ### Patch Changes
