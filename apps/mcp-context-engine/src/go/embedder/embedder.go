@@ -4,12 +4,15 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/types"
+	"gopkg.in/yaml.v3"
 )
 
 // Embedder interface defines operations for generating embeddings
@@ -410,12 +413,219 @@ func CreateCodeChunk(fileID, filePath, text, language string, startByte, endByte
 }
 
 // ChunkCode splits code into chunks for embedding
-// This is a simple implementation - in production you'd want more sophisticated chunking
+// Uses structure-aware chunking for JSON/YAML files, otherwise falls back to line-based chunking
 func ChunkCode(fileID, filePath, content, language string, chunkSize int) []types.CodeChunk {
+	return ChunkStructuredFile(fileID, filePath, content, language, chunkSize)
+}
+
+// ChunkStructuredFile routes to appropriate chunking strategy based on file type
+func ChunkStructuredFile(fileID, filePath, content, language string, chunkSize int) []types.CodeChunk {
 	if chunkSize <= 0 {
 		chunkSize = 300 // Default chunk size
 	}
 	
+	// Use structure-aware chunking for JSON and YAML files
+	switch strings.ToLower(language) {
+	case "json":
+		// Use larger chunk size for structured files to reduce fragmentation
+		structuredChunkSize := 1000
+		if chunkSize > structuredChunkSize {
+			structuredChunkSize = chunkSize
+		}
+		return ChunkJSON(fileID, filePath, content, language, structuredChunkSize)
+	case "yaml", "yml":
+		// Use larger chunk size for structured files to reduce fragmentation
+		structuredChunkSize := 1000
+		if chunkSize > structuredChunkSize {
+			structuredChunkSize = chunkSize
+		}
+		return ChunkYAML(fileID, filePath, content, language, structuredChunkSize)
+	default:
+		// Fall back to line-based chunking for other file types
+		return ChunkByLines(fileID, filePath, content, language, chunkSize)
+	}
+}
+
+// ChunkJSON performs structure-aware chunking of JSON files
+// Keeps complete objects together, especially key-value pairs
+func ChunkJSON(fileID, filePath, content, language string, chunkSize int) []types.CodeChunk {
+	// Try to parse as JSON to understand structure
+	var jsonData interface{}
+	if err := json.Unmarshal([]byte(content), &jsonData); err != nil {
+		// If parsing fails, fall back to line-based chunking
+		return ChunkByLines(fileID, filePath, content, language, chunkSize)
+	}
+	
+	// For package.json and similar config files, try to keep related sections together
+	lines := splitIntoLines(content)
+	var chunks []types.CodeChunk
+	
+	currentChunk := ""
+	currentLines := 0
+	startByte := 0
+	startLine := 0
+	braceDepth := 0
+	bracketDepth := 0
+	inString := false
+	escaped := false
+	
+	for i, line := range lines {
+		// Add line to current chunk
+		if currentChunk != "" {
+			currentChunk += "\n"
+		}
+		currentChunk += line
+		currentLines++
+		
+		// Track JSON structure to avoid breaking objects
+		for _, char := range line {
+			if escaped {
+				escaped = false
+				continue
+			}
+			
+			switch char {
+			case '\\':
+				if inString {
+					escaped = true
+				}
+			case '"':
+				inString = !inString
+			case '{':
+				if !inString {
+					braceDepth++
+				}
+			case '}':
+				if !inString {
+					braceDepth--
+				}
+			case '[':
+				if !inString {
+					bracketDepth++
+				}
+			case ']':
+				if !inString {
+					bracketDepth--
+				}
+			}
+		}
+		
+		// Check if we should create a chunk
+		// Create chunk if: size limit reached AND we're at a safe breakpoint (balanced braces/brackets)
+		// OR if we've reached the end of the file
+		safeBreakpoint := braceDepth == 0 && bracketDepth == 0 && !inString
+		if (len(currentChunk) >= chunkSize && safeBreakpoint) || i == len(lines)-1 {
+			if len(currentChunk) > 0 {
+				endByte := startByte + len(currentChunk)
+				endLine := startLine + currentLines
+				
+				chunk := CreateCodeChunk(
+					fileID,
+					filePath,
+					currentChunk,
+					language,
+					startByte,
+					endByte,
+					startLine+1, // 1-based line numbers
+					endLine,
+				)
+				
+				chunks = append(chunks, chunk)
+				
+				// Reset for next chunk
+				startByte = endByte + 1 // +1 for newline
+				startLine = endLine
+				currentChunk = ""
+				currentLines = 0
+				// Reset JSON tracking state
+				braceDepth = 0
+				bracketDepth = 0
+				inString = false
+				escaped = false
+			}
+		}
+	}
+	
+	return chunks
+}
+
+// ChunkYAML performs structure-aware chunking of YAML files
+// Keeps complete sections and key-value pairs together
+func ChunkYAML(fileID, filePath, content, language string, chunkSize int) []types.CodeChunk {
+	// Try to parse as YAML to understand structure
+	var yamlData interface{}
+	if err := yaml.Unmarshal([]byte(content), &yamlData); err != nil {
+		// If parsing fails, fall back to line-based chunking
+		return ChunkByLines(fileID, filePath, content, language, chunkSize)
+	}
+	
+	lines := splitIntoLines(content)
+	var chunks []types.CodeChunk
+	
+	currentChunk := ""
+	currentLines := 0
+	startByte := 0
+	startLine := 0
+	lastIndentLevel := 0
+	
+	for i, line := range lines {
+		// Add line to current chunk
+		if currentChunk != "" {
+			currentChunk += "\n"
+		}
+		currentChunk += line
+		currentLines++
+		
+		// Calculate indent level
+		indentLevel := 0
+		for _, char := range line {
+			if char == ' ' {
+				indentLevel++
+			} else if char == '\t' {
+				indentLevel += 2 // Treat tab as 2 spaces
+			} else {
+				break
+			}
+		}
+		
+		// Check if we should create a chunk
+		// Create chunk at safe breakpoints: when indent decreases (end of section) or at root level
+		safeBreakpoint := strings.TrimSpace(line) == "" || indentLevel <= lastIndentLevel
+		if (len(currentChunk) >= chunkSize && safeBreakpoint) || i == len(lines)-1 {
+			if len(currentChunk) > 0 {
+				endByte := startByte + len(currentChunk)
+				endLine := startLine + currentLines
+				
+				chunk := CreateCodeChunk(
+					fileID,
+					filePath,
+					currentChunk,
+					language,
+					startByte,
+					endByte,
+					startLine+1, // 1-based line numbers
+					endLine,
+				)
+				
+				chunks = append(chunks, chunk)
+				
+				// Reset for next chunk
+				startByte = endByte + 1 // +1 for newline
+				startLine = endLine
+				currentChunk = ""
+				currentLines = 0
+			}
+		}
+		
+		lastIndentLevel = indentLevel
+	}
+	
+	return chunks
+}
+
+// ChunkByLines performs traditional line-based chunking
+// This is the original ChunkCode implementation, used as fallback
+func ChunkByLines(fileID, filePath, content, language string, chunkSize int) []types.CodeChunk {
 	lines := splitIntoLines(content)
 	var chunks []types.CodeChunk
 	

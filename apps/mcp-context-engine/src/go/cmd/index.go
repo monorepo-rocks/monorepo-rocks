@@ -91,8 +91,14 @@ func performIndexing(ctx context.Context, repoPath string, zoekt indexer.ZoektIn
 			continue
 		}
 
-		// Generate chunks
-		chunks := embedder.ChunkCode(file, file, string(content), detectLanguage(file), 300)
+		// Generate chunks using structure-aware chunking
+		// Use larger chunk size for structured files (JSON/YAML) to reduce fragmentation
+		language := detectLanguage(file)
+		chunkSize := 300 // Default chunk size
+		if language == "json" || language == "yaml" || language == "yml" {
+			chunkSize = 1000 // Larger chunk size for structured files
+		}
+		chunks := embedder.ChunkCode(file, file, string(content), language, chunkSize)
 		embeddings := make([]types.Embedding, 0, len(chunks))
 		for _, chunk := range chunks {
 			// Generate embedding

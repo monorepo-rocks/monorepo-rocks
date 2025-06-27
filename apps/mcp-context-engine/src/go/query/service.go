@@ -421,7 +421,7 @@ func (qs *QueryService) performSemanticSearch(ctx context.Context, request *type
 
 	// Search in vector index
 	vectorOptions := indexer.VectorSearchOptions{
-		MinScore: 0.1, // Minimum similarity threshold
+		MinScore: 0.01, // Lowered threshold for stub embedder with poor quality scores
 	}
 
 	vectorResults, err := qs.faissIndexer.Search(ctx, queryEmbedding.Vector, request.TopK*2, vectorOptions)
