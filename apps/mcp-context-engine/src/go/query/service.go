@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"../config"
-	"../embedder"
-	"../indexer"
-	"../types"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/config"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/embedder"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/indexer"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/types"
 )
 
 // QueryService orchestrates search across lexical and vector indexes
@@ -125,7 +125,7 @@ func (qs *QueryService) extractKeywords(query string) []string {
 		"can": true, "this": true, "that": true, "these": true, "those": true,
 		"i": true, "you": true, "he": true, "she": true, "it": true, "we": true, "they": true,
 		"my": true, "your": true, "his": true, "her": true, "its": true, "our": true, "their": true,
-		"me": true, "him": true, "her": true, "us": true, "them": true,
+		"me": true, "him": true, "us": true, "them": true,
 		"what": true, "where": true, "when": true, "why": true, "how": true,
 		"find": true, "search": true, "look": true, "show": true, "get":  true,
 	}
@@ -211,7 +211,7 @@ func (qs *QueryService) cleanProgrammingTerm(term string) string {
 	term = strings.TrimSpace(term)
 	
 	// Remove function definition keywords
-	prefixesToRemove := []string{"def ", "function ", "func ", "class ", "struct ", "interface "}
+	prefixesToRemove := []string{"def ", "function ", "func ", "class ", "struct ", "interface ", "import ", "from "}
 	for _, prefix := range prefixesToRemove {
 		if strings.HasPrefix(term, prefix) {
 			term = strings.TrimPrefix(term, prefix)

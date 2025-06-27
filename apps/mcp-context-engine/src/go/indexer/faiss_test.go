@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"../types"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/types"
 )
 
 func TestFAISSIndexer_AddVectors(t *testing.T) {

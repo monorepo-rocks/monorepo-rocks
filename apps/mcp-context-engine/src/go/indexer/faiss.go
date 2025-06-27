@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"../types"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/types"
 )
 
 // FAISSIndexer interface defines the operations for vector search indexing

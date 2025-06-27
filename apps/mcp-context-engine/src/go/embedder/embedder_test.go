@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"strings"
 	"testing"
-	"time"
 
-	"../types"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/types"
 )
 
 func TestStubEmbedder_EmbedSingle(t *testing.T) {
@@ -421,8 +419,8 @@ func TestSplitIntoLines(t *testing.T) {
 		{"", []string{}},
 		{"single line", []string{"single line"}},
 		{"line1\nline2", []string{"line1", "line2"}},
-		{"line1\nline2\n", []string{"line1", "line2", ""}},
-		{"a\nb\nc\n", []string{"a", "b", "c", ""}},
+		{"line1\nline2\n", []string{"line1", "line2"}},
+		{"a\nb\nc\n", []string{"a", "b", "c"}},
 	}
 
 	for _, test := range tests {

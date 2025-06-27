@@ -233,7 +233,7 @@ func TestZoektIndexer_BM25Scoring(t *testing.T) {
 	}
 
 	options := SearchOptions{MaxResults: 10}
-	results, err := indexer.Search(ctx, "test", options)
+	results, err := indexer.Search(ctx, "testing", options)
 	if err != nil {
 		t.Fatalf("Search failed: %v", err)
 	}

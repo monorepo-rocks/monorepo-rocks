@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"../types"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/types"
 )
 
 // ZoektIndexer interface defines the operations for lexical search indexing
@@ -428,11 +428,6 @@ func (z *ZoektStubIndexer) findMatchingLines(fileInfo *FileInfo, queryTerms []st
 }
 
 func (z *ZoektStubIndexer) searchRegex(pattern string, options SearchOptions) ([]types.SearchHit, error) {
-	flags := 0
-	if !options.CaseSensitive {
-		flags = regexp.MustCompile(`(?i)`)
-	}
-
 	// Compile regex with appropriate flags
 	var re *regexp.Regexp
 	var err error

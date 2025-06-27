@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"../types"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/types"
 )
 
 // Embedder interface defines operations for generating embeddings

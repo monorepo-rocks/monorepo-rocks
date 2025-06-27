@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"../query"
-	"../types"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/query"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/types"
 )
 
 // Server provides HTTP API endpoints for the search engine

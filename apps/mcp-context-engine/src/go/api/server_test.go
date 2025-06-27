@@ -2,19 +2,17 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
-	"../config"
-	"../embedder"
-	"../indexer"
-	"../query"
-	"../types"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/config"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/embedder"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/indexer"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/query"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/types"
 )
 
 func createTestServer() *Server {
@@ -114,7 +112,7 @@ func TestServer_HandleSearchInvalidJSON(t *testing.T) {
 	server := createTestServer()
 	defer server.queryService.Close()
 
-	invalidJSON := `{"query": "test", "topK": "invalid"}`
+	invalidJSON := `{"query": "test", "k": "invalid"}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/search", strings.NewReader(invalidJSON))
 	req.Header.Set("Content-Type", "application/json")
 	
@@ -489,7 +487,9 @@ func TestParseLanguage(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		req := httptest.NewRequest(http.MethodGet, "/?lang="+test.queryParam, nil)
+		// URL encode the parameter to handle spaces and special characters
+		url := "/?lang=" + strings.ReplaceAll(test.queryParam, " ", "%20")
+		req := httptest.NewRequest(http.MethodGet, url, nil)
 		
 		result := ParseLanguage(req)
 		
