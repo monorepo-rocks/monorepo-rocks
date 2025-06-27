@@ -1,4 +1,4 @@
-# PRD: MCP Context Engine
+# Product Requirements Document (PRD)
 
 **Project Code‑Name:** mcp‑context‑engine
 **Draft Date:** 27 Jun 2025
@@ -85,6 +85,14 @@ Together they let the model answer plain‑English prompts such as "Find imports
 - Runs entirely on localhost; no outbound calls.
 - Optional AES‑encrypted index files.
 - Respects `.gitignore` / allow‑list patterns.
+
+### 5.5 Package Distribution
+
+- **npm publish:** Each tagged release must publish a tarball to the public **npm** registry under the name `mcp-context-engine`.
+- **Semantic versioning:** Follow **SemVer** (major.minor.patch); CI must block non‑incremental tags.
+- **Binary entrypoint:** Define a `bin` field that maps to the CLI (`mcpce`) so users can run `npx mcp-context-engine` without global install.
+- **CLI only:** Package exports _only_ the CLI (`bin` field). No ESM/CommonJS library entrypoints.
+- **Provenance:** Attach `npm provenance` metadata and verify checksums in CI.
 
 ## 6 System Architecture (Textual)
 
