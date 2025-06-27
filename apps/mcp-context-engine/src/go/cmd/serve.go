@@ -8,18 +8,23 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/api"
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/config"
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/embedder"
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/indexer"
-	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/mcp"
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/query"
 	"github.com/spf13/cobra"
 )
 
-var stdioCmd = &cobra.Command{
-	Use:   "stdio",
-	Short: "Run in MCP stdio mode",
-	Long:  `Start the engine in MCP (Model Context Protocol) stdio mode for LLM agent integration.`,
+var (
+	port string
+	host string
+)
+
+var serveCmd = &cobra.Command{
+	Use:   "serve",
+	Short: "Start HTTP API server",
+	Long:  `Start the HTTP API server for REST-based search queries.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load configuration
 		cfg, err := config.Load(configFile)
@@ -43,8 +48,12 @@ var stdioCmd = &cobra.Command{
 		// Create query service
 		querySvc := query.NewService(zoektIdx, faissIdx, emb, cfg.Fusion.BM25Weight)
 
-		// Create MCP server
-		mcpServer := mcp.NewServer(querySvc)
+		// Create API server
+		serverCfg := api.ServerConfig{
+			Host: host,
+			Port: port,
+		}
+		apiServer := api.NewServer(serverCfg, querySvc)
 
 		// Handle shutdown
 		ctx, cancel := context.WithCancel(ctx)
@@ -54,14 +63,19 @@ var stdioCmd = &cobra.Command{
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		go func() {
 			<-sigChan
+			fmt.Println("\nShutting down server...")
 			cancel()
 		}()
 
-		// Run server
-		return mcpServer.Run(ctx)
+		// Start server
+		fmt.Printf("Starting API server on %s:%s\n", host, port)
+		return apiServer.Start(ctx)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(stdioCmd)
+	serveCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port to listen on")
+	serveCmd.Flags().StringVar(&host, "host", "0.0.0.0", "Host to bind to")
+
+	rootCmd.AddCommand(serveCmd)
 }
