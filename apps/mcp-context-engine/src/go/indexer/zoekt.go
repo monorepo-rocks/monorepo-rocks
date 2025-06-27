@@ -3,6 +3,7 @@ package indexer
 import (
 	"context"
 	"fmt"
+	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -100,14 +101,34 @@ func (z *ZoektStubIndexer) Index(ctx context.Context, files []string) error {
 	z.mu.Lock()
 	defer z.mu.Unlock()
 
+	log.Printf("Starting to index %d files", len(files))
+	successCount := 0
+	failCount := 0
+
 	for _, file := range files {
+		log.Printf("Indexing file: %s", file)
 		if err := z.indexFile(file); err != nil {
-			return fmt.Errorf("failed to index file %s: %w", file, err)
+			log.Printf("Failed to index file %s: %v", file, err)
+			failCount++
+			// Continue indexing other files instead of failing the entire batch
+			continue
 		}
+		successCount++
 	}
 
+	// Always update corpus stats even if some files failed
 	z.updateCorpusStats()
 	z.stats.LastIndexTime = time.Now()
+	
+	log.Printf("Indexing completed: %d successful, %d failed out of %d total files", successCount, failCount, len(files))
+	log.Printf("Corpus stats: %d total docs, %.2f avg doc length, %d total terms", 
+		z.corpusStats.TotalDocs, z.corpusStats.AvgDocLength, z.corpusStats.TotalTerms)
+	
+	// Only return error if all files failed
+	if failCount > 0 && successCount == 0 {
+		return fmt.Errorf("failed to index all %d files", len(files))
+	}
+	
 	return nil
 }
 
@@ -222,7 +243,9 @@ func (z *ZoektStubIndexer) indexFile(filePath string) error {
 	// Read actual file content from disk
 	content, err := z.readFileContent(filePath)
 	if err != nil {
-		return fmt.Errorf("failed to read file %s: %w", filePath, err)
+		log.Printf("Warning: Cannot read file %s: %v", filePath, err)
+		// Return the error so it can be counted as a failure
+		return err
 	}
 	
 	lines := strings.Split(content, "\n")
@@ -241,6 +264,7 @@ func (z *ZoektStubIndexer) indexFile(filePath string) error {
 		lastModified = fileInfo.ModTime()
 	} else {
 		lastModified = time.Now()
+		log.Printf("Warning: Cannot get file stats for %s: %v", filePath, err)
 	}
 
 	fileData := &FileInfo{
@@ -254,6 +278,10 @@ func (z *ZoektStubIndexer) indexFile(filePath string) error {
 
 	z.files[filePath] = fileData
 	z.stats.TotalSize += int64(len(content))
+	
+	log.Printf("Successfully indexed file %s (language: %s, size: %d bytes, lines: %d)", 
+		filePath, language, len(content), len(lines))
+	
 	return nil
 }
 
@@ -261,17 +289,20 @@ func (z *ZoektStubIndexer) readFileContent(filePath string) (string, error) {
 	// Check if file exists and is readable
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
+		log.Printf("Cannot access file %s: %v", filePath, err)
 		return "", err
 	}
 
 	// Skip very large files to avoid memory issues (limit to 10MB)
 	if fileInfo.Size() > 10*1024*1024 {
+		log.Printf("Skipping large file %s: %d bytes (limit: 10MB)", filePath, fileInfo.Size())
 		return "", fmt.Errorf("file too large: %d bytes", fileInfo.Size())
 	}
 
 	// Read file content
 	content, err := os.ReadFile(filePath)
 	if err != nil {
+		log.Printf("Cannot read file content %s: %v", filePath, err)
 		return "", err
 	}
 
@@ -371,11 +402,15 @@ func (z *ZoektStubIndexer) calculateBM25(queryTerms []string, doc *FileInfo, k1,
 }
 
 func (z *ZoektStubIndexer) updateCorpusStats() {
+	log.Printf("Updating corpus statistics...")
+	
 	z.corpusStats.TotalDocs = len(z.files)
 	z.corpusStats.DocFreqs = make(map[string]int)
 	z.corpusStats.TotalTerms = 0
 
 	totalLength := 0
+	uniqueTerms := 0
+	
 	for _, fileInfo := range z.files {
 		docLength := len(z.tokenize(fileInfo.Content))
 		totalLength += docLength
@@ -394,6 +429,10 @@ func (z *ZoektStubIndexer) updateCorpusStats() {
 	if z.corpusStats.TotalDocs > 0 {
 		z.corpusStats.AvgDocLength = float64(totalLength) / float64(z.corpusStats.TotalDocs)
 	}
+	
+	uniqueTerms = len(z.corpusStats.DocFreqs)
+	log.Printf("Corpus stats updated: %d documents, %d unique terms, %.2f average document length, %d total terms",
+		z.corpusStats.TotalDocs, uniqueTerms, z.corpusStats.AvgDocLength, z.corpusStats.TotalTerms)
 }
 
 type LineMatch struct {
