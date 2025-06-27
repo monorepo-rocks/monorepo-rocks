@@ -138,6 +138,12 @@ func (qs *QueryService) parseFileQuery(query string) *FileQuery {
 
 	lowerQuery := strings.ToLower(query)
 	
+	// Detect import/usage queries early to preserve library names
+	if qs.isImportUsageQuery(query) {
+		fileQuery = qs.parseImportUsageQuery(query, fileQuery)
+		return fileQuery
+	}
+	
 	// File type patterns with their corresponding file patterns
 	fileTypeMap := map[string][]string{
 		"package.json": {"package.json"},
@@ -202,6 +208,9 @@ func (qs *QueryService) parseFileQuery(query string) *FileQuery {
 		"exports": {"export"},
 		"modules": {"module"},
 		"require": {"require"},
+		"usage": {"usage"},
+		"used": {"used"},
+		"imported": {"imported"},
 	}
 
 	// Check for specific file type matches
@@ -324,6 +333,9 @@ func (qs *QueryService) extractKeywords(query string) []string {
 		"import": true, "export": true, "require": true, "module": true,
 		"function": true, "class": true, "interface": true, "type": true,
 		"const": true, "let": true, "var": true, "package": true,
+		"usage": true, "used": true, "imported": true, "usages": true,
+		// Common short library names that should be preserved
+		"zx": true, "fs": true, "os": true, "db": true, "ui": true, "io": true,
 	}
 
 	// Extract programming-specific terms and preserve them
@@ -352,8 +364,8 @@ func (qs *QueryService) extractKeywords(query string) []string {
 			continue
 		}
 
-		// Filter out stop words and short words
-		if len(word) > 2 && !stopWords[word] {
+		// Filter out stop words but preserve short library names and identifiers
+		if (len(word) > 2 || qs.isLikelyLibraryName(word)) && !stopWords[word] {
 			keywords = append(keywords, word)
 		}
 	}
@@ -431,6 +443,127 @@ func (qs *QueryService) detectFileTypeQueries(query string) map[string]bool {
 	}
 	
 	return terms
+}
+
+// isImportUsageQuery detects if the query is asking about imports or usage of a library
+func (qs *QueryService) isImportUsageQuery(query string) bool {
+	lowerQuery := strings.ToLower(query)
+	
+	// Import patterns
+	importPatterns := []string{
+		"import", "require", "from", "imports of", "imports",
+		"usage of", "usages of", "use of", "uses of", "using",
+		"where", "how", "all usages", "all uses", "all imports",
+	}
+	
+	for _, pattern := range importPatterns {
+		if strings.Contains(lowerQuery, pattern) {
+			return true
+		}
+	}
+	
+	return false
+}
+
+// parseImportUsageQuery handles queries about imports and library usage
+func (qs *QueryService) parseImportUsageQuery(query string, fileQuery *FileQuery) *FileQuery {
+	lowerQuery := strings.ToLower(query)
+	
+	// Extract the library/package name from import/usage queries
+	libraryName := qs.extractLibraryNameFromQuery(query)
+	
+	if libraryName != "" {
+		// Preserve the library name as the focused query
+		fileQuery.FocusedQuery = libraryName
+		
+		// Add import/require as target field
+		if strings.Contains(lowerQuery, "import") || strings.Contains(lowerQuery, "require") {
+			fileQuery.TargetFields = append(fileQuery.TargetFields, "import", "require")
+		}
+		
+		// Add usage-related fields
+		if strings.Contains(lowerQuery, "usage") || strings.Contains(lowerQuery, "use") {
+			fileQuery.TargetFields = append(fileQuery.TargetFields, "usage", "used")
+		}
+		
+		// For JavaScript/TypeScript files, target common file patterns
+		fileQuery.FilePatterns = []string{"*.js", "*.ts", "*.tsx", "*.jsx", "*.mjs", "*.cjs"}
+		
+		log.Printf("[DEBUG] Import/usage query detected - Library: '%s', FocusedQuery: '%s', TargetFields: %v", 
+			libraryName, fileQuery.FocusedQuery, fileQuery.TargetFields)
+	}
+	
+	return fileQuery
+}
+
+// extractLibraryNameFromQuery extracts the library/package name from import/usage queries
+func (qs *QueryService) extractLibraryNameFromQuery(query string) string {
+	// Common patterns for library extraction
+	patterns := []string{
+		`(?i)import[s]?\s+(?:of\s+)?["']?([a-zA-Z0-9@/_-]+)["']?`,
+		`(?i)require[s]?\s+(?:of\s+)?["']?([a-zA-Z0-9@/_-]+)["']?`,
+		`(?i)usage[s]?\s+of\s+["']?([a-zA-Z0-9@/_-]+)["']?`,
+		`(?i)use[s]?\s+of\s+["']?([a-zA-Z0-9@/_-]+)["']?`,
+		`(?i)using\s+["']?([a-zA-Z0-9@/_-]+)["']?`,
+		`(?i)all\s+(?:usages?|uses?)\s+(?:of\s+)?["']?([a-zA-Z0-9@/_-]+)["']?`,
+		`(?i)all\s+imports?\s+(?:of\s+)?["']?([a-zA-Z0-9@/_-]+)["']?`,
+		`(?i)where\s+["']?([a-zA-Z0-9@/_-]+)["']?\s+(?:is\s+)?(?:used|imported)`,
+		`(?i)how\s+["']?([a-zA-Z0-9@/_-]+)["']?\s+(?:is\s+)?(?:used|imported)`,
+	}
+	
+	for _, pattern := range patterns {
+		re := regexp.MustCompile(pattern)
+		matches := re.FindStringSubmatch(query)
+		if len(matches) > 1 && matches[1] != "" {
+			libName := strings.Trim(matches[1], "\"'")
+			log.Printf("[DEBUG] Extracted library name '%s' using pattern '%s'", libName, pattern)
+			return libName
+		}
+	}
+	
+	// Fallback: look for quoted terms or common library names
+	quotedPattern := regexp.MustCompile(`["']([a-zA-Z0-9@/_-]+)["']`)
+	matches := quotedPattern.FindStringSubmatch(query)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	
+	// Look for standalone library names (common short names)
+	words := strings.Fields(query)
+	for _, word := range words {
+		cleanWord := strings.ToLower(strings.Trim(word, ".,!?;:"))
+		if qs.isLikelyLibraryName(cleanWord) {
+			return cleanWord
+		}
+	}
+	
+	return ""
+}
+
+// isLikelyLibraryName determines if a short word is likely a library name
+func (qs *QueryService) isLikelyLibraryName(word string) bool {
+	// Common short library names and patterns
+	commonLibraries := map[string]bool{
+		"zx": true, "fs": true, "os": true, "db": true, "ui": true, "io": true,
+		"rx": true, "d3": true, "p5": true, "$": true, "_": true,
+	}
+	
+	if commonLibraries[word] {
+		return true
+	}
+	
+	// Check for npm package patterns (e.g., @scope/name)
+	if strings.HasPrefix(word, "@") || strings.Contains(word, "/") {
+		return true
+	}
+	
+	// Check for library-like patterns (2+ chars, alphanumeric with common separators)
+	if len(word) >= 2 {
+		match, _ := regexp.MatchString(`^[a-zA-Z0-9][a-zA-Z0-9._-]*$`, word)
+		return match
+	}
+	
+	return false
 }
 
 // tokenizeWithCompounds preserves compound terms like package.json while tokenizing
