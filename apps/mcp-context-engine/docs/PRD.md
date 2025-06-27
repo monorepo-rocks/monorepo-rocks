@@ -55,7 +55,17 @@ Together they let the model answer plain‑English prompts such as "Find imports
 ### 5.3 APIs
 
 - **CLI:** `mcpce index /path/to/repo`; `mcpce search -q "initDatabase"`.
-- **gRPC / HTTP:** `/v1/search` & `/v1/indexStatus`.
+- **HTTP:** `/v1/search` & `/v1/indexStatus`
+- **MCP (stdio):** The engine can run under the MCP protocol via standard input/output. Example config:
+
+```json
+{
+  "name": "mcp-context-engine",
+  "command": "mcpce",
+  "args": ["stdio"]
+}
+```
+
 - **Tool schema** (for agents):
 
 ```json
