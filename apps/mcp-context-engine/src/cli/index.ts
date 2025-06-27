@@ -1,12 +1,8 @@
 #!/usr/bin/env node
-import { spawn } from 'child_process'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
-import { platform, arch } from 'os'
-import { existsSync } from 'fs'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const { spawn } = require('child_process')
+const { dirname, join } = require('path')
+const { platform, arch } = require('os')
+const { existsSync } = require('fs')
 
 function getBinaryName(): string {
 	const os = platform()
@@ -36,13 +32,24 @@ function findBinary(): string {
 	
 	// Look for binary in several locations
 	const possiblePaths = [
-		// In production (npm package)
+		// Platform-specific binary first
+		join(__dirname, '..', 'bin', binaryName),
 		join(__dirname, '..', '..', 'bin', binaryName),
-		// In development
-		join(__dirname, '..', '..', '..', '..', 'bin', binaryName),
-		// Fallback to cwd
 		join(process.cwd(), 'bin', binaryName),
+		// Fallback to generic binary name
+		join(__dirname, '..', 'bin', 'mcpce'),
+		join(__dirname, '..', '..', 'bin', 'mcpce'),
+		join(process.cwd(), 'bin', 'mcpce'),
 	]
+	
+	// Add .exe for Windows
+	if (platform() === 'win32') {
+		possiblePaths.push(
+			join(__dirname, '..', 'bin', 'mcpce.exe'),
+			join(__dirname, '..', '..', 'bin', 'mcpce.exe'),
+			join(process.cwd(), 'bin', 'mcpce.exe')
+		)
+	}
 	
 	for (const path of possiblePaths) {
 		if (existsSync(path)) {
