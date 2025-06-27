@@ -114,9 +114,12 @@ func (qs *QueryService) GetIndexStatus(ctx context.Context) (*types.IndexStatus,
 // Private methods for search orchestration
 
 func (qs *QueryService) extractKeywords(query string) []string {
-	// Simple keyword extraction - in production you'd want more sophisticated NLP
+	// Enhanced keyword extraction with better handling of search intent and technical terms
 	
-	// Remove common stop words
+	// Detect file-type queries first (before tokenization)
+	fileTypeTerms := qs.detectFileTypeQueries(query)
+	
+	// Remove common stop words but preserve action verbs that indicate search intent
 	stopWords := map[string]bool{
 		"the": true, "a": true, "an": true, "and": true, "or": true, "but": true,
 		"in": true, "on": true, "at": true, "to": true, "for": true, "of": true,
@@ -129,17 +132,24 @@ func (qs *QueryService) extractKeywords(query string) []string {
 		"my": true, "your": true, "his": true, "her": true, "its": true, "our": true, "their": true,
 		"me": true, "him": true, "us": true, "them": true,
 		"what": true, "where": true, "when": true, "why": true, "how": true,
-		"find": true, "search": true, "look": true, "show": true, "get":  true,
+		// Removed action verbs that indicate search intent:
+		// "find": true, "search": true, "look": true, "show": true, "get": true, "list": true, "display": true,
 	}
 
 	// Extract programming-specific terms and preserve them
 	programmingTerms := qs.extractProgrammingTerms(query)
 
-	// Tokenize and filter
-	words := qs.tokenize(strings.ToLower(query))
+	// Tokenize using enhanced tokenizer that preserves compound terms
+	words := qs.tokenizeWithCompounds(strings.ToLower(query))
 	var keywords []string
 
 	for _, word := range words {
+		// Keep file-type terms regardless of other filters
+		if _, isFileType := fileTypeTerms[word]; isFileType {
+			keywords = append(keywords, word)
+			continue
+		}
+
 		// Keep programming terms regardless of stop word status
 		if _, isProgrammingTerm := programmingTerms[word]; isProgrammingTerm {
 			keywords = append(keywords, word)
@@ -149,6 +159,20 @@ func (qs *QueryService) extractKeywords(query string) []string {
 		// Filter out stop words and short words
 		if len(word) > 2 && !stopWords[word] {
 			keywords = append(keywords, word)
+		}
+	}
+
+	// Add back file-type terms that might have been tokenized differently
+	for term := range fileTypeTerms {
+		found := false
+		for _, keyword := range keywords {
+			if keyword == term {
+				found = true
+				break
+			}
+		}
+		if !found {
+			keywords = append(keywords, term)
 		}
 	}
 
@@ -169,10 +193,116 @@ func (qs *QueryService) extractKeywords(query string) []string {
 	return keywords
 }
 
+// detectFileTypeQueries identifies file names and extensions in the query
+func (qs *QueryService) detectFileTypeQueries(query string) map[string]bool {
+	terms := make(map[string]bool)
+	
+	// Common config files and their patterns
+	configFiles := []string{
+		"package.json", "tsconfig.json", "go.mod", "go.sum", "Cargo.toml", "Cargo.lock",
+		"composer.json", "pom.xml", "build.gradle", "requirements.txt", "Pipfile",
+		"Dockerfile", "docker-compose.yml", "docker-compose.yaml",
+		".gitignore", ".eslintrc", ".prettierrc", ".babelrc", "webpack.config.js",
+		"jest.config.js", "vite.config.js", "rollup.config.js",
+		"makefile", "Makefile", "justfile", "Justfile",
+		"README.md", "CHANGELOG.md", "LICENSE", "CONTRIBUTING.md",
+	}
+	
+	// Check for exact matches (case-insensitive)
+	lowerQuery := strings.ToLower(query)
+	for _, file := range configFiles {
+		if strings.Contains(lowerQuery, strings.ToLower(file)) {
+			terms[strings.ToLower(file)] = true
+		}
+	}
+	
+	// File extension patterns
+	extensionPatterns := []string{
+		`\.[a-zA-Z0-9]+\b`, // .js, .py, .go, etc.
+	}
+	
+	for _, pattern := range extensionPatterns {
+		re := regexp.MustCompile(pattern)
+		matches := re.FindAllString(query, -1)
+		for _, match := range matches {
+			terms[strings.ToLower(match)] = true
+		}
+	}
+	
+	// JSON field names and common config keys
+	jsonFields := []string{
+		"main", "scripts", "dependencies", "devDependencies", "peerDependencies",
+		"name", "version", "description", "author", "license", "homepage",
+		"repository", "bugs", "keywords", "engines", "files", "bin",
+		"workspaces", "private", "publishConfig", "config",
+		"compilerOptions", "include", "exclude", "extends", "references",
+		"target", "module", "lib", "outDir", "rootDir", "strict",
+		"esModuleInterop", "skipLibCheck", "forceConsistentCasingInFileNames",
+	}
+	
+	// Check for JSON field names in context (e.g., "main field", "scripts section")
+	for _, field := range jsonFields {
+		if strings.Contains(lowerQuery, field) {
+			terms[field] = true
+		}
+	}
+	
+	return terms
+}
+
+// tokenizeWithCompounds preserves compound terms like package.json while tokenizing
+func (qs *QueryService) tokenizeWithCompounds(text string) []string {
+	// First, identify and preserve compound terms
+	compoundPatterns := []string{
+		`\w+\.\w+`, // file.ext patterns
+		`\w+-\w+`,  // hyphenated terms
+		`\w+_\w+`,  // underscore terms
+	}
+	
+	var compounds []string
+	var replacements []string
+	text = strings.ToLower(text)
+	
+	for i, pattern := range compoundPatterns {
+		re := regexp.MustCompile(pattern)
+		matches := re.FindAllString(text, -1)
+		for j, match := range matches {
+			placeholder := fmt.Sprintf("__COMPOUND_%d_%d__", i, j)
+			compounds = append(compounds, match)
+			replacements = append(replacements, placeholder)
+			text = strings.Replace(text, match, placeholder, 1)
+		}
+	}
+	
+	// Regular tokenization
+	re := regexp.MustCompile(`[^\w]+`)
+	tokens := re.Split(text, -1)
+	
+	// Replace placeholders with original compound terms
+	for i, replacement := range replacements {
+		for j, token := range tokens {
+			if token == replacement {
+				tokens[j] = compounds[i]
+				break
+			}
+		}
+	}
+	
+	// Filter out empty tokens
+	var result []string
+	for _, token := range tokens {
+		if len(token) > 0 {
+			result = append(result, token)
+		}
+	}
+	
+	return result
+}
+
 func (qs *QueryService) extractProgrammingTerms(query string) map[string]bool {
 	terms := make(map[string]bool)
 	
-	// Common programming patterns
+	// Enhanced programming patterns with better file and config recognition
 	patterns := []string{
 		// Function patterns
 		`\b\w+\(\)`,  // function calls
@@ -187,10 +317,29 @@ func (qs *QueryService) extractProgrammingTerms(query string) map[string]bool {
 		// Import/include patterns
 		`\bimport\s+\w+`, `\bfrom\s+\w+`, `\b#include\s*<\w+>`,
 		
+		// File patterns with extensions
+		`\b\w+\.\w{1,5}\b`, // files with extensions (e.g., main.go, index.js)
+		
+		// Configuration patterns
+		`\b[a-zA-Z_][a-zA-Z0-9_]*\.json\b`, // JSON config files
+		`\b[a-zA-Z_][a-zA-Z0-9_]*\.ya?ml\b`, // YAML config files
+		`\b[a-zA-Z_][a-zA-Z0-9_]*\.toml\b`, // TOML config files
+		`\b[a-zA-Z_][a-zA-Z0-9_]*\.lock\b`, // Lock files
+		
+		// API and HTTP patterns
+		`\b(GET|POST|PUT|DELETE|PATCH)\b`, // HTTP methods
+		`\b/\w+(/\w+)*\b`, // API endpoints
+		
 		// Common keywords
 		`\b(if|else|for|while|switch|case|try|catch|finally|return|break|continue)\b`,
 		`\b(public|private|protected|static|const|let|var|final)\b`,
 		`\b(int|string|bool|float|double|char|void|null|undefined)\b`,
+		
+		// Database patterns
+		`\b(SELECT|INSERT|UPDATE|DELETE|FROM|WHERE|JOIN)\b`,
+		
+		// Framework/library specific
+		`\b(React|Vue|Angular|Express|Django|Flask|Rails)\b`,
 	}
 
 	for _, pattern := range patterns {
@@ -209,43 +358,38 @@ func (qs *QueryService) extractProgrammingTerms(query string) map[string]bool {
 }
 
 func (qs *QueryService) cleanProgrammingTerm(term string) string {
-	// Remove common prefixes and suffixes
+	// Remove common prefixes and suffixes while preserving important file names
 	term = strings.TrimSpace(term)
+	
+	// Preserve file extensions and compound names
+	if strings.Contains(term, ".") && !strings.HasPrefix(term, ".") {
+		// This looks like a filename, preserve it
+		return term
+	}
 	
 	// Remove function definition keywords
 	prefixesToRemove := []string{"def ", "function ", "func ", "class ", "struct ", "interface ", "import ", "from "}
 	for _, prefix := range prefixesToRemove {
-		if strings.HasPrefix(term, prefix) {
-			term = strings.TrimPrefix(term, prefix)
+		if after, found := strings.CutPrefix(term, prefix); found {
+			term = after
 			break
 		}
 	}
 
 	// Remove parentheses for function calls
-	if strings.HasSuffix(term, "()") {
-		term = strings.TrimSuffix(term, "()")
-	}
+	term = strings.TrimSuffix(term, "()")
 
 	// Remove assignment operators
 	if idx := strings.Index(term, "="); idx > 0 {
 		term = strings.TrimSpace(term[:idx])
 	}
+	
+	// Remove angle brackets from includes
+	if strings.HasPrefix(term, "<") && strings.HasSuffix(term, ">") {
+		term = strings.TrimPrefix(strings.TrimSuffix(term, ">"), "<")
+	}
 
 	return term
-}
-
-func (qs *QueryService) tokenize(text string) []string {
-	// Simple tokenization - split on non-alphanumeric characters
-	re := regexp.MustCompile(`[^\w]+`)
-	tokens := re.Split(text, -1)
-	
-	var result []string
-	for _, token := range tokens {
-		if len(token) > 0 {
-			result = append(result, token)
-		}
-	}
-	return result
 }
 
 func (qs *QueryService) performLexicalSearch(ctx context.Context, request *types.SearchRequest, keywords []string) ([]types.SearchHit, error) {
