@@ -67,7 +67,7 @@ func TestQueryService_Search(t *testing.T) {
 		t.Fatalf("Failed to setup test data: %v", err)
 	}
 
-	request := types.SearchRequest{
+	request := &types.SearchRequest{
 		Query: "main function implementation",
 		TopK:  10,
 	}
@@ -101,7 +101,7 @@ func TestQueryService_SearchEmptyQuery(t *testing.T) {
 	qs := createTestQueryService()
 	defer qs.Close()
 
-	request := types.SearchRequest{
+	request := &types.SearchRequest{
 		Query: "",
 		TopK:  10,
 	}
@@ -121,7 +121,7 @@ func TestQueryService_SearchWithFilters(t *testing.T) {
 		t.Fatalf("Failed to setup test data: %v", err)
 	}
 
-	request := types.SearchRequest{
+	request := &types.SearchRequest{
 		Query:    "function",
 		TopK:     10,
 		Language: "go",
@@ -458,7 +458,7 @@ func TestQueryService_Close(t *testing.T) {
 
 	// Verify that subsequent operations fail or handle closed state gracefully
 	ctx := context.Background()
-	request := types.SearchRequest{Query: "test", TopK: 10}
+	request := &types.SearchRequest{Query: "test", TopK: 10}
 	
 	// This might succeed or fail depending on implementation details
 	// The important thing is that Close() doesn't panic
@@ -504,7 +504,7 @@ func TestQueryService_SearchPerformance(t *testing.T) {
 		t.Fatalf("Failed to setup test data: %v", err)
 	}
 
-	request := types.SearchRequest{
+	request := &types.SearchRequest{
 		Query: "performance test query",
 		TopK:  20,
 	}

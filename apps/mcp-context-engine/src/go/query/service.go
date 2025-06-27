@@ -3,8 +3,10 @@ package query
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -404,9 +406,55 @@ func (qs *QueryService) containsRegexPatterns(query string) bool {
 }
 
 func (qs *QueryService) getChunkText(chunkID string) string {
-	// TODO: Implement actual chunk text retrieval from storage
-	// For now, return a placeholder
-	return fmt.Sprintf("Content for chunk %s", chunkID)
+	// Parse chunkID format: filePath:startByte-endByte
+	parts := strings.Split(chunkID, ":")
+	if len(parts) != 2 {
+		return fmt.Sprintf("Invalid chunk ID format: %s", chunkID)
+	}
+	
+	filePath := parts[0]
+	byteRange := parts[1]
+	
+	// Parse byte range
+	rangeParts := strings.Split(byteRange, "-")
+	if len(rangeParts) != 2 {
+		return fmt.Sprintf("Invalid byte range format: %s", byteRange)
+	}
+	
+	startByte, err := strconv.Atoi(rangeParts[0])
+	if err != nil {
+		return fmt.Sprintf("Invalid start byte: %s", rangeParts[0])
+	}
+	
+	endByte, err := strconv.Atoi(rangeParts[1])
+	if err != nil {
+		return fmt.Sprintf("Invalid end byte: %s", rangeParts[1])
+	}
+	
+	// Validate byte range
+	if startByte < 0 || endByte < startByte {
+		return fmt.Sprintf("Invalid byte range: %d-%d", startByte, endByte)
+	}
+	
+	// Read file content
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Sprintf("Failed to read file %s: %v", filePath, err)
+	}
+	
+	// Validate byte positions against file size
+	if startByte >= len(content) {
+		return fmt.Sprintf("Start byte %d exceeds file size %d", startByte, len(content))
+	}
+	
+	// Adjust end byte if it exceeds file size
+	if endByte > len(content) {
+		endByte = len(content)
+	}
+	
+	// Extract the chunk
+	chunkContent := content[startByte:endByte]
+	return string(chunkContent)
 }
 
 // Additional utility methods
