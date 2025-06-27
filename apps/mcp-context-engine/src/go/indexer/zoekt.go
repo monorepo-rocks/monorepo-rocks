@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -218,9 +219,11 @@ func (z *ZoektStubIndexer) Close() error {
 // Helper methods
 
 func (z *ZoektStubIndexer) indexFile(filePath string) error {
-	// In a real implementation, this would read the file from disk
-	// For now, we simulate file content
-	content := z.simulateFileContent(filePath)
+	// Read actual file content from disk
+	content, err := z.readFileContent(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to read file %s: %w", filePath, err)
+	}
 	
 	lines := strings.Split(content, "\n")
 	language := z.detectLanguage(filePath)
@@ -231,63 +234,49 @@ func (z *ZoektStubIndexer) indexFile(filePath string) error {
 		termFreqs[token]++
 	}
 
-	fileInfo := &FileInfo{
+	// Get actual file modification time
+	fileInfo, err := os.Stat(filePath)
+	var lastModified time.Time
+	if err == nil {
+		lastModified = fileInfo.ModTime()
+	} else {
+		lastModified = time.Now()
+	}
+
+	fileData := &FileInfo{
 		Path:         filePath,
 		Content:      content,
 		Language:     language,
-		LastModified: time.Now(),
+		LastModified: lastModified,
 		Lines:        lines,
 		TermFreqs:    termFreqs,
 	}
 
-	z.files[filePath] = fileInfo
+	z.files[filePath] = fileData
+	z.stats.TotalSize += int64(len(content))
 	return nil
 }
 
-func (z *ZoektStubIndexer) simulateFileContent(filePath string) string {
-	// Simulate different content based on file extension
-	ext := filepath.Ext(filePath)
-	switch ext {
-	case ".go":
-		return `package main
-
-import "fmt"
-
-func main() {
-	fmt.Println("Hello, World!")
-}
-
-func calculateSum(a, b int) int {
-	return a + b
-}
-`
-	case ".js", ".ts":
-		return `function greet(name) {
-	console.log("Hello, " + name);
-}
-
-export function calculate(x, y) {
-	return x + y;
-}
-
-const API_URL = "https://api.example.com";
-`
-	case ".py":
-		return `def greet(name):
-	print(f"Hello, {name}")
-
-def calculate(x, y):
-	return x + y
-
-if __name__ == "__main__":
-	greet("World")
-`
-	default:
-		return `This is a sample file content for testing purposes.
-It contains multiple lines with various words.
-Used for simulating lexical search functionality.
-`
+func (z *ZoektStubIndexer) readFileContent(filePath string) (string, error) {
+	// Check if file exists and is readable
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		return "", err
 	}
+
+	// Skip very large files to avoid memory issues (limit to 10MB)
+	if fileInfo.Size() > 10*1024*1024 {
+		return "", fmt.Errorf("file too large: %d bytes", fileInfo.Size())
+	}
+
+	// Read file content
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+
+	// Convert to string and handle different encodings
+	return string(content), nil
 }
 
 func (z *ZoektStubIndexer) detectLanguage(filePath string) string {

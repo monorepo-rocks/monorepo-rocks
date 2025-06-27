@@ -52,7 +52,7 @@ var indexCmd = &cobra.Command{
 		ctx := context.Background()
 
 		// Initial indexing
-		if err := performIndexing(ctx, repoPath, zoektIdx, faissIdx, emb); err != nil {
+		if err := performIndexing(ctx, repoPath, zoektIdx, faissIdx, emb, indexPath); err != nil {
 			return fmt.Errorf("indexing failed: %w", err)
 		}
 
@@ -66,7 +66,7 @@ var indexCmd = &cobra.Command{
 	},
 }
 
-func performIndexing(ctx context.Context, repoPath string, zoekt indexer.ZoektIndexer, faiss indexer.FAISSIndexer, emb embedder.Embedder) error {
+func performIndexing(ctx context.Context, repoPath string, zoekt indexer.ZoektIndexer, faiss indexer.FAISSIndexer, emb embedder.Embedder, indexPath string) error {
 	// Walk the repository respecting .gitignore
 	files, err := WalkCodeFiles(repoPath, isCodeFile)
 	if err != nil {
@@ -110,9 +110,8 @@ func performIndexing(ctx context.Context, repoPath string, zoekt indexer.ZoektIn
 		}
 	}
 
-	// Save indexes  
-	indexDir := filepath.Dir(files[0]) // Use parent directory of files
-	if err := faiss.Save(ctx, filepath.Join(indexDir, ".mcpce", "faiss.index")); err != nil {
+	// Save indexes to the configured index directory
+	if err := faiss.Save(ctx, filepath.Join(indexPath, "faiss.index")); err != nil {
 		return fmt.Errorf("failed to save FAISS index: %w", err)
 	}
 

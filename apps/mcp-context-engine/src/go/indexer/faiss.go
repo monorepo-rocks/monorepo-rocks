@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -74,6 +75,15 @@ type VectorEntry struct {
 	ChunkID  string
 	Vector   []float32
 	Metadata map[string]interface{}
+}
+
+// PersistableIndex represents the serializable index data
+type PersistableIndex struct {
+	Version   string             `json:"version"`
+	Dimension int                `json:"dimension"`
+	Vectors   map[string][]float32 `json:"vectors"`
+	Stats     VectorIndexStats   `json:"stats"`
+	Timestamp time.Time          `json:"timestamp"`
 }
 
 // NewFAISSIndexer creates a new FAISS indexer instance
@@ -189,12 +199,23 @@ func (f *FAISSStubIndexer) Save(ctx context.Context, path string) error {
 		return fmt.Errorf("failed to create index directory: %w", err)
 	}
 
-	// In a real implementation, this would serialize the FAISS index
-	// For now, we'll simulate saving by creating a placeholder file
-	content := fmt.Sprintf("FAISS Index Stub\nDimension: %d\nVectors: %d\nTimestamp: %s\n",
-		f.dimension, len(f.vectors), time.Now().Format(time.RFC3339))
+	// Create persistable index structure
+	persistable := PersistableIndex{
+		Version:   "1.0",
+		Dimension: f.dimension,
+		Vectors:   f.vectors,
+		Stats:     f.stats,
+		Timestamp: time.Now(),
+	}
 
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	// Serialize to JSON
+	data, err := json.MarshalIndent(persistable, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to serialize index: %w", err)
+	}
+
+	// Write to file
+	if err := os.WriteFile(path, data, 0644); err != nil {
 		return fmt.Errorf("failed to save index: %w", err)
 	}
 
@@ -211,19 +232,34 @@ func (f *FAISSStubIndexer) Load(ctx context.Context, path string) error {
 		return fmt.Errorf("index file does not exist: %s", path)
 	}
 
-	// In a real implementation, this would deserialize the FAISS index
-	// For now, we'll simulate loading by checking the file exists
+	// Read the file content
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to load index: %w", err)
 	}
 
-	// Verify it's our stub format
+	// Verify it's not empty
 	if len(content) == 0 {
-		return fmt.Errorf("invalid index file format")
+		return fmt.Errorf("invalid index file format: empty file")
 	}
 
-	// Reset vectors for simulation
+	// Try to deserialize as JSON first (new format)
+	var persistable PersistableIndex
+	if err := json.Unmarshal(content, &persistable); err == nil {
+		// Validate the loaded data
+		if persistable.Dimension != f.dimension {
+			return fmt.Errorf("dimension mismatch: expected %d, got %d", f.dimension, persistable.Dimension)
+		}
+
+		// Restore vectors and stats
+		f.vectors = persistable.Vectors
+		f.stats = persistable.Stats
+		f.updateStats()
+		return nil
+	}
+
+	// If JSON deserialization fails, assume it's the old stub format
+	// and reset to empty state
 	f.vectors = make(map[string][]float32)
 	f.updateStats()
 
