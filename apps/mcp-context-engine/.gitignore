@@ -13,6 +13,8 @@ bin/
 *.test
 *.out
 vendor/
+# Go binaries in source directories
+go
 
 # Indexes and cache
 .cache/
