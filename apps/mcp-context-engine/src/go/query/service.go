@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"slices"
@@ -54,11 +55,14 @@ func (qs *QueryService) Search(ctx context.Context, request *types.SearchRequest
 		request.TopK = 20
 	}
 
-	// Extract keywords from natural language query
-	keywords := qs.extractKeywords(request.Query)
+	// Parse file-aware query to detect file patterns and extract focused keywords
+	fileQuery := qs.parseFileQuery(request.Query)
 
-	// Perform lexical search
-	lexicalResults, err := qs.performLexicalSearch(ctx, request, keywords)
+	// Extract keywords from natural language query (using focused keywords if file query was detected)
+	keywords := qs.extractKeywords(fileQuery.FocusedQuery)
+
+	// Perform lexical search with file patterns from query analysis
+	lexicalResults, err := qs.performLexicalSearch(ctx, request, keywords, fileQuery)
 	if err != nil {
 		return nil, fmt.Errorf("lexical search failed: %w", err)
 	}
@@ -114,14 +118,178 @@ func (qs *QueryService) GetIndexStatus(ctx context.Context) (*types.IndexStatus,
 
 // Private methods for search orchestration
 
+// parseFileQuery analyzes the query to detect file-specific patterns and extract focused search terms
+func (qs *QueryService) parseFileQuery(query string) *FileQuery {
+	fileQuery := &FileQuery{
+		OriginalQuery: query,
+		FocusedQuery:  query,
+		FilePatterns:  []string{},
+		TargetFields:  []string{},
+	}
+
+	lowerQuery := strings.ToLower(query)
+	
+	// File type patterns with their corresponding file patterns
+	fileTypeMap := map[string][]string{
+		"package.json": {"package.json"},
+		"package json": {"package.json"},
+		"package.json files": {"package.json"},
+		"tsconfig.json": {"tsconfig.json"},
+		"tsconfig json": {"tsconfig.json"},
+		"go.mod": {"go.mod"},
+		"go.sum": {"go.sum"},
+		"cargo.toml": {"Cargo.toml"},
+		"cargo.lock": {"Cargo.lock"},
+		"dockerfile": {"Dockerfile", "*.dockerfile"},
+		"docker-compose": {"docker-compose.yml", "docker-compose.yaml"},
+		"makefile": {"Makefile", "makefile"},
+		"justfile": {"Justfile", "justfile"},
+		"readme": {"README.md", "readme.md", "README.txt"},
+		".gitignore": {".gitignore"},
+		"gitignore": {".gitignore"},
+		".eslintrc": {".eslintrc*"},
+		"eslintrc": {".eslintrc*"},
+		"webpack.config": {"webpack.config.*"},
+		"vite.config": {"vite.config.*"},
+		"jest.config": {"jest.config.*"},
+	}
+
+	// Language-based file patterns
+	langPatterns := map[string][]string{
+		"go files": {"*.go"},
+		"javascript files": {"*.js"},
+		"js files": {"*.js"},
+		"typescript files": {"*.ts", "*.tsx"},
+		"ts files": {"*.ts", "*.tsx"},
+		"python files": {"*.py"},
+		"py files": {"*.py"},
+		"java files": {"*.java"},
+		"c files": {"*.c", "*.h"},
+		"cpp files": {"*.cpp", "*.cc", "*.cxx", "*.hpp"},
+		"rust files": {"*.rs"},
+		"yaml files": {"*.yaml", "*.yml"},
+		"yml files": {"*.yaml", "*.yml"},
+		"json files": {"*.json"},
+		"xml files": {"*.xml"},
+		"html files": {"*.html"},
+		"css files": {"*.css"},
+		"markdown files": {"*.md"},
+		"md files": {"*.md"},
+	}
+
+	// Configuration and field-specific patterns
+	configFields := map[string][]string{
+		"main field": {"main"},
+		"scripts": {"scripts"},
+		"dependencies": {"dependencies"},
+		"devdependencies": {"devDependencies"},
+		"peerdependencies": {"peerDependencies"},
+		"name field": {"name"},
+		"version field": {"version"},
+		"description field": {"description"},
+		"author field": {"author"},
+		"license field": {"license"},
+		"imports": {"import"},
+		"exports": {"export"},
+		"modules": {"module"},
+		"require": {"require"},
+	}
+
+	// Check for specific file type matches
+	for fileType, patterns := range fileTypeMap {
+		if strings.Contains(lowerQuery, fileType) {
+			fileQuery.FilePatterns = append(fileQuery.FilePatterns, patterns...)
+			fileQuery.DetectedFileType = fileType
+			// Remove file type reference from focused query
+			fileQuery.FocusedQuery = strings.ReplaceAll(fileQuery.FocusedQuery, fileType, "")
+			log.Printf("[DEBUG] Detected file type '%s' with patterns: %v", fileType, patterns)
+			break
+		}
+	}
+
+	// Check for language-based patterns
+	if len(fileQuery.FilePatterns) == 0 {
+		for langPattern, patterns := range langPatterns {
+			if strings.Contains(lowerQuery, langPattern) {
+				fileQuery.FilePatterns = append(fileQuery.FilePatterns, patterns...)
+				fileQuery.DetectedFileType = langPattern
+				// Remove language reference from focused query
+				fileQuery.FocusedQuery = strings.ReplaceAll(fileQuery.FocusedQuery, langPattern, "")
+				log.Printf("[DEBUG] Detected language pattern '%s' with patterns: %v", langPattern, patterns)
+				break
+			}
+		}
+	}
+
+	// Extract target fields (configuration keys, JSON fields, etc.)
+	for fieldPattern, fields := range configFields {
+		if strings.Contains(lowerQuery, fieldPattern) {
+			fileQuery.TargetFields = append(fileQuery.TargetFields, fields...)
+			log.Printf("[DEBUG] Detected target fields for '%s': %v", fieldPattern, fields)
+		}
+	}
+
+	// Special handling for package.json queries
+	if fileQuery.DetectedFileType == "package.json" || strings.Contains(lowerQuery, "package.json") {
+		if len(fileQuery.FilePatterns) == 0 {
+			fileQuery.FilePatterns = []string{"package.json"}
+			fileQuery.DetectedFileType = "package.json"
+		}
+		
+		// Common package.json field queries
+		packageJsonFields := []string{"main", "scripts", "dependencies", "devDependencies", "name", "version"}
+		for _, field := range packageJsonFields {
+			if strings.Contains(lowerQuery, field) && !slices.Contains(fileQuery.TargetFields, field) {
+				fileQuery.TargetFields = append(fileQuery.TargetFields, field)
+			}
+		}
+	}
+
+	// Clean up the focused query by removing common file-related words
+	cleanupWords := []string{"files", "file", "in", "of", "the", "for", "from", "within"}
+	focusedWords := strings.Fields(fileQuery.FocusedQuery)
+	var cleanedWords []string
+	
+	for _, word := range focusedWords {
+		word = strings.TrimSpace(word)
+		if word != "" && !slices.Contains(cleanupWords, strings.ToLower(word)) {
+			cleanedWords = append(cleanedWords, word)
+		}
+	}
+	
+	fileQuery.FocusedQuery = strings.Join(cleanedWords, " ")
+	
+	// If we have target fields, focus the query on those
+	if len(fileQuery.TargetFields) > 0 {
+		if fileQuery.FocusedQuery == "" {
+			fileQuery.FocusedQuery = strings.Join(fileQuery.TargetFields, " ")
+		} else {
+			// Combine target fields with focused query
+			fileQuery.FocusedQuery = strings.Join(fileQuery.TargetFields, " ") + " " + fileQuery.FocusedQuery
+		}
+	}
+
+	// Final fallback - if focused query is empty, use original
+	if strings.TrimSpace(fileQuery.FocusedQuery) == "" {
+		fileQuery.FocusedQuery = query
+	}
+
+	log.Printf("[DEBUG] parseFileQuery result - Original: '%s', FilePatterns: %v, FocusedQuery: '%s', DetectedFileType: '%s', TargetFields: %v", 
+		query, fileQuery.FilePatterns, fileQuery.FocusedQuery, fileQuery.DetectedFileType, fileQuery.TargetFields)
+
+	return fileQuery
+}
+
 func (qs *QueryService) extractKeywords(query string) []string {
 	// Enhanced keyword extraction with better handling of search intent and technical terms
+	log.Printf("[DEBUG] extractKeywords input: '%s'", query)
 	
 	// Detect file-type queries first (before tokenization)
 	fileTypeTerms := qs.detectFileTypeQueries(query)
 	
 	// Remove common stop words but preserve action verbs that indicate search intent
 	stopWords := map[string]bool{
+		"field": true, "section": true, // Remove these file-query specific words
 		"the": true, "a": true, "an": true, "and": true, "or": true, "but": true,
 		"in": true, "on": true, "at": true, "to": true, "for": true, "of": true,
 		"with": true, "by": true, "is": true, "are": true, "was": true, "were": true,
@@ -137,6 +305,15 @@ func (qs *QueryService) extractKeywords(query string) []string {
 		// "find": true, "search": true, "look": true, "show": true, "get": true, "list": true, "display": true,
 	}
 
+	// Important terms that should always be preserved
+	importantTerms := map[string]bool{
+		"main": true, "scripts": true, "dependencies": true, "devdependencies": true,
+		"name": true, "version": true, "description": true, "author": true, "license": true,
+		"import": true, "export": true, "require": true, "module": true,
+		"function": true, "class": true, "interface": true, "type": true,
+		"const": true, "let": true, "var": true, "package": true,
+	}
+
 	// Extract programming-specific terms and preserve them
 	programmingTerms := qs.extractProgrammingTerms(query)
 
@@ -145,6 +322,12 @@ func (qs *QueryService) extractKeywords(query string) []string {
 	var keywords []string
 
 	for _, word := range words {
+		// Keep important terms regardless of stop word status
+		if importantTerms[word] {
+			keywords = append(keywords, word)
+			continue
+		}
+
 		// Keep file-type terms regardless of other filters
 		if _, isFileType := fileTypeTerms[word]; isFileType {
 			keywords = append(keywords, word)
@@ -177,6 +360,7 @@ func (qs *QueryService) extractKeywords(query string) []string {
 		}
 	}
 
+	log.Printf("[DEBUG] extractKeywords output: %v", keywords)
 	return keywords
 }
 
@@ -379,19 +563,31 @@ func (qs *QueryService) cleanProgrammingTerm(term string) string {
 	return term
 }
 
-func (qs *QueryService) performLexicalSearch(ctx context.Context, request *types.SearchRequest, keywords []string) ([]types.SearchHit, error) {
+func (qs *QueryService) performLexicalSearch(ctx context.Context, request *types.SearchRequest, keywords []string, fileQuery *FileQuery) ([]types.SearchHit, error) {
 	// Construct search query from keywords
 	searchQuery := strings.Join(keywords, " ")
 	if searchQuery == "" {
 		searchQuery = request.Query // fallback to original query
 	}
+	
+	log.Printf("[DEBUG] Lexical search - Keywords: %v, SearchQuery: '%s', FileQuery: %+v", 
+		keywords, searchQuery, fileQuery)
 
-	// Set up search options
+	// Set up search options with file patterns from query analysis
+	filePatterns := request.Filters.FilePatterns
+	
+	// If file patterns were detected in the query, use them (but still include any existing patterns)
+	if len(fileQuery.FilePatterns) > 0 {
+		filePatterns = append(filePatterns, fileQuery.FilePatterns...)
+		log.Printf("[DEBUG] Using file patterns from query analysis: %v (combined with existing: %v)", 
+			fileQuery.FilePatterns, request.Filters.FilePatterns)
+	}
+	
 	options := indexer.SearchOptions{
 		MaxResults:    request.TopK * 2, // Get more results for fusion ranking
 		UseRegex:      qs.containsRegexPatterns(request.Query),
 		CaseSensitive: false,
-		FilePatterns:  request.Filters.FilePatterns,
+		FilePatterns:  filePatterns,
 		Languages:     []string{request.Language},
 	}
 
@@ -641,7 +837,9 @@ func (qs *QueryService) SuggestQuery(ctx context.Context, partial string) ([]str
 
 // ExplainQuery provides explanation of how a query will be processed
 func (qs *QueryService) ExplainQuery(ctx context.Context, query string) (*QueryExplanation, error) {
-	keywords := qs.extractKeywords(query)
+	// Parse file-aware query
+	fileQuery := qs.parseFileQuery(query)
+	keywords := qs.extractKeywords(fileQuery.FocusedQuery)
 	isRegex := qs.containsRegexPatterns(query)
 	
 	explanation := &QueryExplanation{
@@ -656,6 +854,11 @@ func (qs *QueryService) ExplainQuery(ctx context.Context, query string) (*QueryE
 		explanation.SearchStrategy = "semantic-only"
 	}
 
+	// Add file-aware context to the explanation
+	if len(fileQuery.FilePatterns) > 0 {
+		explanation.SearchStrategy += " (file-targeted)"
+	}
+
 	return explanation, nil
 }
 
@@ -666,6 +869,15 @@ type QueryExplanation struct {
 	IsRegexQuery      bool     `json:"is_regex_query"`
 	SearchStrategy    string   `json:"search_strategy"`
 	BM25Weight        float64  `json:"bm25_weight"`
+}
+
+// FileQuery represents a parsed query with file-aware context
+type FileQuery struct {
+	OriginalQuery    string   `json:"original_query"`
+	FilePatterns     []string `json:"file_patterns"`
+	FocusedQuery     string   `json:"focused_query"`
+	DetectedFileType string   `json:"detected_file_type"`
+	TargetFields     []string `json:"target_fields"`
 }
 
 // Close releases resources
