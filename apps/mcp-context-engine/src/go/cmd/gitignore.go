@@ -18,26 +18,25 @@ func NewGitIgnore(root string) *GitIgnore {
 	gi := &GitIgnore{
 		root: root,
 		patterns: []string{
-			// Always ignore these
+			// Only ignore truly universal patterns that are almost never source code.
+			// We rely on the project's .gitignore for most patterns to avoid
+			// accidentally excluding legitimate source files (e.g. build scripts
+			// in build/, CLI tools in bin/, etc.)
 			".git/",
 			".git",
 			"node_modules/",
 			"node_modules",
 			".DS_Store",
-			"*.log",
-			"dist/",
-			"build/",
-			"bin/",
-			"coverage/",
-			".cache/",
-			"*.map",
-			"*.min.js",
-			"*.min.css",
-			"vendor/",
+			"Thumbs.db",
 			"__pycache__/",
 			"*.pyc",
 			".env",
 			".env.local",
+			".env.*.local",
+			// Our own index files
+			".mcpce/",
+			"*.zoekt",
+			"*.faiss",
 		},
 	}
 	
