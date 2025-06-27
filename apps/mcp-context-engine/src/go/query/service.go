@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -164,28 +165,14 @@ func (qs *QueryService) extractKeywords(query string) []string {
 
 	// Add back file-type terms that might have been tokenized differently
 	for term := range fileTypeTerms {
-		found := false
-		for _, keyword := range keywords {
-			if keyword == term {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !slices.Contains(keywords, term) {
 			keywords = append(keywords, term)
 		}
 	}
 
 	// Add back programming terms that might have been tokenized differently
 	for term := range programmingTerms {
-		found := false
-		for _, keyword := range keywords {
-			if keyword == term {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !slices.Contains(keywords, term) {
 			keywords = append(keywords, term)
 		}
 	}
