@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/config"
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/embedder"
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/indexer"
+	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/types"
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/watcher"
 	"github.com/spf13/cobra"
 )
@@ -46,8 +46,8 @@ var indexCmd = &cobra.Command{
 
 		// Initialize components
 		zoektIdx := indexer.NewZoektIndexer(indexPath)
-		faissIdx := indexer.NewFAISSIndex(indexPath)
-		emb := embedder.NewEmbedder(embedder.DefaultConfig())
+		faissIdx := indexer.NewFAISSIndexer(indexPath, 768) // 768-dim for CodeBERT
+		emb := embedder.NewDefaultEmbedder()
 
 		ctx := context.Background()
 
@@ -66,7 +66,7 @@ var indexCmd = &cobra.Command{
 	},
 }
 
-func performIndexing(ctx context.Context, repoPath string, zoekt *indexer.ZoektIndexer, faiss *indexer.FAISSIndex, emb embedder.Embedder) error {
+func performIndexing(ctx context.Context, repoPath string, zoekt indexer.ZoektIndexer, faiss indexer.FAISSIndexer, emb embedder.Embedder) error {
 	// Walk the repository
 	var files []string
 	err := filepath.Walk(repoPath, func(path string, info os.FileInfo, err error) error {
@@ -87,7 +87,7 @@ func performIndexing(ctx context.Context, repoPath string, zoekt *indexer.ZoektI
 	// Index with Zoekt
 	fmt.Println("Building lexical index...")
 	for _, file := range files {
-		if err := zoekt.IndexFile(ctx, file); err != nil {
+		if err := zoekt.Index(ctx, []string{file}); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to index %s: %v\n", file, err)
 		}
 	}
@@ -101,23 +101,27 @@ func performIndexing(ctx context.Context, repoPath string, zoekt *indexer.ZoektI
 		}
 
 		// Generate chunks
-		chunks := embedder.ChunkCode(string(content), detectLanguage(file))
+		chunks := embedder.ChunkCode(file, file, string(content), detectLanguage(file), 300)
+		embeddings := make([]types.Embedding, 0, len(chunks))
 		for _, chunk := range chunks {
 			// Generate embedding
-			vec, err := emb.Embed(ctx, chunk.Text)
+			emb, err := emb.EmbedSingle(ctx, chunk)
 			if err != nil {
 				continue
 			}
-
-			// Add to FAISS
-			if err := faiss.AddVector(ctx, chunk.Hash, vec); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to add vector: %v\n", err)
+			embeddings = append(embeddings, emb)
+		}
+		// Add embeddings to FAISS after collecting them
+		if len(embeddings) > 0 {
+			if err := faiss.AddVectors(ctx, embeddings); err != nil {
+				return fmt.Errorf("failed to add vectors: %w", err)
 			}
 		}
 	}
 
-	// Save indexes
-	if err := faiss.Save(ctx); err != nil {
+	// Save indexes  
+	indexDir := filepath.Dir(files[0]) // Use parent directory of files
+	if err := faiss.Save(ctx, filepath.Join(indexDir, ".mcpce", "faiss.index")); err != nil {
 		return fmt.Errorf("failed to save FAISS index: %w", err)
 	}
 
@@ -125,7 +129,7 @@ func performIndexing(ctx context.Context, repoPath string, zoekt *indexer.ZoektI
 	return nil
 }
 
-func runWatcher(ctx context.Context, repoPath string, cfg *config.Config, zoekt *indexer.ZoektIndexer, faiss *indexer.FAISSIndex, emb embedder.Embedder) error {
+func runWatcher(ctx context.Context, repoPath string, cfg *config.Config, zoekt indexer.ZoektIndexer, faiss indexer.FAISSIndexer, emb embedder.Embedder) error {
 	w, err := watcher.NewWatcher(cfg.Watcher.DebounceMs)
 	if err != nil {
 		return err
@@ -149,7 +153,7 @@ func runWatcher(ctx context.Context, repoPath string, cfg *config.Config, zoekt 
 			fmt.Printf("File changed: %s\n", event.Path)
 			// Re-index the file
 			if isCodeFile(event.Path) {
-				if err := zoekt.IndexFile(ctx, event.Path); err != nil {
+				if err := zoekt.IncrementalIndex(ctx, []string{event.Path}); err != nil {
 					fmt.Fprintf(os.Stderr, "Failed to re-index %s: %v\n", event.Path, err)
 				}
 			}

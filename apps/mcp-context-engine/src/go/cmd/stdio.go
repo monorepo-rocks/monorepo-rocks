@@ -30,18 +30,18 @@ var stdioCmd = &cobra.Command{
 		// Initialize components
 		indexPath := filepath.Join(cfg.IndexRoot, "indexes")
 		zoektIdx := indexer.NewZoektIndexer(indexPath)
-		faissIdx := indexer.NewFAISSIndex(indexPath)
-		emb := embedder.NewEmbedder(embedder.DefaultConfig())
+		faissIdx := indexer.NewFAISSIndexer(indexPath, 768)
+		emb := embedder.NewDefaultEmbedder()
 
 		// Load indexes
 		ctx := context.Background()
-		if err := faissIdx.Load(ctx); err != nil {
+		if err := faissIdx.Load(ctx, filepath.Join(indexPath, "faiss.index")); err != nil {
 			// Index might not exist yet, that's OK
 			fmt.Fprintf(os.Stderr, "Warning: FAISS index not loaded: %v\n", err)
 		}
 
 		// Create query service
-		querySvc := query.NewService(zoektIdx, faissIdx, emb, cfg.Fusion.BM25Weight)
+		querySvc := query.NewQueryService(zoektIdx, faissIdx, emb, cfg)
 
 		// Create MCP server
 		mcpServer := mcp.NewServer(querySvc)

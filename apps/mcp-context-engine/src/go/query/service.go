@@ -38,7 +38,7 @@ func NewQueryService(
 }
 
 // Search performs hybrid search combining lexical and semantic results
-func (qs *QueryService) Search(ctx context.Context, request types.SearchRequest) (*types.SearchResponse, error) {
+func (qs *QueryService) Search(ctx context.Context, request *types.SearchRequest) (*types.SearchResponse, error) {
 	start := time.Now()
 
 	// Validate request
@@ -246,7 +246,7 @@ func (qs *QueryService) tokenize(text string) []string {
 	return result
 }
 
-func (qs *QueryService) performLexicalSearch(ctx context.Context, request types.SearchRequest, keywords []string) ([]types.SearchHit, error) {
+func (qs *QueryService) performLexicalSearch(ctx context.Context, request *types.SearchRequest, keywords []string) ([]types.SearchHit, error) {
 	// Construct search query from keywords
 	searchQuery := strings.Join(keywords, " ")
 	if searchQuery == "" {
@@ -270,7 +270,7 @@ func (qs *QueryService) performLexicalSearch(ctx context.Context, request types.
 	return qs.zoektIndexer.Search(ctx, searchQuery, options)
 }
 
-func (qs *QueryService) performSemanticSearch(ctx context.Context, request types.SearchRequest) ([]types.SearchHit, error) {
+func (qs *QueryService) performSemanticSearch(ctx context.Context, request *types.SearchRequest) ([]types.SearchHit, error) {
 	// Create a dummy code chunk for the query to generate its embedding
 	queryChunk := types.CodeChunk{
 		FileID:   "query",
@@ -510,4 +510,30 @@ func (qs *QueryService) Close() error {
 	}
 
 	return nil
+}
+
+// GetStatus returns the current indexing status
+func (qs *QueryService) GetStatus(ctx context.Context) (*types.IndexStatus, error) {
+	zoektStats := qs.zoektIndexer.Stats()
+	faissStats := qs.faissIndexer.VectorStats()
+	
+	// Calculate progress percentages
+	zoektProgress := 0
+	if zoektStats.TotalFiles > 0 {
+		zoektProgress = int((float64(zoektStats.IndexedFiles) / float64(zoektStats.TotalFiles)) * 100)
+	}
+	
+	faissProgress := 0
+	if faissStats.TotalVectors > 0 {
+		faissProgress = 100 // Assume complete if we have vectors
+	}
+	
+	return &types.IndexStatus{
+		Repository:    "current", // TODO: Get actual repo path
+		ZoektProgress: zoektProgress,
+		FAISSProgress: faissProgress,
+		TotalFiles:    zoektStats.TotalFiles,
+		IndexedFiles:  zoektStats.IndexedFiles,
+		LastUpdated:   zoektStats.LastIndexTime,
+	}, nil
 }

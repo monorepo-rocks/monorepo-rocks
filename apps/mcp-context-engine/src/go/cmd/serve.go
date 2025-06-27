@@ -35,25 +35,25 @@ var serveCmd = &cobra.Command{
 		// Initialize components
 		indexPath := filepath.Join(cfg.IndexRoot, "indexes")
 		zoektIdx := indexer.NewZoektIndexer(indexPath)
-		faissIdx := indexer.NewFAISSIndex(indexPath)
-		emb := embedder.NewEmbedder(embedder.DefaultConfig())
+		faissIdx := indexer.NewFAISSIndexer(indexPath, 768)
+		emb := embedder.NewDefaultEmbedder()
 
 		// Load indexes
 		ctx := context.Background()
-		if err := faissIdx.Load(ctx); err != nil {
+		if err := faissIdx.Load(ctx, filepath.Join(indexPath, "faiss.index")); err != nil {
 			// Index might not exist yet, that's OK
 			fmt.Fprintf(os.Stderr, "Warning: FAISS index not loaded: %v\n", err)
 		}
 
 		// Create query service
-		querySvc := query.NewService(zoektIdx, faissIdx, emb, cfg.Fusion.BM25Weight)
+		querySvc := query.NewQueryService(zoektIdx, faissIdx, emb, cfg)
 
 		// Create API server
-		serverCfg := api.ServerConfig{
-			Host: host,
-			Port: port,
+		portInt := 8080
+		if port != "" {
+			fmt.Sscanf(port, "%d", &portInt)
 		}
-		apiServer := api.NewServer(serverCfg, querySvc)
+		apiServer := api.NewServer(querySvc, portInt)
 
 		// Handle shutdown
 		ctx, cancel := context.WithCancel(ctx)
@@ -69,7 +69,7 @@ var serveCmd = &cobra.Command{
 
 		// Start server
 		fmt.Printf("Starting API server on %s:%s\n", host, port)
-		return apiServer.Start(ctx)
+		return apiServer.Start()
 	},
 }
 

@@ -99,7 +99,7 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
-	response, err := s.queryService.Search(ctx, request)
+	response, err := s.queryService.Search(ctx, &request)
 	if err != nil {
 		log.Printf("Search error: %v", err)
 		s.writeError(w, http.StatusInternalServerError, string(types.ErrInternal), 
@@ -314,7 +314,7 @@ func (s *Server) handleBatchSearch(w http.ResponseWriter, r *http.Request) {
 	var errors []string
 
 	for i, query := range request.Queries {
-		response, err := s.queryService.Search(ctx, query)
+		response, err := s.queryService.Search(ctx, &query)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("Query %d failed: %v", i, err))
 			// Add empty response to maintain index alignment
