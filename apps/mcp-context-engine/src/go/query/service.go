@@ -566,6 +566,56 @@ func (qs *QueryService) isLikelyLibraryName(word string) bool {
 	return false
 }
 
+// generateImportRegexPatterns creates regex patterns to find import statements for a given library
+func (qs *QueryService) generateImportRegexPatterns(libraryName string) []string {
+	// Escape special regex characters in the library name
+	escapedLibName := regexp.QuoteMeta(libraryName)
+	
+	var patterns []string
+	
+	// ES6 import patterns
+	patterns = append(patterns,
+		fmt.Sprintf(`import\s+.*\s+from\s+['""]%s['""]\s*;?`, escapedLibName),     // import { foo } from 'library';
+		fmt.Sprintf(`import\s+[^'""\s]*\s+from\s+['""]%s['""]\s*;?`, escapedLibName), // import foo from 'library';  
+		fmt.Sprintf(`import\s+\*\s+as\s+\w+\s+from\s+['""]%s['""]\s*;?`, escapedLibName), // import * as foo from 'library';
+		fmt.Sprintf(`import\s+['""]%s['""]\s*;?`, escapedLibName),                // import 'library';
+	)
+	
+	// CommonJS require patterns
+	patterns = append(patterns,
+		fmt.Sprintf(`require\s*\(\s*['""]%s['""\s]*\)`, escapedLibName),        // require('library')
+		fmt.Sprintf(`=\s*require\s*\(\s*['""]%s['""\s]*\)`, escapedLibName),    // const foo = require('library')
+		fmt.Sprintf(`const\s+\w+\s*=\s*require\s*\(\s*['""]%s['""\s]*\)`, escapedLibName), // const foo = require('library')
+		fmt.Sprintf(`let\s+\w+\s*=\s*require\s*\(\s*['""]%s['""\s]*\)`, escapedLibName),   // let foo = require('library')
+		fmt.Sprintf(`var\s+\w+\s*=\s*require\s*\(\s*['""]%s['""\s]*\)`, escapedLibName),   // var foo = require('library')
+	)
+	
+	// Dynamic import patterns
+	patterns = append(patterns,
+		fmt.Sprintf(`import\s*\(\s*['""]%s['""\s]*\)`, escapedLibName),         // import('library')
+		fmt.Sprintf(`await\s+import\s*\(\s*['""]%s['""\s]*\)`, escapedLibName), // await import('library')
+	)
+	
+	// TypeScript import patterns
+	patterns = append(patterns,
+		fmt.Sprintf(`import\s+type\s+.*\s+from\s+['""]%s['""]\s*;?`, escapedLibName), // import type { Foo } from 'library';
+	)
+	
+	// From clause patterns (catches various import forms)
+	patterns = append(patterns,
+		fmt.Sprintf(`from\s+['""]%s['""]\s*;?`, escapedLibName), // from 'library';
+	)
+	
+	log.Printf("[DEBUG] Generated %d regex patterns for library '%s'", len(patterns), libraryName)
+	if len(patterns) > 0 && len(patterns) <= 3 {
+		log.Printf("[DEBUG] Sample patterns: %v", patterns[:len(patterns)])
+	} else if len(patterns) > 3 {
+		log.Printf("[DEBUG] Sample patterns: %v", patterns[:3])
+	}
+	
+	return patterns
+}
+
 // tokenizeWithCompounds preserves compound terms like package.json while tokenizing
 func (qs *QueryService) tokenizeWithCompounds(text string) []string {
 	// First, identify and preserve compound terms
@@ -718,6 +768,21 @@ func (qs *QueryService) performLexicalSearch(ctx context.Context, request *types
 	log.Printf("[DEBUG] Lexical search - Keywords: %v, SearchQuery: '%s', FileQuery: %+v", 
 		keywords, searchQuery, fileQuery)
 
+	// Check if this is an import/usage query and enhance with regex patterns
+	isImportQuery := qs.isImportUsageQuery(request.Query)
+	if isImportQuery {
+		libraryName := qs.extractLibraryNameFromQuery(request.Query)
+		if libraryName != "" {
+			// Generate import regex patterns for the library
+			importRegexPatterns := qs.generateImportRegexPatterns(libraryName)
+			if len(importRegexPatterns) > 0 {
+				// Combine the library name with import patterns using OR (|)
+				searchQuery = strings.Join(importRegexPatterns, "|")
+				log.Printf("[DEBUG] Enhanced import query with regex patterns: %s", searchQuery)
+			}
+		}
+	}
+
 	// Set up search options with file patterns from query analysis
 	filePatterns := request.Filters.FilePatterns
 	
@@ -728,9 +793,12 @@ func (qs *QueryService) performLexicalSearch(ctx context.Context, request *types
 			fileQuery.FilePatterns, request.Filters.FilePatterns)
 	}
 	
+	// Determine if we should use regex - either if the query contains regex patterns or if it's an import query
+	useRegex := qs.containsRegexPatterns(request.Query) || isImportQuery
+	
 	options := indexer.SearchOptions{
 		MaxResults:    request.TopK * 2, // Get more results for fusion ranking
-		UseRegex:      qs.containsRegexPatterns(request.Query),
+		UseRegex:      useRegex,
 		CaseSensitive: false,
 		FilePatterns:  filePatterns,
 		Languages:     []string{request.Language},
@@ -743,6 +811,10 @@ func (qs *QueryService) performLexicalSearch(ctx context.Context, request *types
 
 	log.Printf("[DEBUG] Lexical search options: MaxResults=%d, UseRegex=%v, CaseSensitive=%v, FilePatterns=%v, Languages=%v",
 		options.MaxResults, options.UseRegex, options.CaseSensitive, options.FilePatterns, options.Languages)
+	
+	if isImportQuery {
+		log.Printf("[DEBUG] Import query mode - Final search query: '%s'", searchQuery)
+	}
 
 	// Perform the actual search
 	lexicalResults, err := qs.zoektIndexer.Search(ctx, searchQuery, options)
