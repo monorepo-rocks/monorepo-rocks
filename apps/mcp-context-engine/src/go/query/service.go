@@ -85,6 +85,10 @@ func (qs *QueryService) Search(ctx context.Context, request *types.SearchRequest
 		SemanticHits: len(semanticResults),
 	}
 
+	// Final debug summary
+	log.Printf("[DEBUG] Search complete for query '%s': lexical=%d, semantic=%d, fused=%d, time=%v",
+		request.Query, len(lexicalResults), len(semanticResults), len(fusedResults), time.Since(start))
+
 	return response, nil
 }
 
@@ -596,7 +600,39 @@ func (qs *QueryService) performLexicalSearch(ctx context.Context, request *types
 		options.Languages = []string{}
 	}
 
-	return qs.zoektIndexer.Search(ctx, searchQuery, options)
+	log.Printf("[DEBUG] Lexical search options: MaxResults=%d, UseRegex=%v, CaseSensitive=%v, FilePatterns=%v, Languages=%v",
+		options.MaxResults, options.UseRegex, options.CaseSensitive, options.FilePatterns, options.Languages)
+
+	// Perform the actual search
+	lexicalResults, err := qs.zoektIndexer.Search(ctx, searchQuery, options)
+	if err != nil {
+		log.Printf("[DEBUG] Lexical search failed: %v", err)
+		return nil, err
+	}
+
+	// Log detailed results
+	log.Printf("[DEBUG] Lexical search completed: found %d results", len(lexicalResults))
+	if len(lexicalResults) > 0 {
+		log.Printf("[DEBUG] Top 5 lexical results:")
+		for i, hit := range lexicalResults {
+			if i >= 5 {
+				break
+			}
+			log.Printf("[DEBUG]   %d. File: %s, Line: %d, Score: %.6f, Source: %s, Text: %.100s...",
+				i+1, hit.File, hit.LineNumber, hit.Score, hit.Source, strings.ReplaceAll(hit.Text, "\n", " "))
+		}
+		
+		// Log score distribution
+		if len(lexicalResults) > 0 {
+			minScore := lexicalResults[len(lexicalResults)-1].Score
+			maxScore := lexicalResults[0].Score
+			log.Printf("[DEBUG] Lexical score range: %.6f (min) to %.6f (max)", minScore, maxScore)
+		}
+	} else {
+		log.Printf("[DEBUG] No lexical results found for query: '%s' with keywords: %v", searchQuery, keywords)
+	}
+
+	return lexicalResults, nil
 }
 
 func (qs *QueryService) performSemanticSearch(ctx context.Context, request *types.SearchRequest) ([]types.SearchHit, error) {
@@ -653,6 +689,43 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 	// Reciprocal Rank Fusion (RRF) with BM25 weighting
 	lambda := qs.config.Fusion.BM25Weight
 	k := 60.0 // RRF constant
+	
+	// Adaptive BM25 weight adjustment - if we have both types of results but lexical is underweighted
+	originalLambda := lambda
+	if len(lexicalHits) > 0 && len(semanticHits) > 0 && lambda < 0.5 {
+		// Increase lambda to give lexical results a better chance to compete
+		lambda = 0.6 // Boost to 60% for lexical, 40% for semantic
+		log.Printf("[DEBUG] Adaptive weighting: boosting BM25 weight from %.3f to %.3f to help lexical results compete", originalLambda, lambda)
+	}
+
+	log.Printf("[DEBUG] Fusion ranking - Lexical hits: %d, Semantic hits: %d, BM25 weight (lambda): %.3f, RRF constant (k): %.1f",
+		len(lexicalHits), len(semanticHits), lambda, k)
+	
+	// Check if BM25 weight might be too low for lexical results to compete
+	if lambda < 0.5 && len(lexicalHits) > 0 && len(semanticHits) > 0 {
+		log.Printf("[DEBUG] WARNING: BM25 weight (%.3f) is < 0.5, which may underweight lexical results compared to semantic results", lambda)
+		
+		// Show effective weighting for top-ranked items
+		lexRRF1 := 1.0 / (k + 1.0)  // RRF for rank 1
+		semRRF1 := 1.0 / (k + 1.0)  // RRF for rank 1
+		lexEffectiveWeight := lambda * lexRRF1
+		semEffectiveWeight := (1.0 - lambda) * semRRF1
+		log.Printf("[DEBUG] Effective weights for rank 1: lexical=%.6f, semantic=%.6f (ratio: %.2f:%.2f)", 
+			lexEffectiveWeight, semEffectiveWeight, lexEffectiveWeight/(lexEffectiveWeight+semEffectiveWeight)*100, 
+			semEffectiveWeight/(lexEffectiveWeight+semEffectiveWeight)*100)
+	}
+
+	// Log input score ranges
+	if len(lexicalHits) > 0 {
+		lexMinScore := lexicalHits[len(lexicalHits)-1].Score
+		lexMaxScore := lexicalHits[0].Score
+		log.Printf("[DEBUG] Lexical input score range: %.6f (min) to %.6f (max)", lexMinScore, lexMaxScore)
+	}
+	if len(semanticHits) > 0 {
+		semMinScore := semanticHits[len(semanticHits)-1].Score
+		semMaxScore := semanticHits[0].Score
+		log.Printf("[DEBUG] Semantic input score range: %.6f (min) to %.6f (max)", semMinScore, semMaxScore)
+	}
 
 	// Create maps for efficient lookup
 	lexicalScores := make(map[string]float64)
@@ -660,29 +733,51 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 	allHits := make(map[string]types.SearchHit)
 
 	// Process lexical hits
+	log.Printf("[DEBUG] Processing %d lexical hits:", len(lexicalHits))
 	for rank, hit := range lexicalHits {
 		key := qs.getHitKey(hit)
 		rrf := 1.0 / (k + float64(rank+1))
-		lexicalScores[key] = hit.Score * lambda * rrf
-		allHits[key] = hit
+		originalScore := hit.Score
+		finalScore := originalScore * lambda * rrf
+		lexicalScores[key] = finalScore
+		
+		// Create a copy of the hit with updated score
+		updatedHit := hit
+		updatedHit.Score = finalScore
+		allHits[key] = updatedHit
+		
+		if rank < 3 { // Log first 3 for debugging
+			log.Printf("[DEBUG]   Lex[%d]: %s, original=%.6f, rrf=%.6f, weighted=%.6f (lambda=%.3f)",
+				rank+1, key, originalScore, rrf, finalScore, lambda)
+		}
 	}
 
 	// Process semantic hits
+	log.Printf("[DEBUG] Processing %d semantic hits:", len(semanticHits))
 	for rank, hit := range semanticHits {
 		key := qs.getHitKey(hit)
 		rrf := 1.0 / (k + float64(rank+1))
-		semanticScore := hit.Score * (1.0 - lambda) * rrf
+		originalScore := hit.Score
+		semanticScore := originalScore * (1.0 - lambda) * rrf
+		
+		if rank < 3 { // Log first 3 for debugging
+			log.Printf("[DEBUG]   Sem[%d]: %s, original=%.6f, rrf=%.6f, weighted=%.6f (1-lambda=%.3f)",
+				rank+1, key, originalScore, rrf, semanticScore, 1.0-lambda)
+		}
 		
 		if existing, exists := allHits[key]; exists {
 			// Combine scores for hits that appear in both results
-			existing.Score = lexicalScores[key] + semanticScore
+			combinedScore := lexicalScores[key] + semanticScore
+			log.Printf("[DEBUG]   Combining: %s, lex=%.6f + sem=%.6f = %.6f", key, lexicalScores[key], semanticScore, combinedScore)
+			existing.Score = combinedScore
 			existing.Source = "both"
 			allHits[key] = existing
 		} else {
 			// New hit from semantic search only
-			hit.Score = semanticScore
+			updatedHit := hit
+			updatedHit.Score = semanticScore
 			semanticScores[key] = semanticScore
-			allHits[key] = hit
+			allHits[key] = updatedHit
 		}
 	}
 
@@ -696,11 +791,40 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 		return fusedHits[i].Score > fusedHits[j].Score
 	})
 
+	// Log final results before truncation
+	log.Printf("[DEBUG] Fusion result: %d total hits before truncation", len(fusedHits))
+	if len(fusedHits) > 0 {
+		log.Printf("[DEBUG] Top 5 fused results:")
+		for i, hit := range fusedHits {
+			if i >= 5 {
+				break
+			}
+			log.Printf("[DEBUG]   %d. File: %s, Line: %d, Score: %.6f, Source: %s",
+				i+1, hit.File, hit.LineNumber, hit.Score, hit.Source)
+		}
+		
+		// Log score distribution by source
+		lexCount, semCount, bothCount := 0, 0, 0
+		for _, hit := range fusedHits {
+			switch hit.Source {
+			case "lex":
+				lexCount++
+			case "vec":
+				semCount++
+			case "both":
+				bothCount++
+			}
+		}
+		log.Printf("[DEBUG] Final result distribution: lexical-only=%d, semantic-only=%d, both=%d", lexCount, semCount, bothCount)
+	}
+
 	// Limit to top-k results
 	if len(fusedHits) > topK {
+		log.Printf("[DEBUG] Truncating from %d to %d results", len(fusedHits), topK)
 		fusedHits = fusedHits[:topK]
 	}
 
+	log.Printf("[DEBUG] Final fusion ranking complete: returning %d results", len(fusedHits))
 	return fusedHits
 }
 
