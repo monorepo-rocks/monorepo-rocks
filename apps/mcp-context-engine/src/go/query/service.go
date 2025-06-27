@@ -73,6 +73,11 @@ func (qs *QueryService) Search(ctx context.Context, request *types.SearchRequest
 		return nil, fmt.Errorf("semantic search failed: %w", err)
 	}
 
+	// Filter semantic results for JSON field queries to improve relevance
+	if fileQuery.IsJSONFieldQuery {
+		semanticResults = qs.filterSemanticResultsForJSONFields(semanticResults, fileQuery)
+	}
+
 	// Fusion ranking: combine lexical and semantic results
 	fusedResults := qs.fusionRanking(lexicalResults, semanticResults, request.TopK)
 
@@ -247,6 +252,9 @@ func (qs *QueryService) parseFileQuery(query string) *FileQuery {
 				fileQuery.TargetFields = append(fileQuery.TargetFields, field)
 			}
 		}
+		
+		// Set JSON field search flag for better filtering
+		fileQuery.IsJSONFieldQuery = true
 	}
 
 	// Clean up the focused query by removing common file-related words
@@ -653,7 +661,7 @@ func (qs *QueryService) performSemanticSearch(ctx context.Context, request *type
 
 	// Search in vector index
 	vectorOptions := indexer.VectorSearchOptions{
-		MinScore: 0.01, // Lowered threshold for stub embedder with poor quality scores
+		MinScore: 0.1, // Increased threshold to filter out very low-quality semantic results
 	}
 
 	vectorResults, err := qs.faissIndexer.Search(ctx, queryEmbedding.Vector, request.TopK*2, vectorOptions)
@@ -685,6 +693,59 @@ func (qs *QueryService) performSemanticSearch(ctx context.Context, request *type
 	return hits, nil
 }
 
+// filterSemanticResultsForJSONFields filters semantic results to improve relevance for JSON field queries
+func (qs *QueryService) filterSemanticResultsForJSONFields(hits []types.SearchHit, fileQuery *FileQuery) []types.SearchHit {
+	if len(fileQuery.TargetFields) == 0 {
+		return hits
+	}
+
+	var filtered []types.SearchHit
+	for _, hit := range hits {
+		// Skip very low-scoring semantic results that likely aren't relevant
+		if hit.Score < 0.05 {
+			continue
+		}
+
+		// Check if the hit text contains homepage URLs and exclude them for field queries
+		lowerText := strings.ToLower(hit.Text)
+		if strings.Contains(lowerText, "homepage") && 
+		   (strings.Contains(lowerText, "http://") || strings.Contains(lowerText, "https://")) {
+			textPreview := hit.Text
+			if len(textPreview) > 100 {
+				textPreview = textPreview[:100] + "..."
+			}
+			log.Printf("[DEBUG] Filtering out homepage URL result: %s", textPreview)
+			continue
+		}
+
+		// For JSON field queries, prefer results that actually contain the field as a JSON key
+		hasJsonField := false
+		for _, field := range fileQuery.TargetFields {
+			// Look for field as JSON key pattern: "field":
+			jsonKeyPattern := fmt.Sprintf("\"%s\":", field)
+			if strings.Contains(lowerText, strings.ToLower(jsonKeyPattern)) {
+				hasJsonField = true
+				break
+			}
+		}
+
+		// If we found a JSON field pattern, boost the score slightly
+		if hasJsonField {
+			hit.Score = hit.Score * 1.2
+			filtered = append(filtered, hit)
+		} else {
+			// Still include non-JSON-field results but with lower priority
+			// Only if they have a decent score to begin with
+			if hit.Score >= 0.1 {
+				filtered = append(filtered, hit)
+			}
+		}
+	}
+
+	log.Printf("[DEBUG] Filtered semantic results for JSON field query: %d -> %d results", len(hits), len(filtered))
+	return filtered
+}
+
 func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHit, topK int) []types.SearchHit {
 	// Reciprocal Rank Fusion (RRF) with BM25 weighting
 	lambda := qs.config.Fusion.BM25Weight
@@ -696,6 +757,22 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 		// Increase lambda to give lexical results a better chance to compete
 		lambda = 0.6 // Boost to 60% for lexical, 40% for semantic
 		log.Printf("[DEBUG] Adaptive weighting: boosting BM25 weight from %.3f to %.3f to help lexical results compete", originalLambda, lambda)
+	}
+	
+	// For JSON field queries, heavily favor lexical results since they are more precise
+	isJSONFieldQuery := false
+	// Check if any lexical hit is from a JSON field query context
+	for _, hit := range lexicalHits {
+		if strings.HasSuffix(hit.File, ".json") {
+			isJSONFieldQuery = true
+			break
+		}
+	}
+	
+	if isJSONFieldQuery && lambda < 0.8 {
+		originalLambda = lambda
+		lambda = 0.85 // Heavily favor lexical results for JSON field queries
+		log.Printf("[DEBUG] JSON field query detected: boosting BM25 weight from %.3f to %.3f for precise field matching", originalLambda, lambda)
 	}
 
 	log.Printf("[DEBUG] Fusion ranking - Lexical hits: %d, Semantic hits: %d, BM25 weight (lambda): %.3f, RRF constant (k): %.1f",
@@ -997,11 +1074,12 @@ type QueryExplanation struct {
 
 // FileQuery represents a parsed query with file-aware context
 type FileQuery struct {
-	OriginalQuery    string   `json:"original_query"`
-	FilePatterns     []string `json:"file_patterns"`
-	FocusedQuery     string   `json:"focused_query"`
-	DetectedFileType string   `json:"detected_file_type"`
-	TargetFields     []string `json:"target_fields"`
+	OriginalQuery     string   `json:"original_query"`
+	FilePatterns      []string `json:"file_patterns"`
+	FocusedQuery      string   `json:"focused_query"`
+	DetectedFileType  string   `json:"detected_file_type"`
+	TargetFields      []string `json:"target_fields"`
+	IsJSONFieldQuery  bool     `json:"is_json_field_query"`
 }
 
 // Close releases resources

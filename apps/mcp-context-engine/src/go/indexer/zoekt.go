@@ -609,6 +609,7 @@ type LineMatch struct {
 
 func (z *ZoektStubIndexer) findMatchingLines(fileInfo *FileInfo, queryTerms []string, caseSensitive bool) []LineMatch {
 	var matches []LineMatch
+	isJSONFile := strings.HasSuffix(strings.ToLower(fileInfo.Path), ".json")
 	
 	for i, line := range fileInfo.Lines {
 		searchLine := line
@@ -617,18 +618,48 @@ func (z *ZoektStubIndexer) findMatchingLines(fileInfo *FileInfo, queryTerms []st
 		}
 
 		hasMatch := false
+		isRelevantJSONMatch := true
+		
+		// For JSON files, apply additional filtering for field queries
+		if isJSONFile {
+			// Filter out lines that contain homepage URLs for field queries
+			if strings.Contains(searchLine, "homepage") && 
+			   (strings.Contains(searchLine, "http://") || strings.Contains(searchLine, "https://")) {
+				isRelevantJSONMatch = false
+			}
+		}
+		
 		for _, term := range queryTerms {
 			searchTerm := term
 			if !caseSensitive {
 				searchTerm = strings.ToLower(term)
 			}
+			
 			if strings.Contains(searchLine, searchTerm) {
 				hasMatch = true
+				
+				// For JSON files and potential field names, prefer lines that start with the field as a JSON key
+				if isJSONFile && z.isLikelyJSONField(term) {
+					jsonKeyPattern := fmt.Sprintf("\"%s\":", term)
+					trimmedLine := strings.TrimSpace(searchLine)
+					if strings.HasPrefix(trimmedLine, strings.ToLower(jsonKeyPattern)) {
+						// This is a high-quality match - boost its relevance
+						hasMatch = true
+						break
+					} else if strings.Contains(searchLine, "homepage") || 
+							 strings.Contains(searchLine, "tree/main") ||
+							 (!strings.Contains(searchLine, fmt.Sprintf("\"%s\":", strings.ToLower(term))) && 
+							  strings.Contains(searchLine, strings.ToLower(term))) {
+						// This might be a field name appearing in a URL or value rather than as a key
+						// Lower the priority but don't completely exclude
+						isRelevantJSONMatch = false
+					}
+				}
 				break
 			}
 		}
 
-		if hasMatch {
+		if hasMatch && isRelevantJSONMatch {
 			match := LineMatch{
 				LineNumber: i + 1,
 				Text:       line,
@@ -640,6 +671,18 @@ func (z *ZoektStubIndexer) findMatchingLines(fileInfo *FileInfo, queryTerms []st
 	}
 
 	return matches
+}
+
+// isLikelyJSONField checks if a term is likely a JSON field name
+func (z *ZoektStubIndexer) isLikelyJSONField(term string) bool {
+	jsonFields := map[string]bool{
+		"main": true, "scripts": true, "dependencies": true, "devdependencies": true,
+		"name": true, "version": true, "description": true, "author": true, "license": true,
+		"homepage": true, "repository": true, "bugs": true, "keywords": true,
+		"engines": true, "files": true, "bin": true, "workspaces": true,
+		"private": true, "publishconfig": true, "config": true,
+	}
+	return jsonFields[strings.ToLower(term)]
 }
 
 func (z *ZoektStubIndexer) searchRegex(pattern string, options SearchOptions) ([]types.SearchHit, error) {
