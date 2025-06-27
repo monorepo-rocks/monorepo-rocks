@@ -150,6 +150,9 @@ func (z *ZoektStubIndexer) Search(ctx context.Context, query string, options Sea
 
 	var results []types.SearchHit
 	queryTerms := z.tokenize(strings.ToLower(query))
+	
+	// Remove duplicate terms and preserve order
+	queryTerms = z.deduplicateTerms(queryTerms)
 
 	// Handle regex search
 	if options.UseRegex {
@@ -159,6 +162,9 @@ func (z *ZoektStubIndexer) Search(ctx context.Context, query string, options Sea
 	// BM25 parameters
 	k1 := 1.2
 	b := 0.75
+
+	// Determine search strategy based on file patterns
+	hasFilePatterns := len(options.FilePatterns) > 0
 
 	for filePath, fileInfo := range z.files {
 		// Apply file pattern filters
@@ -172,7 +178,15 @@ func (z *ZoektStubIndexer) Search(ctx context.Context, query string, options Sea
 		}
 
 		// Calculate BM25 score for this document
-		score := z.calculateBM25(queryTerms, fileInfo, k1, b)
+		var score float64
+		if hasFilePatterns {
+			// For file-pattern searches, use OR logic (any term matching gives a score)
+			score = z.calculateBM25WithOR(queryTerms, fileInfo, k1, b)
+		} else {
+			// For general search, use traditional BM25 (all terms contribute)
+			score = z.calculateBM25(queryTerms, fileInfo, k1, b)
+		}
+		
 		if score <= 0 {
 			continue
 		}
@@ -399,6 +413,61 @@ func (z *ZoektStubIndexer) calculateBM25(queryTerms []string, doc *FileInfo, k1,
 	}
 
 	return score
+}
+
+// calculateBM25WithOR calculates BM25 score using OR logic - any matching term contributes to score
+// This is useful for file-pattern searches where we want results if ANY keyword matches
+func (z *ZoektStubIndexer) calculateBM25WithOR(queryTerms []string, doc *FileInfo, k1, b float64) float64 {
+	if z.corpusStats.TotalDocs == 0 || z.corpusStats.AvgDocLength == 0 {
+		return 0
+	}
+
+	docLength := float64(len(z.tokenize(doc.Content)))
+	score := 0.0
+	matchingTerms := 0
+
+	for _, term := range queryTerms {
+		tf := float64(doc.TermFreqs[term])
+		if tf == 0 {
+			continue // Term not found in document
+		}
+
+		df := float64(z.corpusStats.DocFreqs[term])
+		if df == 0 {
+			continue // Term not found in corpus
+		}
+
+		// IDF calculation
+		idf := math.Log((float64(z.corpusStats.TotalDocs)-df+0.5)/(df+0.5) + 1.0)
+
+		// TF component with saturation
+		tfComponent := (tf * (k1 + 1)) / (tf + k1*(1-b+b*(docLength/z.corpusStats.AvgDocLength)))
+
+		score += idf * tfComponent
+		matchingTerms++
+	}
+
+	// Return score if at least one term matched
+	if matchingTerms > 0 {
+		return score
+	}
+
+	return 0
+}
+
+// deduplicateTerms removes duplicate terms while preserving order
+func (z *ZoektStubIndexer) deduplicateTerms(terms []string) []string {
+	seen := make(map[string]bool)
+	var result []string
+	
+	for _, term := range terms {
+		if !seen[term] {
+			seen[term] = true
+			result = append(result, term)
+		}
+	}
+	
+	return result
 }
 
 func (z *ZoektStubIndexer) updateCorpusStats() {
