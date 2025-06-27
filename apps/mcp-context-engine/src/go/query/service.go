@@ -868,8 +868,8 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 		return fusedHits[i].Score > fusedHits[j].Score
 	})
 
-	// Log final results before truncation
-	log.Printf("[DEBUG] Fusion result: %d total hits before truncation", len(fusedHits))
+	// Log final results before filtering
+	log.Printf("[DEBUG] Fusion result: %d total hits before filtering", len(fusedHits))
 	if len(fusedHits) > 0 {
 		log.Printf("[DEBUG] Top 5 fused results:")
 		for i, hit := range fusedHits {
@@ -894,6 +894,24 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 		}
 		log.Printf("[DEBUG] Final result distribution: lexical-only=%d, semantic-only=%d, both=%d", lexCount, semCount, bothCount)
 	}
+
+	// Filter out zero-score results
+	var filteredHits []types.SearchHit
+	zeroScoreCount := 0
+	for _, hit := range fusedHits {
+		if hit.Score < 0.001 {
+			zeroScoreCount++
+			continue
+		}
+		filteredHits = append(filteredHits, hit)
+	}
+	
+	if zeroScoreCount > 0 {
+		log.Printf("[DEBUG] Filtered out %d zero-score results (score < 0.001), %d results remaining", 
+			zeroScoreCount, len(filteredHits))
+	}
+	
+	fusedHits = filteredHits
 
 	// Limit to top-k results
 	if len(fusedHits) > topK {
