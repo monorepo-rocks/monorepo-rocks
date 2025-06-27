@@ -67,19 +67,10 @@ var indexCmd = &cobra.Command{
 }
 
 func performIndexing(ctx context.Context, repoPath string, zoekt indexer.ZoektIndexer, faiss indexer.FAISSIndexer, emb embedder.Embedder) error {
-	// Walk the repository
-	var files []string
-	err := filepath.Walk(repoPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return nil // Skip errors
-		}
-		if !info.IsDir() && isCodeFile(path) {
-			files = append(files, path)
-		}
-		return nil
-	})
+	// Walk the repository respecting .gitignore
+	files, err := WalkCodeFiles(repoPath, isCodeFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to walk repository: %w", err)
 	}
 
 	fmt.Printf("Found %d code files\n", len(files))
