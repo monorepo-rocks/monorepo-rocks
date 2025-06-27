@@ -1,0 +1,36 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist/
+bin/
+*.exe
+
+# Go
+*.o
+*.a
+*.so
+*.test
+*.out
+vendor/
+
+# Indexes and cache
+.cache/
+*.index
+*.zoekt
+*.faiss
+
+# Config
+config.yaml
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

@@ -1,0 +1,14 @@
+{
+	"extends": "@repo/typescript-config/base.json",
+	"compilerOptions": {
+		"rootDir": ".",
+		"outDir": "dist",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true,
+		"lib": ["ESNext"],
+		"types": ["node"]
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["dist", "node_modules"]
+}

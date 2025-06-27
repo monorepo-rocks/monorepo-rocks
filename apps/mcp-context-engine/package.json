@@ -1,0 +1,62 @@
+{
+	"name": "mcp-context-engine",
+	"version": "0.0.1",
+	"private": false,
+	"description": "Fast, offline code search engine combining lexical and semantic search for LLM agents",
+	"keywords": [
+		"mcp",
+		"code-search",
+		"zoekt",
+		"faiss",
+		"semantic-search",
+		"llm-tools"
+	],
+	"homepage": "https://github.com/monorepo-rocks/monorepo-rocks/tree/main/apps/mcp-context-engine",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/monorepo-rocks/monorepo-rocks.git",
+		"directory": "apps/mcp-context-engine"
+	},
+	"license": "MIT",
+	"author": {
+		"name": "monorepo-rocks",
+		"url": "https://github.com/monorepo-rocks"
+	},
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": "./dist/cli/index.cjs"
+	},
+	"main": "./dist/cli/index.cjs",
+	"bin": {
+		"mcpce": "./dist/cli/index.cjs",
+		"mcp-context-engine": "./dist/cli/index.cjs"
+	},
+	"files": [
+		"dist",
+		"bin"
+	],
+	"scripts": {
+		"build": "run-s build:go build:cli",
+		"build:go": "make build",
+		"build:cli": "runx build lib ./src/cli/index.ts --platform=node --format=cjs --sourcemap=external --no-types",
+		"build:dev": "run-s build:go build:cli:dev",
+		"build:cli:dev": "runx build lib ./src/cli/index.ts --platform=node --format=cjs --sourcemap=external --no-types --no-minify",
+		"check:lint": "run-eslint",
+		"check:types": "run-tsc",
+		"prepublishOnly": "run-s build && rm -f dist/**/*.map",
+		"start": "run-s build:dev start:run",
+		"start:run": "node ./dist/cli/index.cjs",
+		"test": "run-vitest",
+		"test:go": "make test"
+	},
+	"dependencies": {
+		"commander": "^12.0.0"
+	},
+	"devDependencies": {
+		"@repo/eslint-config": "workspace:*",
+		"@repo/tools": "workspace:*",
+		"@repo/typescript-config": "workspace:*",
+		"@types/node": "^20.11.5"
+	}
+}
