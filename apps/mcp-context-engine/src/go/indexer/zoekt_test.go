@@ -297,15 +297,56 @@ func TestZoektIndexer_LanguageDetection(t *testing.T) {
 		filename string
 		expected string
 	}{
+		// Programming languages
 		{"main.go", "go"},
 		{"script.py", "python"},
 		{"app.js", "javascript"},
 		{"types.ts", "typescript"},
+		{"component.tsx", "typescript"},
+		{"component.jsx", "javascript"},
 		{"Main.java", "java"},
 		{"program.cpp", "cpp"},
 		{"util.c", "c"},
 		{"lib.rs", "rust"},
+		{"script.rb", "ruby"},
+		{"index.php", "php"},
+		{"Program.cs", "csharp"},
+		{"App.kt", "kotlin"},
+		{"View.swift", "swift"},
+		{"Main.scala", "scala"},
+		{"core.clj", "clojure"},
+		{"Utils.hs", "haskell"},
+		// Configuration and data files
+		{"package.json", "json"},
+		{"config.yaml", "yaml"},
+		{"docker-compose.yml", "yaml"},
+		{"data.xml", "xml"},
+		{"Cargo.toml", "toml"},
+		{"settings.ini", "ini"},
+		// Documentation
+		{"README.md", "markdown"},
+		{"docs.rst", "restructuredtext"},
 		{"readme.txt", "text"},
+		// Web technologies
+		{"index.html", "html"},
+		{"styles.css", "css"},
+		{"main.scss", "scss"},
+		{"vars.sass", "sass"},
+		{"theme.less", "less"},
+		{"App.vue", "vue"},
+		{"Component.svelte", "svelte"},
+		// Build and special files
+		{"Dockerfile", "dockerfile"},
+		{"Makefile", "makefile"},
+		{"CMakeLists.txt", "cmake"},
+		{"go.mod", "go-mod"},
+		{"go.sum", "go-sum"},
+		{"pyproject.toml", "toml"},
+		{"requirements.txt", "text"},
+		{"Pipfile", "toml"},
+		{".gitignore", "gitignore"},
+		// Unknown file should default to text
+		{"unknown.xyz", "text"},
 	}
 
 	for _, test := range tests {

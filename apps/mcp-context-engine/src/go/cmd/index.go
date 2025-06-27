@@ -154,24 +154,78 @@ func runWatcher(ctx context.Context, repoPath string, cfg *config.Config, zoekt 
 func isCodeFile(path string) bool {
 	ext := filepath.Ext(path)
 	codeExts := map[string]bool{
+		// Programming languages
 		".go": true, ".js": true, ".ts": true, ".tsx": true,
 		".py": true, ".java": true, ".c": true, ".cpp": true,
 		".h": true, ".hpp": true, ".rs": true, ".rb": true,
+		".jsx": true, ".php": true, ".cs": true, ".kt": true,
+		".swift": true, ".scala": true, ".clj": true, ".hs": true,
+		// Configuration and data files
+		".json": true, ".yaml": true, ".yml": true,
+		".xml": true, ".toml": true, ".ini": true,
+		// Documentation
+		".md": true, ".rst": true, ".txt": true,
+		// Build and project files
+		".dockerfile": true, ".gitignore": true, ".gitattributes": true,
+		".makefile": true, ".cmake": true,
+		// Web technologies
+		".html": true, ".css": true, ".scss": true, ".sass": true,
+		".less": true, ".vue": true, ".svelte": true,
 	}
-	return codeExts[ext]
+	// Special case for files without extensions that are commonly config files
+	basename := filepath.Base(path)
+	specialFiles := map[string]bool{
+		"Dockerfile": true, "Makefile": true, "CMakeLists.txt": true,
+		"package.json": true, "tsconfig.json": true, "composer.json": true,
+		"Cargo.toml": true, "pyproject.toml": true, "go.mod": true,
+		"go.sum": true, "requirements.txt": true, "Pipfile": true,
+	}
+	return codeExts[ext] || specialFiles[basename]
 }
 
 func detectLanguage(path string) string {
 	ext := filepath.Ext(path)
+	basename := filepath.Base(path)
+	
 	langMap := map[string]string{
+		// Programming languages
 		".go": "go", ".js": "javascript", ".ts": "typescript",
+		".tsx": "typescript", ".jsx": "javascript",
 		".py": "python", ".java": "java", ".c": "c",
-		".cpp": "cpp", ".rs": "rust", ".rb": "ruby",
+		".cpp": "cpp", ".h": "c", ".hpp": "cpp",
+		".rs": "rust", ".rb": "ruby", ".php": "php",
+		".cs": "csharp", ".kt": "kotlin", ".swift": "swift",
+		".scala": "scala", ".clj": "clojure", ".hs": "haskell",
+		// Configuration and data formats
+		".json": "json", ".yaml": "yaml", ".yml": "yaml",
+		".xml": "xml", ".toml": "toml", ".ini": "ini",
+		// Documentation
+		".md": "markdown", ".rst": "restructuredtext", ".txt": "text",
+		// Web technologies
+		".html": "html", ".css": "css", ".scss": "scss",
+		".sass": "sass", ".less": "less", ".vue": "vue",
+		".svelte": "svelte",
+		// Build files
+		".dockerfile": "dockerfile", ".makefile": "makefile",
+		".cmake": "cmake", ".gitignore": "gitignore",
+	}
+	
+	// Check special files without extensions
+	specialFiles := map[string]string{
+		"Dockerfile": "dockerfile", "Makefile": "makefile",
+		"CMakeLists.txt": "cmake", "go.mod": "go-mod",
+		"go.sum": "go-sum", "Cargo.toml": "toml",
+		"pyproject.toml": "toml", "requirements.txt": "text",
+		"Pipfile": "toml",
+	}
+	
+	if lang, ok := specialFiles[basename]; ok {
+		return lang
 	}
 	if lang, ok := langMap[ext]; ok {
 		return lang
 	}
-	return "unknown"
+	return "text"
 }
 
 func init() {

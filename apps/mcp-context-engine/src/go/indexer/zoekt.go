@@ -281,26 +281,48 @@ func (z *ZoektStubIndexer) readFileContent(filePath string) (string, error) {
 
 func (z *ZoektStubIndexer) detectLanguage(filePath string) string {
 	ext := filepath.Ext(filePath)
-	switch ext {
-	case ".go":
-		return "go"
-	case ".js":
-		return "javascript"
-	case ".ts":
-		return "typescript"
-	case ".py":
-		return "python"
-	case ".java":
-		return "java"
-	case ".cpp", ".cc", ".cxx":
-		return "cpp"
-	case ".c":
-		return "c"
-	case ".rs":
-		return "rust"
-	default:
-		return "text"
+	basename := filepath.Base(filePath)
+	
+	langMap := map[string]string{
+		// Programming languages
+		".go": "go", ".js": "javascript", ".ts": "typescript",
+		".tsx": "typescript", ".jsx": "javascript",
+		".py": "python", ".java": "java", ".c": "c",
+		".cpp": "cpp", ".cc": "cpp", ".cxx": "cpp",
+		".h": "c", ".hpp": "cpp",
+		".rs": "rust", ".rb": "ruby", ".php": "php",
+		".cs": "csharp", ".kt": "kotlin", ".swift": "swift",
+		".scala": "scala", ".clj": "clojure", ".hs": "haskell",
+		// Configuration and data formats
+		".json": "json", ".yaml": "yaml", ".yml": "yaml",
+		".xml": "xml", ".toml": "toml", ".ini": "ini",
+		// Documentation
+		".md": "markdown", ".rst": "restructuredtext", ".txt": "text",
+		// Web technologies
+		".html": "html", ".css": "css", ".scss": "scss",
+		".sass": "sass", ".less": "less", ".vue": "vue",
+		".svelte": "svelte",
+		// Build files
+		".dockerfile": "dockerfile", ".makefile": "makefile",
+		".cmake": "cmake", ".gitignore": "gitignore",
 	}
+	
+	// Check special files without extensions
+	specialFiles := map[string]string{
+		"Dockerfile": "dockerfile", "Makefile": "makefile",
+		"CMakeLists.txt": "cmake", "go.mod": "go-mod",
+		"go.sum": "go-sum", "Cargo.toml": "toml",
+		"pyproject.toml": "toml", "requirements.txt": "text",
+		"Pipfile": "toml",
+	}
+	
+	if lang, ok := specialFiles[basename]; ok {
+		return lang
+	}
+	if lang, ok := langMap[ext]; ok {
+		return lang
+	}
+	return "text"
 }
 
 func (z *ZoektStubIndexer) tokenize(text string) []string {
