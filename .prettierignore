@@ -8,3 +8,4 @@ vite.config.ts.timestamp*
 worker-configuration.d.ts
 **/dist/**
 .claude/*.json
+.cursor/rules/*.mdc

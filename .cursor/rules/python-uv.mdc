@@ -1,0 +1,60 @@
+---
+description: Always use uv for Python package management and virtual environments
+globs:
+alwaysApply: false
+---
+<python-uv-guidelines>
+
+<title>Python Package Management with uv</title>
+
+<rules>
+- Always use `uv` instead of `pip`, `pipenv`, `poetry`, or `conda` for Python package management
+- Use `uv init` to create new Python projects - this automatically handles Python installation and virtual environment creation
+- Use `uv add` to install packages instead of `pip install`
+- Use `uv remove` to uninstall packages instead of `pip uninstall`
+- Use `uv sync` to install dependencies from `pyproject.toml` instead of `pip install -r requirements.txt`
+- Use `uv run` to execute Python scripts in the project environment
+- Always create `pyproject.toml` for dependency management instead of `requirements.txt`
+</rules>
+
+<examples>
+<example type="good">
+```bash
+# Create new project (automatically handles Python installation and venv)
+uv init my-project
+cd my-project
+
+# Add dependencies
+uv add requests
+uv add --dev pytest
+
+# Install dependencies
+uv sync
+
+# Run scripts
+uv run python main.py
+uv run pytest
+```
+</example>
+
+<example type="bad">
+```bash
+# Don't use these commands
+pip install requests
+python -m venv venv
+poetry add requests
+conda install requests
+pipenv install requests
+```
+</example>
+</examples>
+
+<rationale>
+- `uv` is significantly faster than traditional Python package managers
+- Better dependency resolution and lock file management
+- Built-in virtual environment management
+- Consistent cross-platform behavior
+- Modern Python project standards with `pyproject.toml`
+</rationale>
+
+</python-uv-guidelines>
