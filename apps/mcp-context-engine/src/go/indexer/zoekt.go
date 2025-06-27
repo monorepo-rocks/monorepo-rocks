@@ -1,0 +1,517 @@
+package indexer
+
+import (
+	"context"
+	"fmt"
+	"math"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"sync"
+	"time"
+
+	"../types"
+)
+
+// ZoektIndexer interface defines the operations for lexical search indexing
+type ZoektIndexer interface {
+	// Index adds files to the lexical index
+	Index(ctx context.Context, files []string) error
+	
+	// IncrementalIndex updates the index with changed files
+	IncrementalIndex(ctx context.Context, files []string) error
+	
+	// Search performs lexical search with BM25 scoring
+	Search(ctx context.Context, query string, options SearchOptions) ([]types.SearchHit, error)
+	
+	// Delete removes files from the index
+	Delete(ctx context.Context, files []string) error
+	
+	// Stats returns indexing statistics
+	Stats() IndexStats
+	
+	// Close closes the indexer and releases resources
+	Close() error
+}
+
+// SearchOptions configures search behavior
+type SearchOptions struct {
+	MaxResults   int
+	UseRegex     bool
+	CaseSensitive bool
+	WholeWord    bool
+	FilePatterns []string
+	Languages    []string
+}
+
+// IndexStats provides information about the index
+type IndexStats struct {
+	TotalFiles    int
+	IndexedFiles  int
+	TotalSize     int64
+	LastIndexTime time.Time
+}
+
+// ZoektStubIndexer is a stub implementation for development/testing
+// This will be replaced with real Zoekt integration when available
+type ZoektStubIndexer struct {
+	mu          sync.RWMutex
+	files       map[string]*FileInfo
+	indexRoot   string
+	stats       IndexStats
+	corpusStats *CorpusStats
+}
+
+// FileInfo represents indexed file information
+type FileInfo struct {
+	Path         string
+	Content      string
+	Language     string
+	LastModified time.Time
+	Lines        []string
+	TermFreqs    map[string]int
+}
+
+// CorpusStats maintains corpus-wide statistics for BM25
+type CorpusStats struct {
+	TotalDocs     int
+	AvgDocLength  float64
+	DocFreqs      map[string]int // term -> number of docs containing term
+	TotalTerms    int64
+}
+
+// NewZoektIndexer creates a new Zoekt indexer instance
+func NewZoektIndexer(indexRoot string) ZoektIndexer {
+	return &ZoektStubIndexer{
+		files:     make(map[string]*FileInfo),
+		indexRoot: indexRoot,
+		stats: IndexStats{
+			LastIndexTime: time.Now(),
+		},
+		corpusStats: &CorpusStats{
+			DocFreqs: make(map[string]int),
+		},
+	}
+}
+
+// Index implements the ZoektIndexer interface
+func (z *ZoektStubIndexer) Index(ctx context.Context, files []string) error {
+	z.mu.Lock()
+	defer z.mu.Unlock()
+
+	for _, file := range files {
+		if err := z.indexFile(file); err != nil {
+			return fmt.Errorf("failed to index file %s: %w", file, err)
+		}
+	}
+
+	z.updateCorpusStats()
+	z.stats.LastIndexTime = time.Now()
+	return nil
+}
+
+// IncrementalIndex implements the ZoektIndexer interface
+func (z *ZoektStubIndexer) IncrementalIndex(ctx context.Context, files []string) error {
+	// For incremental indexing, we just re-index the files
+	// In a real implementation, this would be more sophisticated
+	return z.Index(ctx, files)
+}
+
+// Search implements the ZoektIndexer interface with BM25 scoring
+func (z *ZoektStubIndexer) Search(ctx context.Context, query string, options SearchOptions) ([]types.SearchHit, error) {
+	z.mu.RLock()
+	defer z.mu.RUnlock()
+
+	if len(z.files) == 0 {
+		return []types.SearchHit{}, nil
+	}
+
+	var results []types.SearchHit
+	queryTerms := z.tokenize(strings.ToLower(query))
+
+	// Handle regex search
+	if options.UseRegex {
+		return z.searchRegex(query, options)
+	}
+
+	// BM25 parameters
+	k1 := 1.2
+	b := 0.75
+
+	for filePath, fileInfo := range z.files {
+		// Apply file pattern filters
+		if !z.matchesFilePatterns(filePath, options.FilePatterns) {
+			continue
+		}
+
+		// Apply language filters
+		if !z.matchesLanguages(fileInfo.Language, options.Languages) {
+			continue
+		}
+
+		// Calculate BM25 score for this document
+		score := z.calculateBM25(queryTerms, fileInfo, k1, b)
+		if score <= 0 {
+			continue
+		}
+
+		// Find matching lines for context
+		matches := z.findMatchingLines(fileInfo, queryTerms, options.CaseSensitive)
+		for _, match := range matches {
+			hit := types.SearchHit{
+				File:       filePath,
+				LineNumber: match.LineNumber,
+				Text:       match.Text,
+				Score:      score,
+				Source:     "lex",
+				StartByte:  match.StartByte,
+				EndByte:    match.EndByte,
+				Language:   fileInfo.Language,
+			}
+			results = append(results, hit)
+		}
+	}
+
+	// Sort by score (descending)
+	results = z.sortByScore(results)
+
+	// Limit results
+	if options.MaxResults > 0 && len(results) > options.MaxResults {
+		results = results[:options.MaxResults]
+	}
+
+	return results, nil
+}
+
+// Delete implements the ZoektIndexer interface
+func (z *ZoektStubIndexer) Delete(ctx context.Context, files []string) error {
+	z.mu.Lock()
+	defer z.mu.Unlock()
+
+	for _, file := range files {
+		delete(z.files, file)
+	}
+
+	z.updateCorpusStats()
+	return nil
+}
+
+// Stats implements the ZoektIndexer interface
+func (z *ZoektStubIndexer) Stats() IndexStats {
+	z.mu.RLock()
+	defer z.mu.RUnlock()
+
+	z.stats.TotalFiles = len(z.files)
+	z.stats.IndexedFiles = len(z.files)
+	return z.stats
+}
+
+// Close implements the ZoektIndexer interface
+func (z *ZoektStubIndexer) Close() error {
+	z.mu.Lock()
+	defer z.mu.Unlock()
+
+	z.files = make(map[string]*FileInfo)
+	return nil
+}
+
+// Helper methods
+
+func (z *ZoektStubIndexer) indexFile(filePath string) error {
+	// In a real implementation, this would read the file from disk
+	// For now, we simulate file content
+	content := z.simulateFileContent(filePath)
+	
+	lines := strings.Split(content, "\n")
+	language := z.detectLanguage(filePath)
+	
+	termFreqs := make(map[string]int)
+	tokens := z.tokenize(strings.ToLower(content))
+	for _, token := range tokens {
+		termFreqs[token]++
+	}
+
+	fileInfo := &FileInfo{
+		Path:         filePath,
+		Content:      content,
+		Language:     language,
+		LastModified: time.Now(),
+		Lines:        lines,
+		TermFreqs:    termFreqs,
+	}
+
+	z.files[filePath] = fileInfo
+	return nil
+}
+
+func (z *ZoektStubIndexer) simulateFileContent(filePath string) string {
+	// Simulate different content based on file extension
+	ext := filepath.Ext(filePath)
+	switch ext {
+	case ".go":
+		return `package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Hello, World!")
+}
+
+func calculateSum(a, b int) int {
+	return a + b
+}
+`
+	case ".js", ".ts":
+		return `function greet(name) {
+	console.log("Hello, " + name);
+}
+
+export function calculate(x, y) {
+	return x + y;
+}
+
+const API_URL = "https://api.example.com";
+`
+	case ".py":
+		return `def greet(name):
+	print(f"Hello, {name}")
+
+def calculate(x, y):
+	return x + y
+
+if __name__ == "__main__":
+	greet("World")
+`
+	default:
+		return `This is a sample file content for testing purposes.
+It contains multiple lines with various words.
+Used for simulating lexical search functionality.
+`
+	}
+}
+
+func (z *ZoektStubIndexer) detectLanguage(filePath string) string {
+	ext := filepath.Ext(filePath)
+	switch ext {
+	case ".go":
+		return "go"
+	case ".js":
+		return "javascript"
+	case ".ts":
+		return "typescript"
+	case ".py":
+		return "python"
+	case ".java":
+		return "java"
+	case ".cpp", ".cc", ".cxx":
+		return "cpp"
+	case ".c":
+		return "c"
+	case ".rs":
+		return "rust"
+	default:
+		return "text"
+	}
+}
+
+func (z *ZoektStubIndexer) tokenize(text string) []string {
+	// Simple tokenization - split on non-alphanumeric characters
+	re := regexp.MustCompile(`[^\w]+`)
+	tokens := re.Split(text, -1)
+	
+	var result []string
+	for _, token := range tokens {
+		if len(token) > 0 {
+			result = append(result, token)
+		}
+	}
+	return result
+}
+
+func (z *ZoektStubIndexer) calculateBM25(queryTerms []string, doc *FileInfo, k1, b float64) float64 {
+	if z.corpusStats.TotalDocs == 0 || z.corpusStats.AvgDocLength == 0 {
+		return 0
+	}
+
+	docLength := float64(len(z.tokenize(doc.Content)))
+	score := 0.0
+
+	for _, term := range queryTerms {
+		tf := float64(doc.TermFreqs[term])
+		if tf == 0 {
+			continue
+		}
+
+		df := float64(z.corpusStats.DocFreqs[term])
+		if df == 0 {
+			continue
+		}
+
+		// IDF calculation
+		idf := math.Log((float64(z.corpusStats.TotalDocs)-df+0.5)/(df+0.5) + 1.0)
+
+		// TF component with saturation
+		tfComponent := (tf * (k1 + 1)) / (tf + k1*(1-b+b*(docLength/z.corpusStats.AvgDocLength)))
+
+		score += idf * tfComponent
+	}
+
+	return score
+}
+
+func (z *ZoektStubIndexer) updateCorpusStats() {
+	z.corpusStats.TotalDocs = len(z.files)
+	z.corpusStats.DocFreqs = make(map[string]int)
+	z.corpusStats.TotalTerms = 0
+
+	totalLength := 0
+	for _, fileInfo := range z.files {
+		docLength := len(z.tokenize(fileInfo.Content))
+		totalLength += docLength
+		z.corpusStats.TotalTerms += int64(docLength)
+
+		// Count document frequencies
+		seenTerms := make(map[string]bool)
+		for term := range fileInfo.TermFreqs {
+			if !seenTerms[term] {
+				z.corpusStats.DocFreqs[term]++
+				seenTerms[term] = true
+			}
+		}
+	}
+
+	if z.corpusStats.TotalDocs > 0 {
+		z.corpusStats.AvgDocLength = float64(totalLength) / float64(z.corpusStats.TotalDocs)
+	}
+}
+
+type LineMatch struct {
+	LineNumber int
+	Text       string
+	StartByte  int
+	EndByte    int
+}
+
+func (z *ZoektStubIndexer) findMatchingLines(fileInfo *FileInfo, queryTerms []string, caseSensitive bool) []LineMatch {
+	var matches []LineMatch
+	
+	for i, line := range fileInfo.Lines {
+		searchLine := line
+		if !caseSensitive {
+			searchLine = strings.ToLower(line)
+		}
+
+		hasMatch := false
+		for _, term := range queryTerms {
+			searchTerm := term
+			if !caseSensitive {
+				searchTerm = strings.ToLower(term)
+			}
+			if strings.Contains(searchLine, searchTerm) {
+				hasMatch = true
+				break
+			}
+		}
+
+		if hasMatch {
+			match := LineMatch{
+				LineNumber: i + 1,
+				Text:       line,
+				StartByte:  0, // Simplified - would calculate actual byte positions
+				EndByte:    len(line),
+			}
+			matches = append(matches, match)
+		}
+	}
+
+	return matches
+}
+
+func (z *ZoektStubIndexer) searchRegex(pattern string, options SearchOptions) ([]types.SearchHit, error) {
+	flags := 0
+	if !options.CaseSensitive {
+		flags = regexp.MustCompile(`(?i)`)
+	}
+
+	// Compile regex with appropriate flags
+	var re *regexp.Regexp
+	var err error
+	if !options.CaseSensitive {
+		re, err = regexp.Compile("(?i)" + pattern)
+	} else {
+		re, err = regexp.Compile(pattern)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("invalid regex pattern: %w", err)
+	}
+
+	var results []types.SearchHit
+	for filePath, fileInfo := range z.files {
+		if !z.matchesFilePatterns(filePath, options.FilePatterns) {
+			continue
+		}
+		if !z.matchesLanguages(fileInfo.Language, options.Languages) {
+			continue
+		}
+
+		for i, line := range fileInfo.Lines {
+			if re.MatchString(line) {
+				hit := types.SearchHit{
+					File:       filePath,
+					LineNumber: i + 1,
+					Text:       line,
+					Score:      1.0, // Fixed score for regex matches
+					Source:     "lex",
+					Language:   fileInfo.Language,
+				}
+				results = append(results, hit)
+			}
+		}
+	}
+
+	if options.MaxResults > 0 && len(results) > options.MaxResults {
+		results = results[:options.MaxResults]
+	}
+
+	return results, nil
+}
+
+func (z *ZoektStubIndexer) matchesFilePatterns(filePath string, patterns []string) bool {
+	if len(patterns) == 0 {
+		return true
+	}
+
+	for _, pattern := range patterns {
+		matched, err := filepath.Match(pattern, filepath.Base(filePath))
+		if err == nil && matched {
+			return true
+		}
+	}
+	return false
+}
+
+func (z *ZoektStubIndexer) matchesLanguages(language string, languages []string) bool {
+	if len(languages) == 0 {
+		return true
+	}
+
+	for _, lang := range languages {
+		if strings.EqualFold(language, lang) {
+			return true
+		}
+	}
+	return false
+}
+
+func (z *ZoektStubIndexer) sortByScore(hits []types.SearchHit) []types.SearchHit {
+	// Simple bubble sort by score (descending)
+	n := len(hits)
+	for i := 0; i < n-1; i++ {
+		for j := 0; j < n-i-1; j++ {
+			if hits[j].Score < hits[j+1].Score {
+				hits[j], hits[j+1] = hits[j+1], hits[j]
+			}
+		}
+	}
+	return hits
+}
