@@ -595,10 +595,30 @@ func (z *ZoektStubIndexer) matchesFilePatterns(filePath string, patterns []strin
 		return true
 	}
 
+	fileName := filepath.Base(filePath)
+	
 	for _, pattern := range patterns {
-		matched, err := filepath.Match(pattern, filepath.Base(filePath))
-		if err == nil && matched {
-			return true
+		// Handle patterns with wildcards using filepath.Match
+		if strings.Contains(pattern, "*") || strings.Contains(pattern, "?") || strings.Contains(pattern, "[") {
+			// Try matching against both full path and filename
+			if matched, err := filepath.Match(pattern, filePath); err == nil && matched {
+				return true
+			}
+			if matched, err := filepath.Match(pattern, fileName); err == nil && matched {
+				return true
+			}
+		} else {
+			// For patterns without wildcards, support both exact filename match and suffix match
+			// This allows "package.json" to match files ending with "package.json"
+			if fileName == pattern {
+				return true
+			}
+			if strings.HasSuffix(filePath, pattern) {
+				return true
+			}
+			if strings.HasSuffix(fileName, pattern) {
+				return true
+			}
 		}
 	}
 	return false
