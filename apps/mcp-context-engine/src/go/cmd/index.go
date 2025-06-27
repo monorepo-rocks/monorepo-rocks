@@ -120,6 +120,10 @@ func performIndexing(ctx context.Context, repoPath string, zoekt indexer.ZoektIn
 	if err := faiss.Save(ctx, filepath.Join(indexPath, "faiss.index")); err != nil {
 		return fmt.Errorf("failed to save FAISS index: %w", err)
 	}
+	
+	if err := zoekt.Save(ctx, filepath.Join(indexPath, "zoekt.index")); err != nil {
+		return fmt.Errorf("failed to save Zoekt index: %w", err)
+	}
 
 	fmt.Println("Indexing complete!")
 	return nil

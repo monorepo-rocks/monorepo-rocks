@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math"
@@ -31,6 +32,12 @@ type ZoektIndexer interface {
 	
 	// Stats returns indexing statistics
 	Stats() IndexStats
+	
+	// Save persists the index to disk
+	Save(ctx context.Context, path string) error
+	
+	// Load restores the index from disk
+	Load(ctx context.Context, path string) error
 	
 	// Close closes the indexer and releases resources
 	Close() error
@@ -240,6 +247,95 @@ func (z *ZoektStubIndexer) Stats() IndexStats {
 	z.stats.TotalFiles = len(z.files)
 	z.stats.IndexedFiles = len(z.files)
 	return z.stats
+}
+
+// Save implements the ZoektIndexer interface
+func (z *ZoektStubIndexer) Save(ctx context.Context, path string) error {
+	z.mu.RLock()
+	defer z.mu.RUnlock()
+
+	log.Printf("Saving Zoekt index to %s", path)
+	
+	// Create a persistable data structure
+	data := struct {
+		Files       map[string]*FileInfo `json:"files"`
+		Stats       IndexStats          `json:"stats"`
+		CorpusStats *CorpusStats        `json:"corpus_stats"`
+	}{
+		Files:       z.files,
+		Stats:       z.stats,
+		CorpusStats: z.corpusStats,
+	}
+
+	// Ensure the directory exists
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	// Write to file
+	file, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("failed to create index file: %w", err)
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	if err := encoder.Encode(data); err != nil {
+		return fmt.Errorf("failed to encode index data: %w", err)
+	}
+
+	log.Printf("Successfully saved Zoekt index with %d files", len(z.files))
+	return nil
+}
+
+// Load implements the ZoektIndexer interface
+func (z *ZoektStubIndexer) Load(ctx context.Context, path string) error {
+	z.mu.Lock()
+	defer z.mu.Unlock()
+
+	log.Printf("Loading Zoekt index from %s", path)
+
+	// Check if file exists
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		log.Printf("Index file does not exist: %s", path)
+		return nil // Not an error - just means no index saved yet
+	}
+
+	// Read from file
+	file, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("failed to open index file: %w", err)
+	}
+	defer file.Close()
+
+	// Decode data
+	var data struct {
+		Files       map[string]*FileInfo `json:"files"`
+		Stats       IndexStats          `json:"stats"`
+		CorpusStats *CorpusStats        `json:"corpus_stats"`
+	}
+
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&data); err != nil {
+		return fmt.Errorf("failed to decode index data: %w", err)
+	}
+
+	// Restore the data
+	z.files = data.Files
+	z.stats = data.Stats
+	z.corpusStats = data.CorpusStats
+
+	if z.files == nil {
+		z.files = make(map[string]*FileInfo)
+	}
+	if z.corpusStats == nil {
+		z.corpusStats = &CorpusStats{
+			DocFreqs: make(map[string]int),
+		}
+	}
+
+	log.Printf("Successfully loaded Zoekt index with %d files", len(z.files))
+	return nil
 }
 
 // Close implements the ZoektIndexer interface

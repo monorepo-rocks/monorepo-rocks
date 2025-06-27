@@ -46,6 +46,11 @@ var searchCmd = &cobra.Command{
 			// Index might not exist yet
 			fmt.Fprintf(os.Stderr, "Warning: FAISS index not loaded: %v\n", err)
 		}
+		
+		if err := zoektIdx.Load(ctx, filepath.Join(indexPath, "zoekt.index")); err != nil {
+			// Index might not exist yet
+			fmt.Fprintf(os.Stderr, "Warning: Zoekt index not loaded: %v\n", err)
+		}
 
 		// Create query service
 		querySvc := query.NewQueryService(zoektIdx, faissIdx, emb, cfg)
