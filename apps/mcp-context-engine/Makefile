@@ -15,16 +15,47 @@ BUILD_FLAGS=-trimpath
 # Default target
 all: build
 
+# Help
+help:
+	@echo "MCP Context Engine - Build Targets"
+	@echo ""
+	@echo "Build targets:"
+	@echo "  make build         - Build with real FAISS support (requires 'brew install faiss')"
+	@echo "  make build-stub    - Build with stub implementations (no external dependencies)"
+	@echo "  make build-all     - Build for all platforms (stub mode)"
+	@echo "  make dev           - Development build with debug symbols"
+	@echo ""
+	@echo "Test targets:"
+	@echo "  make test          - Run all tests"
+	@echo "  make test-faiss    - Run FAISS-specific tests"
+	@echo "  make test-help     - Show detailed test options"
+	@echo ""
+	@echo "Other:"
+	@echo "  make clean         - Remove build artifacts"
+	@echo "  make fmt           - Format code"
+	@echo "  make lint          - Run linters"
+	@echo ""
+	@echo "Prerequisites for FAISS support:"
+	@echo "  brew install faiss"
+	@echo ""
+
 # Install Go dependencies
 install-deps:
 	go mod download
 	go mod tidy
 
-# Build for current platform
+# Build for current platform with FAISS support (requires FAISS C library)
 build: install-deps
-	@echo "Building for current platform..."
+	@echo "Building for current platform with FAISS support..."
 	@mkdir -p $(BIN_DIR)
-	go build $(BUILD_FLAGS) $(LDFLAGS) -o $(BIN_DIR)/$(BINARY_NAME) $(MAIN_PATH)
+	CGO_ENABLED=1 CGO_CFLAGS="-I/opt/homebrew/include" CGO_LDFLAGS="-L/opt/homebrew/lib -lfaiss_c" \
+		go build $(BUILD_FLAGS) $(LDFLAGS) -o $(BIN_DIR)/$(BINARY_NAME) $(MAIN_PATH)
+
+# Build with stub implementations (no external dependencies)
+build-stub: install-deps
+	@echo "Building with stub implementations..."
+	@mkdir -p $(BIN_DIR)
+	CGO_ENABLED=0 go build $(BUILD_FLAGS) $(LDFLAGS) -o $(BIN_DIR)/$(BINARY_NAME)-stub $(MAIN_PATH)
 
 # Build for all platforms
 build-all: install-deps
