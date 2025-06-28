@@ -21,10 +21,10 @@ import (
 
 // QueryService orchestrates search across lexical and vector indexes
 type QueryService struct {
-	zoektIndexer  indexer.ZoektIndexer
-	faissIndexer  indexer.FAISSIndexer
-	embedder      embedder.Embedder
-	config        *config.Config
+	zoektIndexer indexer.ZoektIndexer
+	faissIndexer indexer.FAISSIndexer
+	embedder     embedder.Embedder
+	config       *config.Config
 }
 
 // NewQueryService creates a new query service instance
@@ -90,7 +90,7 @@ func (qs *QueryService) Search(ctx context.Context, request *types.SearchRequest
 		LexicalHits:  len(lexicalResults),
 		SemanticHits: len(semanticResults),
 	}
-	
+
 	// Include analytics if enabled
 	if qs.config.Fusion.EnableAnalytics {
 		response.Analytics = analytics
@@ -120,12 +120,12 @@ func (qs *QueryService) GetIndexStatus(ctx context.Context) (*types.IndexStatus,
 	}
 
 	status := &types.IndexStatus{
-		Repository:     "default", // TODO: support multiple repos
-		ZoektProgress:  zoektProgress,
-		FAISSProgress:  faissProgress,
-		TotalFiles:     zoektStats.TotalFiles,
-		IndexedFiles:   zoektStats.IndexedFiles,
-		LastUpdated:    zoektStats.LastIndexTime,
+		Repository:    "default", // TODO: support multiple repos
+		ZoektProgress: zoektProgress,
+		FAISSProgress: faissProgress,
+		TotalFiles:    zoektStats.TotalFiles,
+		IndexedFiles:  zoektStats.IndexedFiles,
+		LastUpdated:   zoektStats.LastIndexTime,
 	}
 
 	return status, nil
@@ -143,80 +143,80 @@ func (qs *QueryService) parseFileQuery(query string) *FileQuery {
 	}
 
 	lowerQuery := strings.ToLower(query)
-	
+
 	// Detect import/usage queries early to preserve library names
 	if qs.isImportUsageQuery(query) {
 		fileQuery = qs.parseImportUsageQuery(query, fileQuery)
 		return fileQuery
 	}
-	
+
 	// File type patterns with their corresponding file patterns
 	fileTypeMap := map[string][]string{
-		"package.json": {"package.json"},
-		"package json": {"package.json"},
+		"package.json":       {"package.json"},
+		"package json":       {"package.json"},
 		"package.json files": {"package.json"},
-		"tsconfig.json": {"tsconfig.json"},
-		"tsconfig json": {"tsconfig.json"},
-		"go.mod": {"go.mod"},
-		"go.sum": {"go.sum"},
-		"cargo.toml": {"Cargo.toml"},
-		"cargo.lock": {"Cargo.lock"},
-		"dockerfile": {"Dockerfile", "*.dockerfile"},
-		"docker-compose": {"docker-compose.yml", "docker-compose.yaml"},
-		"makefile": {"Makefile", "makefile"},
-		"justfile": {"Justfile", "justfile"},
-		"readme": {"README.md", "readme.md", "README.txt"},
-		".gitignore": {".gitignore"},
-		"gitignore": {".gitignore"},
-		".eslintrc": {".eslintrc*"},
-		"eslintrc": {".eslintrc*"},
-		"webpack.config": {"webpack.config.*"},
-		"vite.config": {"vite.config.*"},
-		"jest.config": {"jest.config.*"},
+		"tsconfig.json":      {"tsconfig.json"},
+		"tsconfig json":      {"tsconfig.json"},
+		"go.mod":             {"go.mod"},
+		"go.sum":             {"go.sum"},
+		"cargo.toml":         {"Cargo.toml"},
+		"cargo.lock":         {"Cargo.lock"},
+		"dockerfile":         {"Dockerfile", "*.dockerfile"},
+		"docker-compose":     {"docker-compose.yml", "docker-compose.yaml"},
+		"makefile":           {"Makefile", "makefile"},
+		"justfile":           {"Justfile", "justfile"},
+		"readme":             {"README.md", "readme.md", "README.txt"},
+		".gitignore":         {".gitignore"},
+		"gitignore":          {".gitignore"},
+		".eslintrc":          {".eslintrc*"},
+		"eslintrc":           {".eslintrc*"},
+		"webpack.config":     {"webpack.config.*"},
+		"vite.config":        {"vite.config.*"},
+		"jest.config":        {"jest.config.*"},
 	}
 
 	// Language-based file patterns
 	langPatterns := map[string][]string{
-		"go files": {"*.go"},
+		"go files":         {"*.go"},
 		"javascript files": {"*.js"},
-		"js files": {"*.js"},
+		"js files":         {"*.js"},
 		"typescript files": {"*.ts", "*.tsx"},
-		"ts files": {"*.ts", "*.tsx"},
-		"python files": {"*.py"},
-		"py files": {"*.py"},
-		"java files": {"*.java"},
-		"c files": {"*.c", "*.h"},
-		"cpp files": {"*.cpp", "*.cc", "*.cxx", "*.hpp"},
-		"rust files": {"*.rs"},
-		"yaml files": {"*.yaml", "*.yml"},
-		"yml files": {"*.yaml", "*.yml"},
-		"json files": {"*.json"},
-		"xml files": {"*.xml"},
-		"html files": {"*.html"},
-		"css files": {"*.css"},
-		"markdown files": {"*.md"},
-		"md files": {"*.md"},
+		"ts files":         {"*.ts", "*.tsx"},
+		"python files":     {"*.py"},
+		"py files":         {"*.py"},
+		"java files":       {"*.java"},
+		"c files":          {"*.c", "*.h"},
+		"cpp files":        {"*.cpp", "*.cc", "*.cxx", "*.hpp"},
+		"rust files":       {"*.rs"},
+		"yaml files":       {"*.yaml", "*.yml"},
+		"yml files":        {"*.yaml", "*.yml"},
+		"json files":       {"*.json"},
+		"xml files":        {"*.xml"},
+		"html files":       {"*.html"},
+		"css files":        {"*.css"},
+		"markdown files":   {"*.md"},
+		"md files":         {"*.md"},
 	}
 
 	// Configuration and field-specific patterns
 	configFields := map[string][]string{
-		"main field": {"main"},
-		"scripts": {"scripts"},
-		"dependencies": {"dependencies"},
-		"devdependencies": {"devDependencies"},
-		"peerdependencies": {"peerDependencies"},
-		"name field": {"name"},
-		"version field": {"version"},
+		"main field":        {"main"},
+		"scripts":           {"scripts"},
+		"dependencies":      {"dependencies"},
+		"devdependencies":   {"devDependencies"},
+		"peerdependencies":  {"peerDependencies"},
+		"name field":        {"name"},
+		"version field":     {"version"},
 		"description field": {"description"},
-		"author field": {"author"},
-		"license field": {"license"},
-		"imports": {"import"},
-		"exports": {"export"},
-		"modules": {"module"},
-		"require": {"require"},
-		"usage": {"usage"},
-		"used": {"used"},
-		"imported": {"imported"},
+		"author field":      {"author"},
+		"license field":     {"license"},
+		"imports":           {"import"},
+		"exports":           {"export"},
+		"modules":           {"module"},
+		"require":           {"require"},
+		"usage":             {"usage"},
+		"used":              {"used"},
+		"imported":          {"imported"},
 	}
 
 	// Check for specific file type matches
@@ -259,7 +259,7 @@ func (qs *QueryService) parseFileQuery(query string) *FileQuery {
 			fileQuery.FilePatterns = []string{"package.json"}
 			fileQuery.DetectedFileType = "package.json"
 		}
-		
+
 		// Common package.json field queries
 		packageJsonFields := []string{"main", "scripts", "dependencies", "devDependencies", "name", "version"}
 		for _, field := range packageJsonFields {
@@ -267,7 +267,7 @@ func (qs *QueryService) parseFileQuery(query string) *FileQuery {
 				fileQuery.TargetFields = append(fileQuery.TargetFields, field)
 			}
 		}
-		
+
 		// Set JSON field search flag for better filtering
 		fileQuery.IsJSONFieldQuery = true
 	}
@@ -276,16 +276,16 @@ func (qs *QueryService) parseFileQuery(query string) *FileQuery {
 	cleanupWords := []string{"files", "file", "in", "of", "the", "for", "from", "within"}
 	focusedWords := strings.Fields(fileQuery.FocusedQuery)
 	var cleanedWords []string
-	
+
 	for _, word := range focusedWords {
 		word = strings.TrimSpace(word)
 		if word != "" && !slices.Contains(cleanupWords, strings.ToLower(word)) {
 			cleanedWords = append(cleanedWords, word)
 		}
 	}
-	
+
 	fileQuery.FocusedQuery = strings.Join(cleanedWords, " ")
-	
+
 	// If we have target fields, focus the query on those
 	if len(fileQuery.TargetFields) > 0 {
 		if fileQuery.FocusedQuery == "" {
@@ -301,7 +301,7 @@ func (qs *QueryService) parseFileQuery(query string) *FileQuery {
 		fileQuery.FocusedQuery = query
 	}
 
-	log.Printf("[DEBUG] parseFileQuery result - Original: '%s', FilePatterns: %v, FocusedQuery: '%s', DetectedFileType: '%s', TargetFields: %v", 
+	log.Printf("[DEBUG] parseFileQuery result - Original: '%s', FilePatterns: %v, FocusedQuery: '%s', DetectedFileType: '%s', TargetFields: %v",
 		query, fileQuery.FilePatterns, fileQuery.FocusedQuery, fileQuery.DetectedFileType, fileQuery.TargetFields)
 
 	return fileQuery
@@ -310,10 +310,10 @@ func (qs *QueryService) parseFileQuery(query string) *FileQuery {
 func (qs *QueryService) extractKeywords(query string) []string {
 	// Enhanced keyword extraction with better handling of search intent and technical terms
 	log.Printf("[DEBUG] extractKeywords input: '%s'", query)
-	
+
 	// Detect file-type queries first (before tokenization)
 	fileTypeTerms := qs.detectFileTypeQueries(query)
-	
+
 	// Remove common stop words but preserve action verbs that indicate search intent
 	stopWords := map[string]bool{
 		"field": true, "section": true, // Remove these file-query specific words
@@ -397,7 +397,7 @@ func (qs *QueryService) extractKeywords(query string) []string {
 // detectFileTypeQueries identifies file names and extensions in the query
 func (qs *QueryService) detectFileTypeQueries(query string) map[string]bool {
 	terms := make(map[string]bool)
-	
+
 	// Common config files and their patterns
 	configFiles := []string{
 		"package.json", "tsconfig.json", "go.mod", "go.sum", "Cargo.toml", "Cargo.lock",
@@ -408,7 +408,7 @@ func (qs *QueryService) detectFileTypeQueries(query string) map[string]bool {
 		"makefile", "Makefile", "justfile", "Justfile",
 		"README.md", "CHANGELOG.md", "LICENSE", "CONTRIBUTING.md",
 	}
-	
+
 	// Check for exact matches (case-insensitive)
 	lowerQuery := strings.ToLower(query)
 	for _, file := range configFiles {
@@ -416,12 +416,12 @@ func (qs *QueryService) detectFileTypeQueries(query string) map[string]bool {
 			terms[strings.ToLower(file)] = true
 		}
 	}
-	
+
 	// File extension patterns
 	extensionPatterns := []string{
 		`\.[a-zA-Z0-9]+\b`, // .js, .py, .go, etc.
 	}
-	
+
 	for _, pattern := range extensionPatterns {
 		re := regexp.MustCompile(pattern)
 		matches := re.FindAllString(query, -1)
@@ -429,7 +429,7 @@ func (qs *QueryService) detectFileTypeQueries(query string) map[string]bool {
 			terms[strings.ToLower(match)] = true
 		}
 	}
-	
+
 	// JSON field names and common config keys
 	jsonFields := []string{
 		"main", "scripts", "dependencies", "devDependencies", "peerDependencies",
@@ -440,65 +440,65 @@ func (qs *QueryService) detectFileTypeQueries(query string) map[string]bool {
 		"target", "module", "lib", "outDir", "rootDir", "strict",
 		"esModuleInterop", "skipLibCheck", "forceConsistentCasingInFileNames",
 	}
-	
+
 	// Check for JSON field names in context (e.g., "main field", "scripts section")
 	for _, field := range jsonFields {
 		if strings.Contains(lowerQuery, field) {
 			terms[field] = true
 		}
 	}
-	
+
 	return terms
 }
 
 // isImportUsageQuery detects if the query is asking about imports or usage of a library
 func (qs *QueryService) isImportUsageQuery(query string) bool {
 	lowerQuery := strings.ToLower(query)
-	
+
 	// Import patterns
 	importPatterns := []string{
 		"import", "require", "from", "imports of", "imports",
 		"usage of", "usages of", "use of", "uses of", "using",
 		"where", "how", "all usages", "all uses", "all imports",
 	}
-	
+
 	for _, pattern := range importPatterns {
 		if strings.Contains(lowerQuery, pattern) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
 // parseImportUsageQuery handles queries about imports and library usage
 func (qs *QueryService) parseImportUsageQuery(query string, fileQuery *FileQuery) *FileQuery {
 	lowerQuery := strings.ToLower(query)
-	
+
 	// Extract the library/package name from import/usage queries
 	libraryName := qs.extractLibraryNameFromQuery(query)
-	
+
 	if libraryName != "" {
 		// Preserve the library name as the focused query
 		fileQuery.FocusedQuery = libraryName
-		
+
 		// Add import/require as target field
 		if strings.Contains(lowerQuery, "import") || strings.Contains(lowerQuery, "require") {
 			fileQuery.TargetFields = append(fileQuery.TargetFields, "import", "require")
 		}
-		
+
 		// Add usage-related fields
 		if strings.Contains(lowerQuery, "usage") || strings.Contains(lowerQuery, "use") {
 			fileQuery.TargetFields = append(fileQuery.TargetFields, "usage", "used")
 		}
-		
+
 		// For JavaScript/TypeScript files, target common file patterns
 		fileQuery.FilePatterns = []string{"*.js", "*.ts", "*.tsx", "*.jsx", "*.mjs", "*.cjs"}
-		
-		log.Printf("[DEBUG] Import/usage query detected - Library: '%s', FocusedQuery: '%s', TargetFields: %v", 
+
+		log.Printf("[DEBUG] Import/usage query detected - Library: '%s', FocusedQuery: '%s', TargetFields: %v",
 			libraryName, fileQuery.FocusedQuery, fileQuery.TargetFields)
 	}
-	
+
 	return fileQuery
 }
 
@@ -516,7 +516,7 @@ func (qs *QueryService) extractLibraryNameFromQuery(query string) string {
 		`(?i)where\s+["']?([a-zA-Z0-9@/_-]+)["']?\s+(?:is\s+)?(?:used|imported)`,
 		`(?i)how\s+["']?([a-zA-Z0-9@/_-]+)["']?\s+(?:is\s+)?(?:used|imported)`,
 	}
-	
+
 	for _, pattern := range patterns {
 		re := regexp.MustCompile(pattern)
 		matches := re.FindStringSubmatch(query)
@@ -526,14 +526,14 @@ func (qs *QueryService) extractLibraryNameFromQuery(query string) string {
 			return libName
 		}
 	}
-	
+
 	// Fallback: look for quoted terms or common library names
 	quotedPattern := regexp.MustCompile(`["']([a-zA-Z0-9@/_-]+)["']`)
 	matches := quotedPattern.FindStringSubmatch(query)
 	if len(matches) > 1 {
 		return matches[1]
 	}
-	
+
 	// Look for standalone library names (common short names)
 	words := strings.Fields(query)
 	for _, word := range words {
@@ -542,7 +542,7 @@ func (qs *QueryService) extractLibraryNameFromQuery(query string) string {
 			return cleanWord
 		}
 	}
-	
+
 	return ""
 }
 
@@ -553,22 +553,22 @@ func (qs *QueryService) isLikelyLibraryName(word string) bool {
 		"zx": true, "fs": true, "os": true, "db": true, "ui": true, "io": true,
 		"rx": true, "d3": true, "p5": true, "$": true, "_": true,
 	}
-	
+
 	if commonLibraries[word] {
 		return true
 	}
-	
+
 	// Check for npm package patterns (e.g., @scope/name)
 	if strings.HasPrefix(word, "@") || strings.Contains(word, "/") {
 		return true
 	}
-	
+
 	// Check for library-like patterns (2+ chars, alphanumeric with common separators)
 	if len(word) >= 2 {
 		match, _ := regexp.MatchString(`^[a-zA-Z0-9][a-zA-Z0-9._-]*$`, word)
 		return match
 	}
-	
+
 	return false
 }
 
@@ -576,49 +576,49 @@ func (qs *QueryService) isLikelyLibraryName(word string) bool {
 func (qs *QueryService) generateImportRegexPatterns(libraryName string) []string {
 	// Escape special regex characters in the library name
 	escapedLibName := regexp.QuoteMeta(libraryName)
-	
+
 	var patterns []string
-	
+
 	// ES6 import patterns
 	patterns = append(patterns,
-		fmt.Sprintf(`import\s+.*\s+from\s+['""]%s['""]\s*;?`, escapedLibName),     // import { foo } from 'library';
-		fmt.Sprintf(`import\s+[^'""\s]*\s+from\s+['""]%s['""]\s*;?`, escapedLibName), // import foo from 'library';  
+		fmt.Sprintf(`import\s+.*\s+from\s+['""]%s['""]\s*;?`, escapedLibName),            // import { foo } from 'library';
+		fmt.Sprintf(`import\s+[^'""\s]*\s+from\s+['""]%s['""]\s*;?`, escapedLibName),     // import foo from 'library';
 		fmt.Sprintf(`import\s+\*\s+as\s+\w+\s+from\s+['""]%s['""]\s*;?`, escapedLibName), // import * as foo from 'library';
-		fmt.Sprintf(`import\s+['""]%s['""]\s*;?`, escapedLibName),                // import 'library';
+		fmt.Sprintf(`import\s+['""]%s['""]\s*;?`, escapedLibName),                        // import 'library';
 	)
-	
+
 	// CommonJS require patterns
 	patterns = append(patterns,
-		fmt.Sprintf(`require\s*\(\s*['""]%s['""\s]*\)`, escapedLibName),        // require('library')
-		fmt.Sprintf(`=\s*require\s*\(\s*['""]%s['""\s]*\)`, escapedLibName),    // const foo = require('library')
+		fmt.Sprintf(`require\s*\(\s*['""]%s['""\s]*\)`, escapedLibName),                   // require('library')
+		fmt.Sprintf(`=\s*require\s*\(\s*['""]%s['""\s]*\)`, escapedLibName),               // const foo = require('library')
 		fmt.Sprintf(`const\s+\w+\s*=\s*require\s*\(\s*['""]%s['""\s]*\)`, escapedLibName), // const foo = require('library')
 		fmt.Sprintf(`let\s+\w+\s*=\s*require\s*\(\s*['""]%s['""\s]*\)`, escapedLibName),   // let foo = require('library')
 		fmt.Sprintf(`var\s+\w+\s*=\s*require\s*\(\s*['""]%s['""\s]*\)`, escapedLibName),   // var foo = require('library')
 	)
-	
+
 	// Dynamic import patterns
 	patterns = append(patterns,
 		fmt.Sprintf(`import\s*\(\s*['""]%s['""\s]*\)`, escapedLibName),         // import('library')
 		fmt.Sprintf(`await\s+import\s*\(\s*['""]%s['""\s]*\)`, escapedLibName), // await import('library')
 	)
-	
+
 	// TypeScript import patterns
 	patterns = append(patterns,
 		fmt.Sprintf(`import\s+type\s+.*\s+from\s+['""]%s['""]\s*;?`, escapedLibName), // import type { Foo } from 'library';
 	)
-	
+
 	// From clause patterns (catches various import forms)
 	patterns = append(patterns,
 		fmt.Sprintf(`from\s+['""]%s['""]\s*;?`, escapedLibName), // from 'library';
 	)
-	
+
 	log.Printf("[DEBUG] Generated %d regex patterns for library '%s'", len(patterns), libraryName)
 	if len(patterns) > 0 && len(patterns) <= 3 {
 		log.Printf("[DEBUG] Sample patterns: %v", patterns[:len(patterns)])
 	} else if len(patterns) > 3 {
 		log.Printf("[DEBUG] Sample patterns: %v", patterns[:3])
 	}
-	
+
 	return patterns
 }
 
@@ -630,11 +630,11 @@ func (qs *QueryService) tokenizeWithCompounds(text string) []string {
 		`\w+-\w+`,  // hyphenated terms
 		`\w+_\w+`,  // underscore terms
 	}
-	
+
 	var compounds []string
 	var replacements []string
 	text = strings.ToLower(text)
-	
+
 	for i, pattern := range compoundPatterns {
 		re := regexp.MustCompile(pattern)
 		matches := re.FindAllString(text, -1)
@@ -645,11 +645,11 @@ func (qs *QueryService) tokenizeWithCompounds(text string) []string {
 			text = strings.Replace(text, match, placeholder, 1)
 		}
 	}
-	
+
 	// Regular tokenization
 	re := regexp.MustCompile(`[^\w]+`)
 	tokens := re.Split(text, -1)
-	
+
 	// Replace placeholders with original compound terms
 	for i, replacement := range replacements {
 		for j, token := range tokens {
@@ -659,7 +659,7 @@ func (qs *QueryService) tokenizeWithCompounds(text string) []string {
 			}
 		}
 	}
-	
+
 	// Filter out empty tokens
 	var result []string
 	for _, token := range tokens {
@@ -667,49 +667,49 @@ func (qs *QueryService) tokenizeWithCompounds(text string) []string {
 			result = append(result, token)
 		}
 	}
-	
+
 	return result
 }
 
 func (qs *QueryService) extractProgrammingTerms(query string) map[string]bool {
 	terms := make(map[string]bool)
-	
+
 	// Enhanced programming patterns with better file and config recognition
 	patterns := []string{
 		// Function patterns
-		`\b\w+\(\)`,  // function calls
+		`\b\w+\(\)`,                                       // function calls
 		`\bdef\s+\w+`, `\bfunction\s+\w+`, `\bfunc\s+\w+`, // function definitions
-		
+
 		// Variable patterns
 		`\b[a-zA-Z_][a-zA-Z0-9_]*\s*=`, // variable assignments
-		
+
 		// Class/struct patterns
 		`\bclass\s+\w+`, `\bstruct\s+\w+`, `\binterface\s+\w+`,
-		
+
 		// Import/include patterns
 		`\bimport\s+\w+`, `\bfrom\s+\w+`, `\b#include\s*<\w+>`,
-		
+
 		// File patterns with extensions
 		`\b\w+\.\w{1,5}\b`, // files with extensions (e.g., main.go, index.js)
-		
+
 		// Configuration patterns
-		`\b[a-zA-Z_][a-zA-Z0-9_]*\.json\b`, // JSON config files
+		`\b[a-zA-Z_][a-zA-Z0-9_]*\.json\b`,  // JSON config files
 		`\b[a-zA-Z_][a-zA-Z0-9_]*\.ya?ml\b`, // YAML config files
-		`\b[a-zA-Z_][a-zA-Z0-9_]*\.toml\b`, // TOML config files
-		`\b[a-zA-Z_][a-zA-Z0-9_]*\.lock\b`, // Lock files
-		
+		`\b[a-zA-Z_][a-zA-Z0-9_]*\.toml\b`,  // TOML config files
+		`\b[a-zA-Z_][a-zA-Z0-9_]*\.lock\b`,  // Lock files
+
 		// API and HTTP patterns
 		`\b(GET|POST|PUT|DELETE|PATCH)\b`, // HTTP methods
-		`\b/\w+(/\w+)*\b`, // API endpoints
-		
+		`\b/\w+(/\w+)*\b`,                 // API endpoints
+
 		// Common keywords
 		`\b(if|else|for|while|switch|case|try|catch|finally|return|break|continue)\b`,
 		`\b(public|private|protected|static|const|let|var|final)\b`,
 		`\b(int|string|bool|float|double|char|void|null|undefined)\b`,
-		
+
 		// Database patterns
 		`\b(SELECT|INSERT|UPDATE|DELETE|FROM|WHERE|JOIN)\b`,
-		
+
 		// Framework/library specific
 		`\b(React|Vue|Angular|Express|Django|Flask|Rails)\b`,
 	}
@@ -732,13 +732,13 @@ func (qs *QueryService) extractProgrammingTerms(query string) map[string]bool {
 func (qs *QueryService) cleanProgrammingTerm(term string) string {
 	// Remove common prefixes and suffixes while preserving important file names
 	term = strings.TrimSpace(term)
-	
+
 	// Preserve file extensions and compound names
 	if strings.Contains(term, ".") && !strings.HasPrefix(term, ".") {
 		// This looks like a filename, preserve it
 		return term
 	}
-	
+
 	// Remove function definition keywords
 	prefixesToRemove := []string{"def ", "function ", "func ", "class ", "struct ", "interface ", "import ", "from "}
 	for _, prefix := range prefixesToRemove {
@@ -755,7 +755,7 @@ func (qs *QueryService) cleanProgrammingTerm(term string) string {
 	if idx := strings.Index(term, "="); idx > 0 {
 		term = strings.TrimSpace(term[:idx])
 	}
-	
+
 	// Remove angle brackets from includes
 	if strings.HasPrefix(term, "<") && strings.HasSuffix(term, ">") {
 		term = strings.TrimPrefix(strings.TrimSuffix(term, ">"), "<")
@@ -770,8 +770,8 @@ func (qs *QueryService) performLexicalSearch(ctx context.Context, request *types
 	if searchQuery == "" {
 		searchQuery = request.Query // fallback to original query
 	}
-	
-	log.Printf("[DEBUG] Lexical search - Keywords: %v, SearchQuery: '%s', FileQuery: %+v", 
+
+	log.Printf("[DEBUG] Lexical search - Keywords: %v, SearchQuery: '%s', FileQuery: %+v",
 		keywords, searchQuery, fileQuery)
 
 	// Check if this is an import/usage query and enhance with regex patterns
@@ -791,17 +791,17 @@ func (qs *QueryService) performLexicalSearch(ctx context.Context, request *types
 
 	// Set up search options with file patterns from query analysis
 	filePatterns := request.Filters.FilePatterns
-	
+
 	// If file patterns were detected in the query, use them (but still include any existing patterns)
 	if len(fileQuery.FilePatterns) > 0 {
 		filePatterns = append(filePatterns, fileQuery.FilePatterns...)
-		log.Printf("[DEBUG] Using file patterns from query analysis: %v (combined with existing: %v)", 
+		log.Printf("[DEBUG] Using file patterns from query analysis: %v (combined with existing: %v)",
 			fileQuery.FilePatterns, request.Filters.FilePatterns)
 	}
-	
+
 	// Determine if we should use regex - either if the query contains regex patterns or if it's an import query
 	useRegex := qs.containsRegexPatterns(request.Query) || isImportQuery
-	
+
 	options := indexer.SearchOptions{
 		MaxResults:    request.TopK * 2, // Get more results for fusion ranking
 		UseRegex:      useRegex,
@@ -817,7 +817,7 @@ func (qs *QueryService) performLexicalSearch(ctx context.Context, request *types
 
 	log.Printf("[DEBUG] Lexical search options: MaxResults=%d, UseRegex=%v, CaseSensitive=%v, FilePatterns=%v, Languages=%v",
 		options.MaxResults, options.UseRegex, options.CaseSensitive, options.FilePatterns, options.Languages)
-	
+
 	if isImportQuery {
 		log.Printf("[DEBUG] Import query mode - Final search query: '%s'", searchQuery)
 	}
@@ -840,7 +840,7 @@ func (qs *QueryService) performLexicalSearch(ctx context.Context, request *types
 			log.Printf("[DEBUG]   %d. File: %s, Line: %d, Score: %.6f, Source: %s, Text: %.100s...",
 				i+1, hit.File, hit.LineNumber, hit.Score, hit.Source, strings.ReplaceAll(hit.Text, "\n", " "))
 		}
-		
+
 		// Log score distribution
 		if len(lexicalResults) > 0 {
 			minScore := lexicalResults[len(lexicalResults)-1].Score
@@ -892,7 +892,7 @@ func (qs *QueryService) performSemanticSearch(ctx context.Context, request *type
 
 		hit := types.SearchHit{
 			File:       filePath,
-			LineNumber: 1, // TODO: extract actual line number from chunk ID
+			LineNumber: 1,                               // TODO: extract actual line number from chunk ID
 			Text:       qs.getChunkText(result.ChunkID), // TODO: implement chunk text retrieval
 			Score:      float64(result.Score),
 			Source:     "vec",
@@ -919,8 +919,8 @@ func (qs *QueryService) filterSemanticResultsForJSONFields(hits []types.SearchHi
 
 		// Check if the hit text contains homepage URLs and exclude them for field queries
 		lowerText := strings.ToLower(hit.Text)
-		if strings.Contains(lowerText, "homepage") && 
-		   (strings.Contains(lowerText, "http://") || strings.Contains(lowerText, "https://")) {
+		if strings.Contains(lowerText, "homepage") &&
+			(strings.Contains(lowerText, "http://") || strings.Contains(lowerText, "https://")) {
 			textPreview := hit.Text
 			if len(textPreview) > 100 {
 				textPreview = textPreview[:100] + "..."
@@ -967,14 +967,14 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 		result, _ := qs.enhancedFusionRanking(lexicalHits, semanticHits, request, fileQuery)
 		return result
 	}
-	
+
 	// Original RRF implementation for backward compatibility
 	lambda := qs.config.Fusion.BM25Weight
 	k := qs.config.Fusion.RRFConstant
 	if k == 0 {
 		k = 60.0 // Default RRF constant for backward compatibility
 	}
-	
+
 	// Adaptive BM25 weight adjustment - if we have both types of results but lexical is underweighted
 	originalLambda := lambda
 	if len(lexicalHits) > 0 && len(semanticHits) > 0 && lambda < 0.5 {
@@ -982,7 +982,7 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 		lambda = 0.6 // Boost to 60% for lexical, 40% for semantic
 		log.Printf("[DEBUG] Adaptive weighting: boosting BM25 weight from %.3f to %.3f to help lexical results compete", originalLambda, lambda)
 	}
-	
+
 	// For JSON field queries, heavily favor lexical results since they are more precise
 	isJSONFieldQuery := false
 	// Check if any lexical hit is from a JSON field query context
@@ -992,7 +992,7 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 			break
 		}
 	}
-	
+
 	if isJSONFieldQuery && lambda < 0.8 {
 		originalLambda = lambda
 		lambda = 0.85 // Heavily favor lexical results for JSON field queries
@@ -1001,18 +1001,18 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 
 	log.Printf("[DEBUG] Fusion ranking - Lexical hits: %d, Semantic hits: %d, BM25 weight (lambda): %.3f, RRF constant (k): %.1f",
 		len(lexicalHits), len(semanticHits), lambda, k)
-	
+
 	// Check if BM25 weight might be too low for lexical results to compete
 	if lambda < 0.5 && len(lexicalHits) > 0 && len(semanticHits) > 0 {
 		log.Printf("[DEBUG] WARNING: BM25 weight (%.3f) is < 0.5, which may underweight lexical results compared to semantic results", lambda)
-		
+
 		// Show effective weighting for top-ranked items
-		lexRRF1 := 1.0 / (k + 1.0)  // RRF for rank 1
-		semRRF1 := 1.0 / (k + 1.0)  // RRF for rank 1
+		lexRRF1 := 1.0 / (k + 1.0) // RRF for rank 1
+		semRRF1 := 1.0 / (k + 1.0) // RRF for rank 1
 		lexEffectiveWeight := lambda * lexRRF1
 		semEffectiveWeight := (1.0 - lambda) * semRRF1
-		log.Printf("[DEBUG] Effective weights for rank 1: lexical=%.6f, semantic=%.6f (ratio: %.2f:%.2f)", 
-			lexEffectiveWeight, semEffectiveWeight, lexEffectiveWeight/(lexEffectiveWeight+semEffectiveWeight)*100, 
+		log.Printf("[DEBUG] Effective weights for rank 1: lexical=%.6f, semantic=%.6f (ratio: %.2f:%.2f)",
+			lexEffectiveWeight, semEffectiveWeight, lexEffectiveWeight/(lexEffectiveWeight+semEffectiveWeight)*100,
 			semEffectiveWeight/(lexEffectiveWeight+semEffectiveWeight)*100)
 	}
 
@@ -1041,12 +1041,12 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 		originalScore := hit.Score
 		finalScore := originalScore * lambda * rrf
 		lexicalScores[key] = finalScore
-		
+
 		// Create a copy of the hit with updated score
 		updatedHit := hit
 		updatedHit.Score = finalScore
 		allHits[key] = updatedHit
-		
+
 		if rank < 3 { // Log first 3 for debugging
 			log.Printf("[DEBUG]   Lex[%d]: %s, original=%.6f, rrf=%.6f, weighted=%.6f (lambda=%.3f)",
 				rank+1, key, originalScore, rrf, finalScore, lambda)
@@ -1060,12 +1060,12 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 		rrf := 1.0 / (k + float64(rank+1))
 		originalScore := hit.Score
 		semanticScore := originalScore * (1.0 - lambda) * rrf
-		
+
 		if rank < 3 { // Log first 3 for debugging
 			log.Printf("[DEBUG]   Sem[%d]: %s, original=%.6f, rrf=%.6f, weighted=%.6f (1-lambda=%.3f)",
 				rank+1, key, originalScore, rrf, semanticScore, 1.0-lambda)
 		}
-		
+
 		if existing, exists := allHits[key]; exists {
 			// Combine scores for hits that appear in both results
 			combinedScore := lexicalScores[key] + semanticScore
@@ -1103,7 +1103,7 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 			log.Printf("[DEBUG]   %d. File: %s, Line: %d, Score: %.6f, Source: %s",
 				i+1, hit.File, hit.LineNumber, hit.Score, hit.Source)
 		}
-		
+
 		// Log score distribution by source
 		lexCount, semCount, bothCount := 0, 0, 0
 		for _, hit := range fusedHits {
@@ -1129,12 +1129,12 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 		}
 		filteredHits = append(filteredHits, hit)
 	}
-	
+
 	if zeroScoreCount > 0 {
-		log.Printf("[DEBUG] Filtered out %d zero-score results (score < 0.001), %d results remaining", 
+		log.Printf("[DEBUG] Filtered out %d zero-score results (score < 0.001), %d results remaining",
 			zeroScoreCount, len(filteredHits))
 	}
-	
+
 	fusedHits = filteredHits
 
 	// Limit to top-k results
@@ -1151,7 +1151,7 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 func (qs *QueryService) enhancedFusionRanking(lexicalHits, semanticHits []types.SearchHit, request *types.SearchRequest, fileQuery *FileQuery) ([]types.SearchHit, *types.FusionAnalytics) {
 	start := time.Now()
 	cfg := &qs.config.Fusion
-	
+
 	// Initialize analytics
 	analytics := &types.FusionAnalytics{
 		Strategy:           string(cfg.Strategy),
@@ -1161,27 +1161,27 @@ func (qs *QueryService) enhancedFusionRanking(lexicalHits, semanticHits []types.
 		ScoreDistribution:  types.ScoreDistribution{},
 		BoostFactors:       types.BoostFactors{},
 	}
-	
+
 	// Determine query type for adaptive weighting
 	queryType := qs.detectQueryType(request.Query, fileQuery)
 	analytics.QueryType = string(queryType)
-	
+
 	// Get effective weight based on query type and adaptive weighting
 	effectiveWeight := qs.getEffectiveWeight(cfg, queryType, len(lexicalHits), len(semanticHits), fileQuery)
 	analytics.EffectiveWeight = effectiveWeight
-	
+
 	if cfg.DebugScoring {
-		log.Printf("[DEBUG] Enhanced fusion ranking - Strategy: %s, QueryType: %s, EffectiveWeight: %.3f", 
+		log.Printf("[DEBUG] Enhanced fusion ranking - Strategy: %s, QueryType: %s, EffectiveWeight: %.3f",
 			cfg.Strategy, queryType, effectiveWeight)
 	}
-	
+
 	// Calculate score statistics before normalization
 	qs.calculateScoreDistribution(lexicalHits, semanticHits, &analytics.ScoreDistribution)
-	
+
 	// Normalize scores if requested
 	normalizedLexical := qs.normalizeScores(lexicalHits, cfg.Normalization, "lexical")
 	normalizedSemantic := qs.normalizeScores(semanticHits, cfg.Normalization, "semantic")
-	
+
 	// Apply fusion strategy
 	var fusedHits []types.SearchHit
 	switch cfg.Strategy {
@@ -1195,97 +1195,97 @@ func (qs *QueryService) enhancedFusionRanking(lexicalHits, semanticHits []types.
 		// Fallback to RRF
 		fusedHits = qs.applyRRFFusion(normalizedLexical, normalizedSemantic, effectiveWeight, cfg.RRFConstant)
 	}
-	
+
 	// Apply boost factors
 	fusedHits = qs.applyBoostFactors(fusedHits, request, fileQuery, cfg, &analytics.BoostFactors)
-	
+
 	// Filter by minimum scores
 	fusedHits = qs.filterByMinimumScores(fusedHits, cfg)
-	
+
 	// Sort by final score
 	sort.Slice(fusedHits, func(i, j int) bool {
 		return fusedHits[i].Score > fusedHits[j].Score
 	})
-	
+
 	// Limit to top-k results
 	if len(fusedHits) > request.TopK {
 		fusedHits = fusedHits[:request.TopK]
 	}
-	
+
 	// Calculate final analytics
 	analytics.TotalCandidates = len(fusedHits)
 	analytics.BothCandidates = qs.countBothCandidates(fusedHits)
 	analytics.ProcessingTime = time.Since(start)
-	
+
 	// Calculate final score distribution
 	qs.calculateFinalScoreDistribution(fusedHits, &analytics.ScoreDistribution)
-	
+
 	if cfg.DebugScoring {
-		log.Printf("[DEBUG] Enhanced fusion complete: %d results, processing time: %v", 
+		log.Printf("[DEBUG] Enhanced fusion complete: %d results, processing time: %v",
 			len(fusedHits), analytics.ProcessingTime)
 		qs.logTopResults(fusedHits, 5)
 	}
-	
+
 	return fusedHits, analytics
 }
 
 // detectQueryType analyzes the query to determine its characteristics
 func (qs *QueryService) detectQueryType(query string, fileQuery *FileQuery) config.QueryType {
 	lowerQuery := strings.ToLower(query)
-	
+
 	// Check for import/usage queries
 	if qs.isImportUsageQuery(query) {
 		return config.QueryImport
 	}
-	
+
 	// Check for configuration file queries
-	if fileQuery.IsJSONFieldQuery || strings.Contains(lowerQuery, "config") || 
-	   strings.Contains(lowerQuery, "package.json") || strings.Contains(lowerQuery, "tsconfig") {
+	if fileQuery.IsJSONFieldQuery || strings.Contains(lowerQuery, "config") ||
+		strings.Contains(lowerQuery, "package.json") || strings.Contains(lowerQuery, "tsconfig") {
 		return config.QueryConfig
 	}
-	
+
 	// Check for file-specific queries
 	if len(fileQuery.FilePatterns) > 0 || strings.Contains(lowerQuery, "file") {
 		return config.QueryFile
 	}
-	
+
 	// Check for symbol/identifier queries (contains camelCase, snake_case, or programming terms)
 	if qs.containsSymbols(query) {
 		return config.QuerySymbol
 	}
-	
+
 	// Check for code-specific queries
 	if qs.containsCodeKeywords(query) {
 		return config.QueryCode
 	}
-	
+
 	// Default to natural language
 	return config.QueryNatural
 }
 
 // getEffectiveWeight determines the effective lexical weight based on configuration and query characteristics
-func (qs *QueryService) getEffectiveWeight(cfg *config.FusionConfig, queryType config.QueryType, 
+func (qs *QueryService) getEffectiveWeight(cfg *config.FusionConfig, queryType config.QueryType,
 	lexicalCount, semanticCount int, fileQuery *FileQuery) float64 {
-	
+
 	baseWeight := cfg.BM25Weight
-	
+
 	// Apply adaptive weighting if enabled
 	if cfg.AdaptiveWeighting {
 		if weight, exists := cfg.QueryTypeWeights[queryType]; exists {
 			baseWeight = weight
 		}
-		
+
 		// Apply legacy adaptive rules for backward compatibility
 		if lexicalCount > 0 && semanticCount > 0 && baseWeight < 0.5 {
 			baseWeight = math.Max(baseWeight, 0.6)
 		}
-		
+
 		// JSON field queries get heavy lexical preference
 		if fileQuery.IsJSONFieldQuery && baseWeight < 0.8 {
 			baseWeight = 0.85
 		}
 	}
-	
+
 	return math.Min(math.Max(baseWeight, 0.0), 1.0) // Clamp to [0,1]
 }
 
@@ -1294,16 +1294,16 @@ func (qs *QueryService) normalizeScores(hits []types.SearchHit, normalization co
 	if normalization == config.NormNone || len(hits) == 0 {
 		return hits
 	}
-	
+
 	normalizedHits := make([]types.SearchHit, len(hits))
 	copy(normalizedHits, hits)
-	
+
 	// Extract scores
 	scores := make([]float64, len(hits))
 	for i, hit := range hits {
 		scores[i] = hit.Score
 	}
-	
+
 	switch normalization {
 	case config.NormMinMax:
 		qs.applyMinMaxNormalization(normalizedHits, scores)
@@ -1312,7 +1312,7 @@ func (qs *QueryService) normalizeScores(hits []types.SearchHit, normalization co
 	case config.NormRankBased:
 		qs.applyRankBasedNormalization(normalizedHits)
 	}
-	
+
 	return normalizedHits
 }
 
@@ -1321,7 +1321,7 @@ func (qs *QueryService) applyMinMaxNormalization(hits []types.SearchHit, scores 
 	if len(scores) == 0 {
 		return
 	}
-	
+
 	minScore := scores[0]
 	maxScore := scores[0]
 	for _, score := range scores {
@@ -1332,7 +1332,7 @@ func (qs *QueryService) applyMinMaxNormalization(hits []types.SearchHit, scores 
 			maxScore = score
 		}
 	}
-	
+
 	if maxScore == minScore {
 		// All scores are the same, set to 1.0
 		for i := range hits {
@@ -1340,7 +1340,7 @@ func (qs *QueryService) applyMinMaxNormalization(hits []types.SearchHit, scores 
 		}
 		return
 	}
-	
+
 	for i := range hits {
 		hits[i].Score = (hits[i].Score - minScore) / (maxScore - minScore)
 	}
@@ -1351,14 +1351,14 @@ func (qs *QueryService) applyZScoreNormalization(hits []types.SearchHit, scores 
 	if len(scores) == 0 {
 		return
 	}
-	
+
 	// Calculate mean
 	var sum float64
 	for _, score := range scores {
 		sum += score
 	}
 	mean := sum / float64(len(scores))
-	
+
 	// Calculate standard deviation
 	var sumSquares float64
 	for _, score := range scores {
@@ -1366,7 +1366,7 @@ func (qs *QueryService) applyZScoreNormalization(hits []types.SearchHit, scores 
 		sumSquares += diff * diff
 	}
 	stdDev := math.Sqrt(sumSquares / float64(len(scores)))
-	
+
 	if stdDev == 0 {
 		// All scores are the same, set to 0.0
 		for i := range hits {
@@ -1374,7 +1374,7 @@ func (qs *QueryService) applyZScoreNormalization(hits []types.SearchHit, scores 
 		}
 		return
 	}
-	
+
 	for i := range hits {
 		hits[i].Score = (hits[i].Score - mean) / stdDev
 		// Transform to positive range [0, 1] using sigmoid
@@ -1395,25 +1395,25 @@ func (qs *QueryService) applyRRFFusion(lexicalHits, semanticHits []types.SearchH
 	lexicalScores := make(map[string]float64)
 	semanticScores := make(map[string]float64)
 	allHits := make(map[string]types.SearchHit)
-	
+
 	// Process lexical hits
 	for rank, hit := range lexicalHits {
 		key := qs.getHitKey(hit)
 		rrf := 1.0 / (k + float64(rank+1))
 		finalScore := hit.Score * weight * rrf
 		lexicalScores[key] = finalScore
-		
+
 		updatedHit := hit
 		updatedHit.Score = finalScore
 		allHits[key] = updatedHit
 	}
-	
+
 	// Process semantic hits
 	for rank, hit := range semanticHits {
 		key := qs.getHitKey(hit)
 		rrf := 1.0 / (k + float64(rank+1))
 		semanticScore := hit.Score * (1.0 - weight) * rrf
-		
+
 		if existing, exists := allHits[key]; exists {
 			// Combine scores
 			existing.Score = lexicalScores[key] + semanticScore
@@ -1427,13 +1427,13 @@ func (qs *QueryService) applyRRFFusion(lexicalHits, semanticHits []types.SearchH
 			allHits[key] = updatedHit
 		}
 	}
-	
+
 	// Convert back to slice
 	var result []types.SearchHit
 	for _, hit := range allHits {
 		result = append(result, hit)
 	}
-	
+
 	return result
 }
 
@@ -1441,23 +1441,23 @@ func (qs *QueryService) applyRRFFusion(lexicalHits, semanticHits []types.SearchH
 func (qs *QueryService) applyWeightedLinearFusion(lexicalHits, semanticHits []types.SearchHit, weight float64) []types.SearchHit {
 	lexicalScores := make(map[string]float64)
 	allHits := make(map[string]types.SearchHit)
-	
+
 	// Process lexical hits
 	for _, hit := range lexicalHits {
 		key := qs.getHitKey(hit)
 		finalScore := hit.Score * weight
 		lexicalScores[key] = finalScore
-		
+
 		updatedHit := hit
 		updatedHit.Score = finalScore
 		allHits[key] = updatedHit
 	}
-	
+
 	// Process semantic hits
 	for _, hit := range semanticHits {
 		key := qs.getHitKey(hit)
 		semanticScore := hit.Score * (1.0 - weight)
-		
+
 		if existing, exists := allHits[key]; exists {
 			// Combine scores
 			existing.Score = lexicalScores[key] + semanticScore
@@ -1470,13 +1470,13 @@ func (qs *QueryService) applyWeightedLinearFusion(lexicalHits, semanticHits []ty
 			allHits[key] = updatedHit
 		}
 	}
-	
+
 	// Convert back to slice
 	var result []types.SearchHit
 	for _, hit := range allHits {
 		result = append(result, hit)
 	}
-	
+
 	return result
 }
 
@@ -1484,11 +1484,11 @@ func (qs *QueryService) applyWeightedLinearFusion(lexicalHits, semanticHits []ty
 func (qs *QueryService) applyLearnedWeightsFusion(lexicalHits, semanticHits []types.SearchHit, request *types.SearchRequest, fileQuery *FileQuery) []types.SearchHit {
 	// For now, this is a placeholder that uses query-specific learned weights
 	// In a full implementation, this would use a trained ML model
-	
+
 	// Simple heuristic-based learned weights
 	var weight float64
 	queryLen := len(strings.Fields(request.Query))
-	
+
 	if queryLen <= 2 {
 		weight = 0.7 // Short queries favor lexical
 	} else if queryLen <= 5 {
@@ -1496,47 +1496,47 @@ func (qs *QueryService) applyLearnedWeightsFusion(lexicalHits, semanticHits []ty
 	} else {
 		weight = 0.3 // Long queries favor semantic
 	}
-	
+
 	// Adjust based on query characteristics
 	if fileQuery.IsJSONFieldQuery {
 		weight = 0.8
 	} else if qs.isImportUsageQuery(request.Query) {
 		weight = 0.75
 	}
-	
+
 	// Use weighted linear fusion with learned weight
 	return qs.applyWeightedLinearFusion(lexicalHits, semanticHits, weight)
 }
 
 // applyBoostFactors applies various boost factors to the fused results
-func (qs *QueryService) applyBoostFactors(hits []types.SearchHit, request *types.SearchRequest, 
+func (qs *QueryService) applyBoostFactors(hits []types.SearchHit, request *types.SearchRequest,
 	fileQuery *FileQuery, cfg *config.FusionConfig, boostStats *types.BoostFactors) []types.SearchHit {
-	
+
 	queryTerms := qs.extractKeywords(request.Query)
 	var totalBoostFactor float64
 	boostedCount := 0
-	
+
 	for i := range hits {
 		boostFactor := 1.0
-		
+
 		// Exact match boost
 		if qs.isExactMatch(hits[i].Text, queryTerms) {
 			boostFactor *= cfg.ExactMatchBoost
 			boostStats.ExactMatches++
 		}
-		
+
 		// Symbol match boost
 		if qs.isSymbolMatch(hits[i].Text, queryTerms) {
 			boostFactor *= cfg.SymbolMatchBoost
 			boostStats.SymbolMatches++
 		}
-		
+
 		// File type boost
 		if qs.matchesFileType(hits[i].File, fileQuery.FilePatterns) {
 			boostFactor *= cfg.FileTypeBoost
 			boostStats.FileTypeBoosts++
 		}
-		
+
 		// Apply boost
 		if boostFactor > 1.0 {
 			hits[i].Score *= boostFactor
@@ -1544,13 +1544,13 @@ func (qs *QueryService) applyBoostFactors(hits []types.SearchHit, request *types
 			boostedCount++
 		}
 	}
-	
+
 	if boostedCount > 0 {
 		boostStats.AvgBoostFactor = totalBoostFactor / float64(boostedCount)
 	} else {
 		boostStats.AvgBoostFactor = 1.0
 	}
-	
+
 	return hits
 }
 
@@ -1578,18 +1578,18 @@ func (qs *QueryService) isSymbolMatch(text string, queryTerms []string) bool {
 func (qs *QueryService) containsSymbolPattern(text, term string) bool {
 	// Simple heuristic for symbol matching
 	patterns := []string{
-		term,                           // Exact match
-		strings.Title(term),            // Title case
-		strings.ToUpper(term),          // Upper case
+		term,                              // Exact match
+		strings.Title(term),               // Title case
+		strings.ToUpper(term),             // Upper case
 		strings.ReplaceAll(term, "_", ""), // Snake to camel
 	}
-	
+
 	for _, pattern := range patterns {
 		if strings.Contains(text, pattern) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -1597,7 +1597,7 @@ func (qs *QueryService) matchesFileType(fileName string, patterns []string) bool
 	if len(patterns) == 0 {
 		return false
 	}
-	
+
 	lowerFileName := strings.ToLower(fileName)
 	for _, pattern := range patterns {
 		// Simple pattern matching (could be enhanced with proper glob matching)
@@ -1610,17 +1610,17 @@ func (qs *QueryService) matchesFileType(fileName string, patterns []string) bool
 			return true
 		}
 	}
-	
+
 	return false
 }
 
 // filterByMinimumScores filters results based on minimum score thresholds
 func (qs *QueryService) filterByMinimumScores(hits []types.SearchHit, cfg *config.FusionConfig) []types.SearchHit {
 	var filtered []types.SearchHit
-	
+
 	for _, hit := range hits {
 		shouldInclude := true
-		
+
 		if hit.Source == "lex" && hit.Score < cfg.MinLexicalScore {
 			shouldInclude = false
 		} else if hit.Source == "vec" && hit.Score < cfg.MinSemanticScore {
@@ -1632,12 +1632,12 @@ func (qs *QueryService) filterByMinimumScores(hits []types.SearchHit, cfg *confi
 				shouldInclude = false
 			}
 		}
-		
+
 		if shouldInclude {
 			filtered = append(filtered, hit)
 		}
 	}
-	
+
 	return filtered
 }
 
@@ -1652,7 +1652,7 @@ func (qs *QueryService) calculateScoreDistribution(lexicalHits, semanticHits []t
 		dist.LexicalMax = lexScores[0]
 		dist.LexicalMean = qs.calculateMean(lexScores)
 	}
-	
+
 	if len(semanticHits) > 0 {
 		semScores := make([]float64, len(semanticHits))
 		for i, hit := range semanticHits {
@@ -1668,12 +1668,12 @@ func (qs *QueryService) calculateFinalScoreDistribution(hits []types.SearchHit, 
 	if len(hits) == 0 {
 		return
 	}
-	
+
 	scores := make([]float64, len(hits))
 	for i, hit := range hits {
 		scores[i] = hit.Score
 	}
-	
+
 	dist.FinalMin = scores[len(scores)-1]
 	dist.FinalMax = scores[0]
 	dist.FinalMean = qs.calculateMean(scores)
@@ -1683,7 +1683,7 @@ func (qs *QueryService) calculateMean(scores []float64) float64 {
 	if len(scores) == 0 {
 		return 0
 	}
-	
+
 	var sum float64
 	for _, score := range scores {
 		sum += score
@@ -1704,18 +1704,18 @@ func (qs *QueryService) countBothCandidates(hits []types.SearchHit) int {
 func (qs *QueryService) containsSymbols(query string) bool {
 	// Check for camelCase, snake_case, or programming symbols
 	patterns := []regexp.Regexp{
-		*regexp.MustCompile(`[a-z][A-Z]`),     // camelCase
-		*regexp.MustCompile(`\w+_\w+`),        // snake_case
-		*regexp.MustCompile(`[A-Z_]{2,}`),     // CONSTANTS
-		*regexp.MustCompile(`\w+::\w+`),       // namespaced symbols
+		*regexp.MustCompile(`[a-z][A-Z]`), // camelCase
+		*regexp.MustCompile(`\w+_\w+`),    // snake_case
+		*regexp.MustCompile(`[A-Z_]{2,}`), // CONSTANTS
+		*regexp.MustCompile(`\w+::\w+`),   // namespaced symbols
 	}
-	
+
 	for _, pattern := range patterns {
 		if pattern.MatchString(query) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -1726,14 +1726,14 @@ func (qs *QueryService) containsCodeKeywords(query string) bool {
 		"import", "export", "require", "include", "struct", "interface",
 		"type", "enum", "public", "private", "protected", "static",
 	}
-	
+
 	lowerQuery := strings.ToLower(query)
 	for _, keyword := range codeKeywords {
 		if strings.Contains(lowerQuery, keyword) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -1782,47 +1782,47 @@ func (qs *QueryService) getChunkText(chunkID string) string {
 	if len(parts) != 2 {
 		return fmt.Sprintf("Invalid chunk ID format: %s", chunkID)
 	}
-	
+
 	filePath := parts[0]
 	byteRange := parts[1]
-	
+
 	// Parse byte range
 	rangeParts := strings.Split(byteRange, "-")
 	if len(rangeParts) != 2 {
 		return fmt.Sprintf("Invalid byte range format: %s", byteRange)
 	}
-	
+
 	startByte, err := strconv.Atoi(rangeParts[0])
 	if err != nil {
 		return fmt.Sprintf("Invalid start byte: %s", rangeParts[0])
 	}
-	
+
 	endByte, err := strconv.Atoi(rangeParts[1])
 	if err != nil {
 		return fmt.Sprintf("Invalid end byte: %s", rangeParts[1])
 	}
-	
+
 	// Validate byte range
 	if startByte < 0 || endByte < startByte {
 		return fmt.Sprintf("Invalid byte range: %d-%d", startByte, endByte)
 	}
-	
+
 	// Read file content
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Sprintf("Failed to read file %s: %v", filePath, err)
 	}
-	
+
 	// Validate byte positions against file size
 	if startByte >= len(content) {
 		return fmt.Sprintf("Start byte %d exceeds file size %d", startByte, len(content))
 	}
-	
+
 	// Adjust end byte if it exceeds file size
 	if endByte > len(content) {
 		endByte = len(content)
 	}
-	
+
 	// Extract the chunk
 	chunkContent := content[startByte:endByte]
 	return string(chunkContent)
@@ -1853,7 +1853,7 @@ func (qs *QueryService) SuggestQuery(ctx context.Context, partial string) ([]str
 	// Filter suggestions based on partial match
 	var matches []string
 	lowerPartial := strings.ToLower(partial)
-	
+
 	for _, suggestion := range suggestions {
 		if strings.Contains(strings.ToLower(suggestion), lowerPartial) {
 			matches = append(matches, suggestion)
@@ -1885,13 +1885,13 @@ func (qs *QueryService) ExplainQuery(ctx context.Context, query string) (*QueryE
 	fileQuery := qs.parseFileQuery(query)
 	keywords := qs.extractKeywords(fileQuery.FocusedQuery)
 	isRegex := qs.containsRegexPatterns(query)
-	
+
 	explanation := &QueryExplanation{
-		OriginalQuery:    query,
+		OriginalQuery:     query,
 		ExtractedKeywords: keywords,
-		IsRegexQuery:     isRegex,
-		SearchStrategy:   "hybrid",
-		BM25Weight:       qs.config.Fusion.BM25Weight,
+		IsRegexQuery:      isRegex,
+		SearchStrategy:    "hybrid",
+		BM25Weight:        qs.config.Fusion.BM25Weight,
 	}
 
 	if len(keywords) == 0 {
@@ -1917,12 +1917,12 @@ type QueryExplanation struct {
 
 // FileQuery represents a parsed query with file-aware context
 type FileQuery struct {
-	OriginalQuery     string   `json:"original_query"`
-	FilePatterns      []string `json:"file_patterns"`
-	FocusedQuery      string   `json:"focused_query"`
-	DetectedFileType  string   `json:"detected_file_type"`
-	TargetFields      []string `json:"target_fields"`
-	IsJSONFieldQuery  bool     `json:"is_json_field_query"`
+	OriginalQuery    string   `json:"original_query"`
+	FilePatterns     []string `json:"file_patterns"`
+	FocusedQuery     string   `json:"focused_query"`
+	DetectedFileType string   `json:"detected_file_type"`
+	TargetFields     []string `json:"target_fields"`
+	IsJSONFieldQuery bool     `json:"is_json_field_query"`
 }
 
 // Close releases resources
@@ -1952,18 +1952,18 @@ func (qs *QueryService) Close() error {
 func (qs *QueryService) GetStatus(ctx context.Context) (*types.IndexStatus, error) {
 	zoektStats := qs.zoektIndexer.Stats()
 	faissStats := qs.faissIndexer.VectorStats()
-	
+
 	// Calculate progress percentages
 	zoektProgress := 0
 	if zoektStats.TotalFiles > 0 {
 		zoektProgress = int((float64(zoektStats.IndexedFiles) / float64(zoektStats.TotalFiles)) * 100)
 	}
-	
+
 	faissProgress := 0
 	if faissStats.TotalVectors > 0 {
 		faissProgress = 100 // Assume complete if we have vectors
 	}
-	
+
 	return &types.IndexStatus{
 		Repository:    "current", // TODO: Get actual repo path
 		ZoektProgress: zoektProgress,

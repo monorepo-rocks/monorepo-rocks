@@ -1,9 +1,7 @@
 package query
 
 import (
-	"context"
 	"testing"
-	"time"
 
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/config"
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/embedder"
@@ -14,7 +12,7 @@ import (
 func createEnhancedTestQueryService() *QueryService {
 	// Create enhanced test configuration
 	cfg := config.DefaultConfig()
-	
+
 	// Configure enhanced fusion settings
 	cfg.Fusion.Strategy = config.FusionRRF
 	cfg.Fusion.Normalization = config.NormMinMax
@@ -169,13 +167,13 @@ func TestEnhancedFusionRanking_LearnedWeights(t *testing.T) {
 		TopK:  5,
 	}
 
-	fusedResults2, analytics2 := qs.enhancedFusionRanking(lexicalHits, semanticHits, longRequest, fileQuery)
+	fusedResults2, _ := qs.enhancedFusionRanking(lexicalHits, semanticHits, longRequest, fileQuery)
 
 	if len(fusedResults) == 0 || len(fusedResults2) == 0 {
 		t.Error("Expected fused results for both queries")
 	}
 
-	t.Logf("Learned weights fusion test passed with short query: %d results, long query: %d results", 
+	t.Logf("Learned weights fusion test passed with short query: %d results, long query: %d results",
 		len(fusedResults), len(fusedResults2))
 }
 
@@ -198,7 +196,7 @@ func TestQueryTypeDetection(t *testing.T) {
 	for _, test := range tests {
 		fileQuery := qs.parseFileQuery(test.query)
 		queryType := qs.detectQueryType(test.query, fileQuery)
-		
+
 		if queryType != test.expected {
 			t.Errorf("Query '%s': expected type %s, got %s", test.query, test.expected, queryType)
 		}

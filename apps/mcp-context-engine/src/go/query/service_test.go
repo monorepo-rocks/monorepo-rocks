@@ -92,7 +92,7 @@ func TestQueryService_Search(t *testing.T) {
 
 	// Verify response structure
 	if len(response.Hits) != response.TotalHits {
-		t.Errorf("Hits length (%d) doesn't match TotalHits (%d)", 
+		t.Errorf("Hits length (%d) doesn't match TotalHits (%d)",
 			len(response.Hits), response.TotalHits)
 	}
 }
@@ -214,7 +214,7 @@ func TestQueryService_ExtractKeywords(t *testing.T) {
 
 	for _, test := range tests {
 		keywords := qs.extractKeywords(test.query)
-		
+
 		// Check that all expected keywords are present
 		for _, expected := range test.expected {
 			found := false
@@ -225,7 +225,7 @@ func TestQueryService_ExtractKeywords(t *testing.T) {
 				}
 			}
 			if !found {
-				t.Errorf("Query '%s': expected keyword '%s' not found in %v", 
+				t.Errorf("Query '%s': expected keyword '%s' not found in %v",
 					test.query, expected, keywords)
 			}
 		}
@@ -260,12 +260,12 @@ func TestQueryService_ExtractProgrammingTerms(t *testing.T) {
 
 	for _, test := range tests {
 		terms := qs.extractProgrammingTerms(test.query)
-		
+
 		if len(terms) == 0 && len(test.expected) > 0 {
 			t.Errorf("Query '%s': expected programming terms, but none found", test.query)
 			continue
 		}
-		
+
 		for _, expected := range test.expected {
 			if !terms[expected] {
 				// Print available terms for debugging
@@ -273,7 +273,7 @@ func TestQueryService_ExtractProgrammingTerms(t *testing.T) {
 				for term := range terms {
 					availableTerms = append(availableTerms, term)
 				}
-				t.Errorf("Query '%s': expected programming term '%s' not found. Available terms: %v", 
+				t.Errorf("Query '%s': expected programming term '%s' not found. Available terms: %v",
 					test.query, expected, availableTerms)
 			}
 		}
@@ -300,7 +300,7 @@ func TestQueryService_ContainsRegexPatterns(t *testing.T) {
 	for _, test := range tests {
 		result := qs.containsRegexPatterns(test.query)
 		if result != test.expected {
-			t.Errorf("Query '%s': expected regex detection %t, got %t", 
+			t.Errorf("Query '%s': expected regex detection %t, got %t",
 				test.query, test.expected, result)
 		}
 	}
@@ -360,7 +360,7 @@ func TestQueryService_SuggestQuery(t *testing.T) {
 	defer qs.Close()
 
 	ctx := context.Background()
-	
+
 	suggestions, err := qs.SuggestQuery(ctx, "func")
 	if err != nil {
 		t.Fatalf("SuggestQuery failed: %v", err)
@@ -388,7 +388,7 @@ func TestQueryService_SuggestQueryShortInput(t *testing.T) {
 	defer qs.Close()
 
 	ctx := context.Background()
-	
+
 	suggestions, err := qs.SuggestQuery(ctx, "a")
 	if err != nil {
 		t.Fatalf("SuggestQuery failed: %v", err)
@@ -404,7 +404,7 @@ func TestQueryService_ExplainQuery(t *testing.T) {
 	defer qs.Close()
 
 	ctx := context.Background()
-	
+
 	explanation, err := qs.ExplainQuery(ctx, "find main function")
 	if err != nil {
 		t.Fatalf("ExplainQuery failed: %v", err)
@@ -415,7 +415,7 @@ func TestQueryService_ExplainQuery(t *testing.T) {
 	}
 
 	if explanation.OriginalQuery != "find main function" {
-		t.Errorf("Expected original query 'find main function', got '%s'", 
+		t.Errorf("Expected original query 'find main function', got '%s'",
 			explanation.OriginalQuery)
 	}
 
@@ -437,7 +437,7 @@ func TestQueryService_ExplainRegexQuery(t *testing.T) {
 	defer qs.Close()
 
 	ctx := context.Background()
-	
+
 	explanation, err := qs.ExplainQuery(ctx, "func\\s+\\w+")
 	if err != nil {
 		t.Fatalf("ExplainQuery failed: %v", err)
@@ -450,7 +450,7 @@ func TestQueryService_ExplainRegexQuery(t *testing.T) {
 
 func TestQueryService_Close(t *testing.T) {
 	qs := createTestQueryService()
-	
+
 	err := qs.Close()
 	if err != nil {
 		t.Fatalf("Close failed: %v", err)
@@ -459,7 +459,7 @@ func TestQueryService_Close(t *testing.T) {
 	// Verify that subsequent operations fail or handle closed state gracefully
 	ctx := context.Background()
 	request := &types.SearchRequest{Query: "test", TopK: 10}
-	
+
 	// This might succeed or fail depending on implementation details
 	// The important thing is that Close() doesn't panic
 	_, _ = qs.Search(ctx, request)
@@ -490,7 +490,7 @@ func TestQueryService_GetHitKey(t *testing.T) {
 	for _, test := range tests {
 		result := qs.getHitKey(test.hit)
 		if result != test.expected {
-			t.Errorf("getHitKey(%+v) = '%s', expected '%s'", 
+			t.Errorf("getHitKey(%+v) = '%s', expected '%s'",
 				test.hit, result, test.expected)
 		}
 	}
@@ -511,14 +511,14 @@ func TestQueryService_SearchPerformance(t *testing.T) {
 
 	ctx := context.Background()
 	start := time.Now()
-	
+
 	response, err := qs.Search(ctx, request)
 	if err != nil {
 		t.Fatalf("Search failed: %v", err)
 	}
 
 	elapsed := time.Since(start)
-	
+
 	// Check that search completes in reasonable time (adjust threshold as needed)
 	if elapsed > 5*time.Second {
 		t.Errorf("Search took too long: %v", elapsed)
@@ -526,7 +526,7 @@ func TestQueryService_SearchPerformance(t *testing.T) {
 
 	// Verify that the reported query time is reasonable
 	if response.QueryTime > elapsed+100*time.Millisecond {
-		t.Errorf("Reported query time (%v) is greater than actual elapsed time (%v)", 
+		t.Errorf("Reported query time (%v) is greater than actual elapsed time (%v)",
 			response.QueryTime, elapsed)
 	}
 }
