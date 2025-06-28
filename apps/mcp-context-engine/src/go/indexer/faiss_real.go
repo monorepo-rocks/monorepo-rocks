@@ -124,7 +124,7 @@ func (f *RealFAISSIndexer) Search(ctx context.Context, queryVector []float32, k 
 	normalizedQuery := f.normalizeVector(queryVector)
 
 	// Perform k-NN search
-	distances, labels, err := f.index.Search(normalizedQuery, k)
+	distances, labels, err := f.index.Search(normalizedQuery, int64(k))
 	if err != nil {
 		return nil, fmt.Errorf("FAISS search failed: %w", err)
 	}
@@ -205,11 +205,6 @@ func (f *RealFAISSIndexer) Delete(ctx context.Context, chunkIDs []string) error 
 	for _, id := range faissIDs {
 		deleteSet[id] = true
 	}
-
-	// Reconstruct vectors that we want to keep
-	var keepVectors []float32
-	var keepIDs []int64
-	var keepChunkIDs []string
 
 	// Since FAISS doesn't provide direct access to stored vectors,
 	// we'll need to track this ourselves or rebuild from scratch
