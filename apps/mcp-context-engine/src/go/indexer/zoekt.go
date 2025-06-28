@@ -90,17 +90,25 @@ type CorpusStats struct {
 }
 
 // NewZoektIndexer creates a new Zoekt indexer instance
+// By default, returns the real Zoekt implementation for enhanced search capabilities
 func NewZoektIndexer(indexRoot string) ZoektIndexer {
-	return &ZoektStubIndexer{
-		files:     make(map[string]*FileInfo),
-		indexRoot: indexRoot,
-		stats: IndexStats{
-			LastIndexTime: time.Now(),
-		},
-		corpusStats: &CorpusStats{
-			DocFreqs: make(map[string]int),
-		},
+	// Check for environment variable to use stub implementation for testing/development
+	if useStub := os.Getenv("ZOEKT_USE_STUB"); useStub == "true" {
+		log.Printf("Using Zoekt stub implementation (ZOEKT_USE_STUB=true)")
+		return &ZoektStubIndexer{
+			files:     make(map[string]*FileInfo),
+			indexRoot: indexRoot,
+			stats: IndexStats{
+				LastIndexTime: time.Now(),
+			},
+			corpusStats: &CorpusStats{
+				DocFreqs: make(map[string]int),
+			},
+		}
 	}
+	
+	log.Printf("Using real Zoekt implementation with enhanced search capabilities")
+	return NewRealZoektIndexer(indexRoot)
 }
 
 // Index implements the ZoektIndexer interface
