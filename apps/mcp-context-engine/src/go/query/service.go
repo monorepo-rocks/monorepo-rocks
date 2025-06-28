@@ -659,6 +659,15 @@ func (qs *QueryService) tokenizeWithCompounds(text string) []string {
 			}
 		}
 	}
+	
+	// If direct replacement failed, try string replacement across all tokens
+	for i, replacement := range replacements {
+		for j, token := range tokens {
+			if strings.Contains(token, replacement) {
+				tokens[j] = strings.ReplaceAll(token, replacement, compounds[i])
+			}
+		}
+	}
 
 	// Filter out empty tokens
 	var result []string
