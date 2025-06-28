@@ -87,11 +87,32 @@ type PersistableIndex struct {
 }
 
 // NewFAISSIndexer creates a new FAISS indexer instance
+// Uses environment variable FAISS_USE_REAL to toggle between real and stub implementations
 func NewFAISSIndexer(indexPath string, dimension int) FAISSIndexer {
 	if dimension <= 0 {
 		dimension = 768 // Default CodeBERT dimension
 	}
 
+	// Check environment variable to determine which implementation to use
+	useReal := os.Getenv("FAISS_USE_REAL") == "true"
+	
+	if useReal {
+		// Try to create real FAISS indexer
+		realIndexer, err := NewRealFAISSIndexer(indexPath, dimension)
+		if err != nil {
+			// Fall back to stub if real FAISS creation fails
+			fmt.Fprintf(os.Stderr, "Warning: Failed to create real FAISS indexer (%v), falling back to stub implementation\n", err)
+			return newStubIndexer(indexPath, dimension)
+		}
+		return realIndexer
+	}
+
+	// Use stub implementation by default
+	return newStubIndexer(indexPath, dimension)
+}
+
+// newStubIndexer creates a stub FAISS indexer
+func newStubIndexer(indexPath string, dimension int) FAISSIndexer {
 	return &FAISSStubIndexer{
 		vectors:   make(map[string][]float32),
 		dimension: dimension,
