@@ -47,10 +47,10 @@ import (
 
 // User represents a user in the authentication system
 type User struct {
-	ID       int    \`json:"id"\`
-	Username string \`json:"username"\`
-	Email    string \`json:"email"\`
-	Password string \`json:"-"\`
+	ID       int    ` + "`json:\"id\"`" + `
+	Username string ` + "`json:\"username\"`" + `
+	Email    string ` + "`json:\"email\"`" + `
+	Password string ` + "`json:\"-\"`" + `
 }
 
 // AuthService provides authentication functionality
@@ -264,7 +264,7 @@ class APIClient {
         };
         
         if (this.apiKey) {
-            this.defaultHeaders['Authorization'] = \`Bearer \${this.apiKey}\`;
+            this.defaultHeaders['Authorization'] = ` + "`Bearer ${this.apiKey}`" + `;
         }
     }
 
@@ -318,7 +318,7 @@ class APIClient {
      * @returns {Promise<Object>} User profile object
      */
     async getUserProfile(userId) {
-        const response = await this.get(\`/users/\${userId}\`);
+        const response = await this.get(` + "`/users/${userId}`" + `);
         
         if (response.success) {
             return response.user;
@@ -334,7 +334,7 @@ class APIClient {
      * @returns {Promise<Object>} Updated user object
      */
     async updateUserProfile(userId, updates) {
-        const response = await this.put(\`/users/\${userId}\`, updates);
+        const response = await this.put(` + "`/users/${userId}`" + `, updates);
         
         if (response.success) {
             return response.user;
@@ -379,7 +379,7 @@ class APIClient {
     }
 
     async request(method, endpoint, data = null, options = {}) {
-        const url = \`\${this.baseURL}\${endpoint}\`;
+        const url = ` + "`${this.baseURL}${endpoint}`" + `;
         const headers = { ...this.defaultHeaders, ...(options.headers || {}) };
 
         const fetchOptions = {
@@ -396,12 +396,12 @@ class APIClient {
             const responseData = await response.json();
 
             if (!response.ok) {
-                throw new Error(\`HTTP \${response.status}: \${responseData.message || 'Request failed'}\`);
+                throw new Error(` + "`HTTP ${response.status}: ${responseData.message || 'Request failed'}`" + `);
             }
 
             return responseData;
         } catch (error) {
-            throw new Error(\`API request failed: \${error.message}\`);
+            throw new Error(` + "`API request failed: ${error.message}`" + `);
         }
     }
 }
@@ -610,7 +610,7 @@ features:
     github:
       enabled: true
       client_id: "${GITHUB_CLIENT_ID}"
-      client_secret: "${GITHUB_CLIENT_SECRET}"`
+      client_secret: "${GITHUB_CLIENT_SECRET}"`,
 	}
 
 	// Write test files

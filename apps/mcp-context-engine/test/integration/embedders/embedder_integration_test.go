@@ -106,13 +106,16 @@ func TestTFIDFEmbedderIntegration(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Basic TF-IDF functionality", func(t *testing.T) {
-		config := embedder.Config{
-			Type:      "tfidf",
-			Dimension: 256, // Reasonable size for TF-IDF
-			CacheSize: 1000,
+		config := embedder.EmbedderConfig{
+			Model:      "sentence-transformers/all-MiniLM-L6-v2",
+			Device:     "cpu",
+			BatchSize:  32,
+			CacheSize:  1000,
+			Timeout:    30 * time.Second,
+			MaxRetries: 3,
 		}
 
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 		require.NotNil(t, emb, "Embedder should be created successfully")
 
 		// Test single text embedding
@@ -133,13 +136,16 @@ func TestTFIDFEmbedderIntegration(t *testing.T) {
 	})
 
 	t.Run("TF-IDF vocabulary building", func(t *testing.T) {
-		config := embedder.Config{
-			Type:      "tfidf",
-			Dimension: 128,
-			CacheSize: 1000,
+		config := embedder.EmbedderConfig{
+			Model:      "sentence-transformers/all-MiniLM-L6-v2",
+			Device:     "cpu",
+			BatchSize:  32,
+			CacheSize:  1000,
+			Timeout:    30 * time.Second,
+			MaxRetries: 3,
 		}
 
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 
 		// Embed multiple texts to build vocabulary
 		texts := []string{
@@ -166,13 +172,16 @@ func TestTFIDFEmbedderIntegration(t *testing.T) {
 	})
 
 	t.Run("TF-IDF batch processing", func(t *testing.T) {
-		config := embedder.Config{
-			Type:      "tfidf",
-			Dimension: 128,
-			CacheSize: 1000,
+		config := embedder.EmbedderConfig{
+			Model:      "sentence-transformers/all-MiniLM-L6-v2",
+			Device:     "cpu",
+			BatchSize:  32,
+			CacheSize:  1000,
+			Timeout:    30 * time.Second,
+			MaxRetries: 3,
 		}
 
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 
 		// Prepare batch of texts
 		var texts []string
@@ -203,13 +212,13 @@ func TestTFIDFEmbedderIntegration(t *testing.T) {
 	})
 
 	t.Run("TF-IDF caching behavior", func(t *testing.T) {
-		config := embedder.Config{
+		config := embedder.EmbedderConfig{
 			Type:      "tfidf",
 			Dimension: 128,
 			CacheSize: 10, // Small cache for testing
 		}
 
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 
 		text := testCodeSamples["simple_function"]
 
@@ -236,13 +245,13 @@ func TestTFIDFEmbedderIntegration(t *testing.T) {
 	})
 
 	t.Run("TF-IDF with different code languages", func(t *testing.T) {
-		config := embedder.Config{
+		config := embedder.EmbedderConfig{
 			Type:      "tfidf",
 			Dimension: 256,
 			CacheSize: 1000,
 		}
 
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 
 		// Test with different programming languages
 		languageTexts := map[string]string{
@@ -293,14 +302,14 @@ func TestONNXEmbedderIntegration(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("ONNX embedder availability", func(t *testing.T) {
-		config := embedder.Config{
+		config := embedder.EmbedderConfig{
 			Type:      "onnx",
 			Dimension: 768, // CodeBERT dimension
 			ModelPath: "./models/codebert.onnx", // This would need to exist
 			CacheSize: 1000,
 		}
 
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 		
 		// If ONNX is not available, this will fallback to TF-IDF
 		// We test both scenarios
@@ -333,14 +342,14 @@ func TestONNXEmbedderIntegration(t *testing.T) {
 			t.Skip("Skipping ONNX semantic test in short mode")
 		}
 
-		config := embedder.Config{
+		config := embedder.EmbedderConfig{
 			Type:      "onnx",
 			Dimension: 768,
 			ModelPath: "./models/codebert.onnx",
 			CacheSize: 1000,
 		}
 
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 
 		// Test semantic understanding with similar code patterns
 		semanticallyRelated := []string{
@@ -403,7 +412,7 @@ func TestEmbedderConfigurationAndFallback(t *testing.T) {
 		assert.Greater(t, config.Dimension, 0, "Default dimension should be positive")
 		assert.Greater(t, config.CacheSize, 0, "Default cache size should be positive")
 
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 		require.NotNil(t, emb, "Embedder with default config should be created")
 
 		text := testCodeSamples["simple_function"]
@@ -413,14 +422,14 @@ func TestEmbedderConfigurationAndFallback(t *testing.T) {
 	})
 
 	t.Run("Invalid configuration handling", func(t *testing.T) {
-		invalidConfigs := []embedder.Config{
+		invalidConfigs := []embedder.EmbedderConfig{
 			{Type: "invalid_type", Dimension: 128},
 			{Type: "tfidf", Dimension: 0}, // Invalid dimension
 			{Type: "tfidf", Dimension: -1}, // Negative dimension
 		}
 
 		for i, config := range invalidConfigs {
-			emb := embedder.NewEmbedder(config)
+			emb := embedder.NewStubEmbedder(config)
 			
 			// Should either create a fallback embedder or handle gracefully
 			if emb != nil {
@@ -442,21 +451,21 @@ func TestEmbedderConfigurationAndFallback(t *testing.T) {
 			t.Skip("Skipping performance test in short mode")
 		}
 
-		tfidfConfig := embedder.Config{
+		tfidfConfig := embedder.EmbedderConfig{
 			Type:      "tfidf",
 			Dimension: 256,
 			CacheSize: 1000,
 		}
 
-		onnxConfig := embedder.Config{
+		onnxConfig := embedder.EmbedderConfig{
 			Type:      "onnx",
 			Dimension: 768,
 			ModelPath: "./models/codebert.onnx",
 			CacheSize: 1000,
 		}
 
-		tfidfEmb := embedder.NewEmbedder(tfidfConfig)
-		onnxEmb := embedder.NewEmbedder(onnxConfig)
+		tfidfEmb := embedder.NewStubEmbedder(tfidfConfig)
+		onnxEmb := embedder.NewStubEmbedder(onnxConfig)
 
 		text := testCodeSamples["class_definition"]
 
@@ -492,7 +501,7 @@ func TestEmbedderErrorHandling(t *testing.T) {
 
 	t.Run("Empty text handling", func(t *testing.T) {
 		config := embedder.DefaultConfig()
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 
 		vector, err := emb.EmbedText(ctx, "")
 		// Should either handle gracefully or return appropriate error
@@ -507,7 +516,7 @@ func TestEmbedderErrorHandling(t *testing.T) {
 
 	t.Run("Very long text handling", func(t *testing.T) {
 		config := embedder.DefaultConfig()
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 
 		// Create very long text (10KB)
 		longText := strings.Repeat("this is a very long code snippet with lots of repetitive content ", 150)
@@ -522,7 +531,7 @@ func TestEmbedderErrorHandling(t *testing.T) {
 
 	t.Run("Special characters handling", func(t *testing.T) {
 		config := embedder.DefaultConfig()
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 
 		specialTexts := []string{
 			"func 测试(参数 string) bool { return true }",                    // Unicode
@@ -544,7 +553,7 @@ func TestEmbedderErrorHandling(t *testing.T) {
 
 	t.Run("Context cancellation", func(t *testing.T) {
 		config := embedder.DefaultConfig()
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 
 		// Create a context that's already cancelled
 		cancelledCtx, cancel := context.WithCancel(ctx)
@@ -577,10 +586,10 @@ import (
 )
 
 type User struct {
-	ID       int    \`json:"id"\`
-	Username string \`json:"username"\`
-	Email    string \`json:"email"\`
-	Password string \`json:"-"\`
+	ID       int    ` + "`json:\"id\"`" + `
+	Username string ` + "`json:\"username\"`" + `
+	Email    string ` + "`json:\"email\"`" + `
+	Password string ` + "`json:\"-\"`" + `
 }
 
 func (u *User) HashPassword(password string) {
@@ -668,7 +677,7 @@ if __name__ == "__main__":
 
 	t.Run("File content embedding", func(t *testing.T) {
 		config := embedder.DefaultConfig()
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 
 		for filename := range testFiles {
 			filePath := filepath.Join(tmpDir, filename)
@@ -693,7 +702,7 @@ if __name__ == "__main__":
 
 	t.Run("Cross-language similarity", func(t *testing.T) {
 		config := embedder.DefaultConfig()
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 
 		// Read both files
 		goContent, err := ioutil.ReadFile(filepath.Join(tmpDir, "user.go"))
@@ -734,7 +743,7 @@ if __name__ == "__main__":
 
 	t.Run("Chunk-based embedding", func(t *testing.T) {
 		config := embedder.DefaultConfig()
-		emb := embedder.NewEmbedder(config)
+		emb := embedder.NewStubEmbedder(config)
 
 		// Read Go file and split into chunks (simulate real usage)
 		goContent, err := ioutil.ReadFile(filepath.Join(tmpDir, "user.go"))

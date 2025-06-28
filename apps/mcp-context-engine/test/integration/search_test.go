@@ -67,21 +67,23 @@ class TestAuth(unittest.TestCase):
 	// Initialize components
 	indexPath := filepath.Join(tmpDir, "indexes")
 	zoektIdx := indexer.NewZoektIndexer(indexPath)
-	faissIdx := indexer.NewFAISSIndex(indexPath)
-	emb := embedder.NewEmbedder(embedder.DefaultConfig())
+	faissIdx := indexer.NewFAISSIndexer(indexPath, 384) // Default dimension for MiniLM-L6-v2
+	emb := embedder.NewDefaultEmbedder()
 
 	ctx := context.Background()
 
 	// Index files
+	var filePaths []string
 	for name := range testFiles {
 		path := filepath.Join(tmpDir, name)
-		if err := zoektIdx.IndexFile(ctx, path); err != nil {
-			t.Fatalf("Failed to index %s: %v", name, err)
-		}
+		filePaths = append(filePaths, path)
+	}
+	if err := zoektIdx.Index(ctx, filePaths); err != nil {
+		t.Fatalf("Failed to index files: %v", err)
 	}
 
 	// Create query service
-	querySvc := query.NewService(zoektIdx, faissIdx, emb, 0.45)
+	querySvc := query.NewQueryService(zoektIdx, faissIdx, emb, 0.45)
 
 	// Test cases
 	tests := []struct {
@@ -137,11 +139,11 @@ func TestSearchWithFilters(t *testing.T) {
 	// Create components
 	indexPath := os.TempDir()
 	zoektIdx := indexer.NewZoektIndexer(indexPath)
-	faissIdx := indexer.NewFAISSIndex(indexPath)
-	emb := embedder.NewEmbedder(embedder.DefaultConfig())
+	faissIdx := indexer.NewFAISSIndexer(indexPath, 384) // Default dimension for MiniLM-L6-v2
+	emb := embedder.NewDefaultEmbedder()
 
 	ctx := context.Background()
-	querySvc := query.NewService(zoektIdx, faissIdx, emb, 0.45)
+	querySvc := query.NewQueryService(zoektIdx, faissIdx, emb, 0.45)
 
 	// Test language filter
 	req := &types.SearchRequest{

@@ -70,10 +70,10 @@ import (
 
 // {{struct}} represents a {{entity}} in the system
 type {{struct}} struct {
-	ID        int       \`json:"id"\`
-	Name      string    \`json:"name"\`
-	Email     string    \`json:"email"\`
-	CreatedAt time.Time \`json:"created_at"\`
+	ID        int       ` + "`json:\"id\"`" + `
+	Name      string    ` + "`json:\"name\"`" + `
+	Email     string    ` + "`json:\"email\"`" + `
+	CreatedAt time.Time ` + "`json:\"created_at\"`" + `
 	{{fields}}
 }
 
@@ -219,7 +219,7 @@ class {{class}} {
             throw new Error('{{entity}} name cannot be empty');
         }
 
-        console.log(\`{{action}} {{entity}}: \${this.name}\`);
+        console.log(` + "`{{action}} {{entity}}: ${this.name}`" + `);
         {{logic}}
         return true;
     }
@@ -260,7 +260,7 @@ class {{class}} {
     }
 
     toString() {
-        return \`{{class}}(id=\${this.id}, name=\${this.name})\`;
+        return ` + "`{{class}}(id=${this.id}, name=${this.name})`" + `;
     }
 }
 

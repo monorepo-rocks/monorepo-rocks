@@ -250,8 +250,8 @@ func TestFileWatcherWithRealIndexer(t *testing.T) {
 			"user.go": `package main
 
 type User struct {
-    ID   int    \`json:"id"\`
-    Name string \`json:"name"\`
+    ID   int    ` + "`json:\"id\"`" + `
+    Name string ` + "`json:\"name\"`" + `
 }
 
 func (u *User) Authenticate(password string) bool {

@@ -42,7 +42,7 @@ type TestData struct {
 }
 
 // setupTestEnvironment creates a temporary directory with test files
-func setupTestEnvironment(t *testing.T) (string, *indexer.RealZoektIndexer, TestData) {
+func setupTestEnvironment(t *testing.T) (string, indexer.ZoektIndexer, TestData) {
 	// Create temporary directory
 	tmpDir, err := os.MkdirTemp("", "zoekt-real-integration-*")
 	require.NoError(t, err, "Failed to create temp directory")
@@ -80,7 +80,7 @@ func setupTestEnvironment(t *testing.T) (string, *indexer.RealZoektIndexer, Test
 	err = json.Unmarshal(testDataBytes, &testData)
 	require.NoError(t, err, "Failed to parse test data")
 
-	return tmpDir, indexer.(*indexer.RealZoektIndexer), testData
+	return tmpDir, indexer, testData
 }
 
 func TestRealZoektIndexerBasicOperations(t *testing.T) {
@@ -434,7 +434,7 @@ func TestRealZoektIndexerAdvancedQueries(t *testing.T) {
 					MaxResults: 10,
 					UseRegex:   true,
 				}
-				results, err := zoektIdx.Search(ctx, pattern, options)
+				_, err := zoektIdx.Search(ctx, pattern, options)
 				assert.NoError(t, err, "Regex search should succeed for pattern: %s", pattern)
 				// Note: Some patterns might not match, which is okay
 			})
