@@ -16,6 +16,7 @@ import (
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/embedder"
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/indexer"
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/types"
+	"math"
 )
 
 // QueryService orchestrates search across lexical and vector indexes
@@ -79,7 +80,7 @@ func (qs *QueryService) Search(ctx context.Context, request *types.SearchRequest
 	}
 
 	// Fusion ranking: combine lexical and semantic results
-	fusedResults := qs.fusionRanking(lexicalResults, semanticResults, request.TopK)
+	fusedResults, analytics := qs.enhancedFusionRanking(lexicalResults, semanticResults, request, fileQuery)
 
 	// Build response
 	response := &types.SearchResponse{
@@ -88,6 +89,11 @@ func (qs *QueryService) Search(ctx context.Context, request *types.SearchRequest
 		QueryTime:    time.Since(start),
 		LexicalHits:  len(lexicalResults),
 		SemanticHits: len(semanticResults),
+	}
+	
+	// Include analytics if enabled
+	if qs.config.Fusion.EnableAnalytics {
+		response.Analytics = analytics
 	}
 
 	// Final debug summary
@@ -952,9 +958,22 @@ func (qs *QueryService) filterSemanticResultsForJSONFields(hits []types.SearchHi
 }
 
 func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHit, topK int) []types.SearchHit {
-	// Reciprocal Rank Fusion (RRF) with BM25 weighting
+	// Legacy function maintained for backward compatibility
+	// Check if enhanced fusion is configured, otherwise use original implementation
+	if qs.config.Fusion.Strategy != "" && qs.config.Fusion.Strategy != config.FusionRRF {
+		// Use enhanced fusion for non-default strategies
+		request := &types.SearchRequest{TopK: topK}
+		fileQuery := &FileQuery{}
+		result, _ := qs.enhancedFusionRanking(lexicalHits, semanticHits, request, fileQuery)
+		return result
+	}
+	
+	// Original RRF implementation for backward compatibility
 	lambda := qs.config.Fusion.BM25Weight
-	k := 60.0 // RRF constant
+	k := qs.config.Fusion.RRFConstant
+	if k == 0 {
+		k = 60.0 // Default RRF constant for backward compatibility
+	}
 	
 	// Adaptive BM25 weight adjustment - if we have both types of results but lexical is underweighted
 	originalLambda := lambda
@@ -1126,6 +1145,608 @@ func (qs *QueryService) fusionRanking(lexicalHits, semanticHits []types.SearchHi
 
 	log.Printf("[DEBUG] Final fusion ranking complete: returning %d results", len(fusedHits))
 	return fusedHits
+}
+
+// enhancedFusionRanking provides an advanced fusion ranking implementation with multiple strategies and analytics
+func (qs *QueryService) enhancedFusionRanking(lexicalHits, semanticHits []types.SearchHit, request *types.SearchRequest, fileQuery *FileQuery) ([]types.SearchHit, *types.FusionAnalytics) {
+	start := time.Now()
+	cfg := &qs.config.Fusion
+	
+	// Initialize analytics
+	analytics := &types.FusionAnalytics{
+		Strategy:           string(cfg.Strategy),
+		LexicalCandidates:  len(lexicalHits),
+		SemanticCandidates: len(semanticHits),
+		Normalization:      string(cfg.Normalization),
+		ScoreDistribution:  types.ScoreDistribution{},
+		BoostFactors:       types.BoostFactors{},
+	}
+	
+	// Determine query type for adaptive weighting
+	queryType := qs.detectQueryType(request.Query, fileQuery)
+	analytics.QueryType = string(queryType)
+	
+	// Get effective weight based on query type and adaptive weighting
+	effectiveWeight := qs.getEffectiveWeight(cfg, queryType, len(lexicalHits), len(semanticHits), fileQuery)
+	analytics.EffectiveWeight = effectiveWeight
+	
+	if cfg.DebugScoring {
+		log.Printf("[DEBUG] Enhanced fusion ranking - Strategy: %s, QueryType: %s, EffectiveWeight: %.3f", 
+			cfg.Strategy, queryType, effectiveWeight)
+	}
+	
+	// Calculate score statistics before normalization
+	qs.calculateScoreDistribution(lexicalHits, semanticHits, &analytics.ScoreDistribution)
+	
+	// Normalize scores if requested
+	normalizedLexical := qs.normalizeScores(lexicalHits, cfg.Normalization, "lexical")
+	normalizedSemantic := qs.normalizeScores(semanticHits, cfg.Normalization, "semantic")
+	
+	// Apply fusion strategy
+	var fusedHits []types.SearchHit
+	switch cfg.Strategy {
+	case config.FusionRRF:
+		fusedHits = qs.applyRRFFusion(normalizedLexical, normalizedSemantic, effectiveWeight, cfg.RRFConstant)
+	case config.FusionWeightedLinear:
+		fusedHits = qs.applyWeightedLinearFusion(normalizedLexical, normalizedSemantic, effectiveWeight)
+	case config.FusionLearnedWeights:
+		fusedHits = qs.applyLearnedWeightsFusion(normalizedLexical, normalizedSemantic, request, fileQuery)
+	default:
+		// Fallback to RRF
+		fusedHits = qs.applyRRFFusion(normalizedLexical, normalizedSemantic, effectiveWeight, cfg.RRFConstant)
+	}
+	
+	// Apply boost factors
+	fusedHits = qs.applyBoostFactors(fusedHits, request, fileQuery, cfg, &analytics.BoostFactors)
+	
+	// Filter by minimum scores
+	fusedHits = qs.filterByMinimumScores(fusedHits, cfg)
+	
+	// Sort by final score
+	sort.Slice(fusedHits, func(i, j int) bool {
+		return fusedHits[i].Score > fusedHits[j].Score
+	})
+	
+	// Limit to top-k results
+	if len(fusedHits) > request.TopK {
+		fusedHits = fusedHits[:request.TopK]
+	}
+	
+	// Calculate final analytics
+	analytics.TotalCandidates = len(fusedHits)
+	analytics.BothCandidates = qs.countBothCandidates(fusedHits)
+	analytics.ProcessingTime = time.Since(start)
+	
+	// Calculate final score distribution
+	qs.calculateFinalScoreDistribution(fusedHits, &analytics.ScoreDistribution)
+	
+	if cfg.DebugScoring {
+		log.Printf("[DEBUG] Enhanced fusion complete: %d results, processing time: %v", 
+			len(fusedHits), analytics.ProcessingTime)
+		qs.logTopResults(fusedHits, 5)
+	}
+	
+	return fusedHits, analytics
+}
+
+// detectQueryType analyzes the query to determine its characteristics
+func (qs *QueryService) detectQueryType(query string, fileQuery *FileQuery) config.QueryType {
+	lowerQuery := strings.ToLower(query)
+	
+	// Check for import/usage queries
+	if qs.isImportUsageQuery(query) {
+		return config.QueryImport
+	}
+	
+	// Check for configuration file queries
+	if fileQuery.IsJSONFieldQuery || strings.Contains(lowerQuery, "config") || 
+	   strings.Contains(lowerQuery, "package.json") || strings.Contains(lowerQuery, "tsconfig") {
+		return config.QueryConfig
+	}
+	
+	// Check for file-specific queries
+	if len(fileQuery.FilePatterns) > 0 || strings.Contains(lowerQuery, "file") {
+		return config.QueryFile
+	}
+	
+	// Check for symbol/identifier queries (contains camelCase, snake_case, or programming terms)
+	if qs.containsSymbols(query) {
+		return config.QuerySymbol
+	}
+	
+	// Check for code-specific queries
+	if qs.containsCodeKeywords(query) {
+		return config.QueryCode
+	}
+	
+	// Default to natural language
+	return config.QueryNatural
+}
+
+// getEffectiveWeight determines the effective lexical weight based on configuration and query characteristics
+func (qs *QueryService) getEffectiveWeight(cfg *config.FusionConfig, queryType config.QueryType, 
+	lexicalCount, semanticCount int, fileQuery *FileQuery) float64 {
+	
+	baseWeight := cfg.BM25Weight
+	
+	// Apply adaptive weighting if enabled
+	if cfg.AdaptiveWeighting {
+		if weight, exists := cfg.QueryTypeWeights[queryType]; exists {
+			baseWeight = weight
+		}
+		
+		// Apply legacy adaptive rules for backward compatibility
+		if lexicalCount > 0 && semanticCount > 0 && baseWeight < 0.5 {
+			baseWeight = math.Max(baseWeight, 0.6)
+		}
+		
+		// JSON field queries get heavy lexical preference
+		if fileQuery.IsJSONFieldQuery && baseWeight < 0.8 {
+			baseWeight = 0.85
+		}
+	}
+	
+	return math.Min(math.Max(baseWeight, 0.0), 1.0) // Clamp to [0,1]
+}
+
+// normalizeScores applies the specified normalization to a set of hits
+func (qs *QueryService) normalizeScores(hits []types.SearchHit, normalization config.ScoreNormalization, source string) []types.SearchHit {
+	if normalization == config.NormNone || len(hits) == 0 {
+		return hits
+	}
+	
+	normalizedHits := make([]types.SearchHit, len(hits))
+	copy(normalizedHits, hits)
+	
+	// Extract scores
+	scores := make([]float64, len(hits))
+	for i, hit := range hits {
+		scores[i] = hit.Score
+	}
+	
+	switch normalization {
+	case config.NormMinMax:
+		qs.applyMinMaxNormalization(normalizedHits, scores)
+	case config.NormZScore:
+		qs.applyZScoreNormalization(normalizedHits, scores)
+	case config.NormRankBased:
+		qs.applyRankBasedNormalization(normalizedHits)
+	}
+	
+	return normalizedHits
+}
+
+// applyMinMaxNormalization applies min-max normalization to scores
+func (qs *QueryService) applyMinMaxNormalization(hits []types.SearchHit, scores []float64) {
+	if len(scores) == 0 {
+		return
+	}
+	
+	minScore := scores[0]
+	maxScore := scores[0]
+	for _, score := range scores {
+		if score < minScore {
+			minScore = score
+		}
+		if score > maxScore {
+			maxScore = score
+		}
+	}
+	
+	if maxScore == minScore {
+		// All scores are the same, set to 1.0
+		for i := range hits {
+			hits[i].Score = 1.0
+		}
+		return
+	}
+	
+	for i := range hits {
+		hits[i].Score = (hits[i].Score - minScore) / (maxScore - minScore)
+	}
+}
+
+// applyZScoreNormalization applies z-score normalization to scores
+func (qs *QueryService) applyZScoreNormalization(hits []types.SearchHit, scores []float64) {
+	if len(scores) == 0 {
+		return
+	}
+	
+	// Calculate mean
+	var sum float64
+	for _, score := range scores {
+		sum += score
+	}
+	mean := sum / float64(len(scores))
+	
+	// Calculate standard deviation
+	var sumSquares float64
+	for _, score := range scores {
+		diff := score - mean
+		sumSquares += diff * diff
+	}
+	stdDev := math.Sqrt(sumSquares / float64(len(scores)))
+	
+	if stdDev == 0 {
+		// All scores are the same, set to 0.0
+		for i := range hits {
+			hits[i].Score = 0.0
+		}
+		return
+	}
+	
+	for i := range hits {
+		hits[i].Score = (hits[i].Score - mean) / stdDev
+		// Transform to positive range [0, 1] using sigmoid
+		hits[i].Score = 1.0 / (1.0 + math.Exp(-hits[i].Score))
+	}
+}
+
+// applyRankBasedNormalization applies rank-based normalization to scores
+func (qs *QueryService) applyRankBasedNormalization(hits []types.SearchHit) {
+	for i := range hits {
+		// Rank-based score: 1/rank (hits are already sorted by score)
+		hits[i].Score = 1.0 / float64(i+1)
+	}
+}
+
+// applyRRFFusion applies Reciprocal Rank Fusion
+func (qs *QueryService) applyRRFFusion(lexicalHits, semanticHits []types.SearchHit, weight, k float64) []types.SearchHit {
+	lexicalScores := make(map[string]float64)
+	semanticScores := make(map[string]float64)
+	allHits := make(map[string]types.SearchHit)
+	
+	// Process lexical hits
+	for rank, hit := range lexicalHits {
+		key := qs.getHitKey(hit)
+		rrf := 1.0 / (k + float64(rank+1))
+		finalScore := hit.Score * weight * rrf
+		lexicalScores[key] = finalScore
+		
+		updatedHit := hit
+		updatedHit.Score = finalScore
+		allHits[key] = updatedHit
+	}
+	
+	// Process semantic hits
+	for rank, hit := range semanticHits {
+		key := qs.getHitKey(hit)
+		rrf := 1.0 / (k + float64(rank+1))
+		semanticScore := hit.Score * (1.0 - weight) * rrf
+		
+		if existing, exists := allHits[key]; exists {
+			// Combine scores
+			existing.Score = lexicalScores[key] + semanticScore
+			existing.Source = "both"
+			allHits[key] = existing
+		} else {
+			// New semantic-only hit
+			updatedHit := hit
+			updatedHit.Score = semanticScore
+			semanticScores[key] = semanticScore
+			allHits[key] = updatedHit
+		}
+	}
+	
+	// Convert back to slice
+	var result []types.SearchHit
+	for _, hit := range allHits {
+		result = append(result, hit)
+	}
+	
+	return result
+}
+
+// applyWeightedLinearFusion applies weighted linear combination
+func (qs *QueryService) applyWeightedLinearFusion(lexicalHits, semanticHits []types.SearchHit, weight float64) []types.SearchHit {
+	lexicalScores := make(map[string]float64)
+	semanticScores := make(map[string]float64)
+	allHits := make(map[string]types.SearchHit)
+	
+	// Process lexical hits
+	for _, hit := range lexicalHits {
+		key := qs.getHitKey(hit)
+		finalScore := hit.Score * weight
+		lexicalScores[key] = finalScore
+		
+		updatedHit := hit
+		updatedHit.Score = finalScore
+		allHits[key] = updatedHit
+	}
+	
+	// Process semantic hits
+	for _, hit := range semanticHits {
+		key := qs.getHitKey(hit)
+		semanticScore := hit.Score * (1.0 - weight)
+		
+		if existing, exists := allHits[key]; exists {
+			// Combine scores
+			existing.Score = lexicalScores[key] + semanticScore
+			existing.Source = "both"
+			allHits[key] = existing
+		} else {
+			// New semantic-only hit
+			updatedHit := hit
+			updatedHit.Score = semanticScore
+			allHits[key] = updatedHit
+		}
+	}
+	
+	// Convert back to slice
+	var result []types.SearchHit
+	for _, hit := range allHits {
+		result = append(result, hit)
+	}
+	
+	return result
+}
+
+// applyLearnedWeightsFusion applies ML-based learned weights (placeholder implementation)
+func (qs *QueryService) applyLearnedWeightsFusion(lexicalHits, semanticHits []types.SearchHit, request *types.SearchRequest, fileQuery *FileQuery) []types.SearchHit {
+	// For now, this is a placeholder that uses query-specific learned weights
+	// In a full implementation, this would use a trained ML model
+	
+	// Simple heuristic-based learned weights
+	var weight float64
+	queryLen := len(strings.Fields(request.Query))
+	
+	if queryLen <= 2 {
+		weight = 0.7 // Short queries favor lexical
+	} else if queryLen <= 5 {
+		weight = 0.5 // Medium queries balanced
+	} else {
+		weight = 0.3 // Long queries favor semantic
+	}
+	
+	// Adjust based on query characteristics
+	if fileQuery.IsJSONFieldQuery {
+		weight = 0.8
+	} else if qs.isImportUsageQuery(request.Query) {
+		weight = 0.75
+	}
+	
+	// Use weighted linear fusion with learned weight
+	return qs.applyWeightedLinearFusion(lexicalHits, semanticHits, weight)
+}
+
+// applyBoostFactors applies various boost factors to the fused results
+func (qs *QueryService) applyBoostFactors(hits []types.SearchHit, request *types.SearchRequest, 
+	fileQuery *FileQuery, cfg *config.FusionConfig, boostStats *types.BoostFactors) []types.SearchHit {
+	
+	queryTerms := qs.extractKeywords(request.Query)
+	var totalBoostFactor float64
+	boostedCount := 0
+	
+	for i := range hits {
+		boostFactor := 1.0
+		
+		// Exact match boost
+		if qs.isExactMatch(hits[i].Text, queryTerms) {
+			boostFactor *= cfg.ExactMatchBoost
+			boostStats.ExactMatches++
+		}
+		
+		// Symbol match boost
+		if qs.isSymbolMatch(hits[i].Text, queryTerms) {
+			boostFactor *= cfg.SymbolMatchBoost
+			boostStats.SymbolMatches++
+		}
+		
+		// File type boost
+		if qs.matchesFileType(hits[i].File, fileQuery.FilePatterns) {
+			boostFactor *= cfg.FileTypeBoost
+			boostStats.FileTypeBoosts++
+		}
+		
+		// Apply boost
+		if boostFactor > 1.0 {
+			hits[i].Score *= boostFactor
+			totalBoostFactor += boostFactor
+			boostedCount++
+		}
+	}
+	
+	if boostedCount > 0 {
+		boostStats.AvgBoostFactor = totalBoostFactor / float64(boostedCount)
+	} else {
+		boostStats.AvgBoostFactor = 1.0
+	}
+	
+	return hits
+}
+
+// Helper functions for boost detection
+func (qs *QueryService) isExactMatch(text string, queryTerms []string) bool {
+	lowerText := strings.ToLower(text)
+	for _, term := range queryTerms {
+		if strings.Contains(lowerText, strings.ToLower(term)) {
+			return true
+		}
+	}
+	return false
+}
+
+func (qs *QueryService) isSymbolMatch(text string, queryTerms []string) bool {
+	// Look for camelCase, snake_case, or exact symbol matches
+	for _, term := range queryTerms {
+		if qs.containsSymbolPattern(text, term) {
+			return true
+		}
+	}
+	return false
+}
+
+func (qs *QueryService) containsSymbolPattern(text, term string) bool {
+	// Simple heuristic for symbol matching
+	patterns := []string{
+		term,                           // Exact match
+		strings.Title(term),            // Title case
+		strings.ToUpper(term),          // Upper case
+		strings.ReplaceAll(term, "_", ""), // Snake to camel
+	}
+	
+	for _, pattern := range patterns {
+		if strings.Contains(text, pattern) {
+			return true
+		}
+	}
+	
+	return false
+}
+
+func (qs *QueryService) matchesFileType(fileName string, patterns []string) bool {
+	if len(patterns) == 0 {
+		return false
+	}
+	
+	lowerFileName := strings.ToLower(fileName)
+	for _, pattern := range patterns {
+		// Simple pattern matching (could be enhanced with proper glob matching)
+		if strings.HasSuffix(pattern, "*") {
+			ext := strings.TrimPrefix(pattern, "*")
+			if strings.HasSuffix(lowerFileName, strings.ToLower(ext)) {
+				return true
+			}
+		} else if strings.Contains(lowerFileName, strings.ToLower(pattern)) {
+			return true
+		}
+	}
+	
+	return false
+}
+
+// filterByMinimumScores filters results based on minimum score thresholds
+func (qs *QueryService) filterByMinimumScores(hits []types.SearchHit, cfg *config.FusionConfig) []types.SearchHit {
+	var filtered []types.SearchHit
+	
+	for _, hit := range hits {
+		shouldInclude := true
+		
+		if hit.Source == "lex" && hit.Score < cfg.MinLexicalScore {
+			shouldInclude = false
+		} else if hit.Source == "vec" && hit.Score < cfg.MinSemanticScore {
+			shouldInclude = false
+		} else if hit.Source == "both" {
+			// For combined hits, use the minimum of the two thresholds
+			minThreshold := math.Min(cfg.MinLexicalScore, cfg.MinSemanticScore)
+			if hit.Score < minThreshold {
+				shouldInclude = false
+			}
+		}
+		
+		if shouldInclude {
+			filtered = append(filtered, hit)
+		}
+	}
+	
+	return filtered
+}
+
+// Utility functions for analytics and debugging
+func (qs *QueryService) calculateScoreDistribution(lexicalHits, semanticHits []types.SearchHit, dist *types.ScoreDistribution) {
+	if len(lexicalHits) > 0 {
+		lexScores := make([]float64, len(lexicalHits))
+		for i, hit := range lexicalHits {
+			lexScores[i] = hit.Score
+		}
+		dist.LexicalMin = lexScores[len(lexScores)-1]
+		dist.LexicalMax = lexScores[0]
+		dist.LexicalMean = qs.calculateMean(lexScores)
+	}
+	
+	if len(semanticHits) > 0 {
+		semScores := make([]float64, len(semanticHits))
+		for i, hit := range semanticHits {
+			semScores[i] = hit.Score
+		}
+		dist.SemanticMin = semScores[len(semScores)-1]
+		dist.SemanticMax = semScores[0]
+		dist.SemanticMean = qs.calculateMean(semScores)
+	}
+}
+
+func (qs *QueryService) calculateFinalScoreDistribution(hits []types.SearchHit, dist *types.ScoreDistribution) {
+	if len(hits) == 0 {
+		return
+	}
+	
+	scores := make([]float64, len(hits))
+	for i, hit := range hits {
+		scores[i] = hit.Score
+	}
+	
+	dist.FinalMin = scores[len(scores)-1]
+	dist.FinalMax = scores[0]
+	dist.FinalMean = qs.calculateMean(scores)
+}
+
+func (qs *QueryService) calculateMean(scores []float64) float64 {
+	if len(scores) == 0 {
+		return 0
+	}
+	
+	var sum float64
+	for _, score := range scores {
+		sum += score
+	}
+	return sum / float64(len(scores))
+}
+
+func (qs *QueryService) countBothCandidates(hits []types.SearchHit) int {
+	count := 0
+	for _, hit := range hits {
+		if hit.Source == "both" {
+			count++
+		}
+	}
+	return count
+}
+
+func (qs *QueryService) containsSymbols(query string) bool {
+	// Check for camelCase, snake_case, or programming symbols
+	patterns := []regexp.Regexp{
+		*regexp.MustCompile(`[a-z][A-Z]`),     // camelCase
+		*regexp.MustCompile(`\w+_\w+`),        // snake_case
+		*regexp.MustCompile(`[A-Z_]{2,}`),     // CONSTANTS
+		*regexp.MustCompile(`\w+::\w+`),       // namespaced symbols
+	}
+	
+	for _, pattern := range patterns {
+		if pattern.MatchString(query) {
+			return true
+		}
+	}
+	
+	return false
+}
+
+func (qs *QueryService) containsCodeKeywords(query string) bool {
+	codeKeywords := []string{
+		"function", "class", "method", "variable", "const", "let", "var",
+		"def", "if", "else", "for", "while", "try", "catch", "return",
+		"import", "export", "require", "include", "struct", "interface",
+		"type", "enum", "public", "private", "protected", "static",
+	}
+	
+	lowerQuery := strings.ToLower(query)
+	for _, keyword := range codeKeywords {
+		if strings.Contains(lowerQuery, keyword) {
+			return true
+		}
+	}
+	
+	return false
+}
+
+func (qs *QueryService) logTopResults(hits []types.SearchHit, count int) {
+	log.Printf("[DEBUG] Top %d enhanced fusion results:", count)
+	for i, hit := range hits {
+		if i >= count {
+			break
+		}
+		log.Printf("[DEBUG]   %d. File: %s, Line: %d, Score: %.6f, Source: %s",
+			i+1, hit.File, hit.LineNumber, hit.Score, hit.Source)
+	}
 }
 
 func (qs *QueryService) getHitKey(hit types.SearchHit) string {
