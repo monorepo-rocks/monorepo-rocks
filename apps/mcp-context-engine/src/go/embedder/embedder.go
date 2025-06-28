@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -96,16 +97,43 @@ func NewStubEmbedder(config EmbedderConfig) Embedder {
 }
 
 // NewDefaultEmbedder creates an embedder with default configuration
+// The type of embedder is determined by environment variables:
+// - EMBEDDER_USE_STUB=true: Use stub embedder (development/testing)
+// - EMBEDDER_USE_TFIDF=true: Use TF-IDF based embedder (lightweight)
+// - EMBEDDER_USE_ONNX=true: Use ONNX Runtime embedder (high quality, default)
 func NewDefaultEmbedder() Embedder {
 	config := EmbedderConfig{
-		Model:      "microsoft/codebert-base",
+		Model:      "sentence-transformers/all-MiniLM-L6-v2",
 		Device:     "cpu",
 		BatchSize:  32,
 		CacheSize:  10000,
 		Timeout:    30 * time.Second,
 		MaxRetries: 3,
 	}
-	return NewStubEmbedder(config)
+	
+	// Check environment variables to determine embedder type
+	if os.Getenv("EMBEDDER_USE_STUB") == "true" {
+		fmt.Println("Using stub embedder (EMBEDDER_USE_STUB=true)")
+		config.Model = "microsoft/codebert-base"
+		return NewStubEmbedder(config)
+	}
+	
+	if os.Getenv("EMBEDDER_USE_TFIDF") == "true" {
+		fmt.Println("Using TF-IDF embedder (EMBEDDER_USE_TFIDF=true)")
+		config.Model = "tfidf-vectorizer"
+		return NewTFIDFEmbedder(config)
+	}
+	
+	// Default to ONNX embedder if available, otherwise fallback to TF-IDF
+	if os.Getenv("EMBEDDER_USE_ONNX") == "true" {
+		fmt.Println("Using ONNX embedder with all-MiniLM-L6-v2 model")
+		return NewONNXEmbedder(config)
+	}
+	
+	// Fallback to TF-IDF if ONNX is not available or requested
+	fmt.Println("Using TF-IDF embedder (ONNX not available or not requested)")
+	config.Model = "tfidf-vectorizer"
+	return NewTFIDFEmbedder(config)
 }
 
 // Embed implements the Embedder interface for batch processing
