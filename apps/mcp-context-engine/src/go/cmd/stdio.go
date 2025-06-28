@@ -18,8 +18,10 @@ import (
 
 var stdioCmd = &cobra.Command{
 	Use:   "stdio",
-	Short: "Run in MCP stdio mode",
-	Long:  `Start the engine in MCP (Model Context Protocol) stdio mode for LLM agent integration.`,
+	Short: "Run in stdio mode (supports both MCP JSON-RPC and simple JSON lines)",
+	Long: `Start the engine in stdio mode. Supports two protocols:
+1. MCP JSON-RPC protocol for full LLM agent integration
+2. Simple JSON lines: read {query:..., lang:..., top_k:?}; write back JSON array of hits`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load configuration
 		cfg, err := config.Load(configFile)
@@ -57,8 +59,8 @@ var stdioCmd = &cobra.Command{
 			cancel()
 		}()
 
-		// Run server
-		return mcpServer.Run(ctx)
+		// Run server with protocol detection
+		return mcpServer.RunWithProtocolDetection(ctx)
 	},
 }
 

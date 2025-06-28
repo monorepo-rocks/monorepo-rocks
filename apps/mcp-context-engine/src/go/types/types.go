@@ -19,7 +19,8 @@ type SearchHit struct {
 // SearchRequest represents a search query
 type SearchRequest struct {
 	Query    string `json:"query"`
-	TopK     int    `json:"k,omitempty"`
+	TopK     int    `json:"top_k,omitempty"` // Changed to match expected field name
+	K        int    `json:"k,omitempty"`     // Keep for backward compatibility
 	Language string `json:"lang,omitempty"`
 	Filters  struct {
 		FilePatterns []string `json:"file_patterns,omitempty"`

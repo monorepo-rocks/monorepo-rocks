@@ -1440,7 +1440,6 @@ func (qs *QueryService) applyRRFFusion(lexicalHits, semanticHits []types.SearchH
 // applyWeightedLinearFusion applies weighted linear combination
 func (qs *QueryService) applyWeightedLinearFusion(lexicalHits, semanticHits []types.SearchHit, weight float64) []types.SearchHit {
 	lexicalScores := make(map[string]float64)
-	semanticScores := make(map[string]float64)
 	allHits := make(map[string]types.SearchHit)
 	
 	// Process lexical hits
