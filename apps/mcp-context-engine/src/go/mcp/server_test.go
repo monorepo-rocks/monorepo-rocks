@@ -88,7 +88,7 @@ func TestServer_HandleToolCall(t *testing.T) {
 	
 	params, _ := json.Marshal(map[string]interface{}{
 		"name":      "code_context",
-		"arguments": searchArgs,
+		"arguments": json.RawMessage(searchArgs),
 	})
 	
 	req := &Request{
@@ -140,7 +140,7 @@ func TestServer_Run(t *testing.T) {
 	if !strings.Contains(outputStr, "initialized") {
 		t.Error("Expected initialization notification")
 	}
-	if !strings.Contains(outputStr, "tools/list") {
-		t.Error("Expected tools/list in output")
+	if !strings.Contains(outputStr, "code_context") {
+		t.Errorf("Expected code_context tool in output, got: %s", outputStr)
 	}
 }
