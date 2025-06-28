@@ -13,9 +13,26 @@ Fast, offline code search engine combining lexical and semantic search for LLM a
 
 ## Installation
 
+### Quick Start (Stub Implementation)
+
 ```bash
-npm install -g mcp-context-engine
+# Build with stub implementations (no external dependencies)
+make build-stub
 ```
+
+### Production Installation (Real FAISS)
+
+For production use with high-performance vector search:
+
+```bash
+# Install FAISS library
+brew install faiss
+
+# Build with FAISS support
+make build
+```
+
+See [FAISS Installation Guide](docs/FAISS_INSTALLATION.md) for detailed setup instructions.
 
 ## Usage
 
