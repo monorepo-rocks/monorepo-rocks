@@ -1,0 +1,97 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Alice Johnson",
+      "email": "alice@example.com",
+      "role": "developer",
+      "created_at": "2023-01-15T09:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Bob Smith",
+      "email": "bob@company.org",
+      "role": "manager",
+      "created_at": "2023-02-20T10:30:00Z"
+    },
+    {
+      "id": 3,
+      "name": "Charlie Brown",
+      "email": "charlie@example.com",
+      "role": "designer",
+      "created_at": "2023-03-10T14:15:00Z"
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "name": "Web Application",
+      "description": "Modern web application built with React and Node.js",
+      "languages": ["javascript", "typescript", "css"],
+      "status": "active"
+    },
+    {
+      "id": 2,
+      "name": "API Gateway",
+      "description": "Microservices API gateway written in Go",
+      "languages": ["go"],
+      "status": "active"
+    },
+    {
+      "id": 3,
+      "name": "Data Pipeline",
+      "description": "ETL pipeline for processing large datasets with Python",
+      "languages": ["python", "sql"],
+      "status": "maintenance"
+    }
+  ],
+  "search_queries": [
+    {
+      "query": "authenticate",
+      "expected_files": ["sample_code.go", "sample_code.py", "sample_code.js"],
+      "expected_min_results": 3
+    },
+    {
+      "query": "user management",
+      "expected_files": ["sample_code.py", "sample_code.js"],
+      "expected_min_results": 2
+    },
+    {
+      "query": "function main",
+      "expected_files": ["sample_code.go"],
+      "expected_min_results": 1
+    },
+    {
+      "query": "import",
+      "expected_files": ["sample_code.go", "sample_code.py", "sample_code.js"],
+      "expected_min_results": 3
+    },
+    {
+      "query": "class User",
+      "expected_files": ["sample_code.py", "sample_code.js"],
+      "expected_min_results": 2
+    }
+  ],
+  "test_scenarios": {
+    "basic_search": {
+      "description": "Test basic keyword search functionality",
+      "queries": ["function", "class", "import", "authenticate"]
+    },
+    "regex_search": {
+      "description": "Test regular expression search",
+      "patterns": ["func[[:space:]]+\\w+", "class \\w+", "def \\w+\\("]
+    },
+    "language_filter": {
+      "description": "Test language-specific filtering",
+      "filters": {
+        "go": ["func", "package", "import"],
+        "python": ["def", "class", "import"],
+        "javascript": ["function", "class", "import"]
+      }
+    },
+    "file_pattern": {
+      "description": "Test file pattern filtering",
+      "patterns": ["*.go", "*.py", "*.js", "*.json", "*.yaml"]
+    }
+  }
+}

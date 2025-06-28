@@ -1,0 +1,71 @@
+# Sample configuration file for testing
+server:
+  host: "localhost"
+  port: 8080
+  timeout: 30s
+  max_connections: 100
+
+database:
+  driver: "postgres"
+  host: "localhost"
+  port: 5432
+  name: "testdb"
+  username: "testuser"
+  password: "testpass"
+  ssl_mode: "disable"
+  max_connections: 25
+
+indexing:
+  batch_size: 1000
+  index_path: "./indexes"
+  languages:
+    - "go"
+    - "python"  
+    - "javascript"
+    - "typescript"
+    - "java"
+    - "c"
+    - "cpp"
+    - "rust"
+  file_patterns:
+    - "*.go"
+    - "*.py"
+    - "*.js"
+    - "*.ts"
+    - "*.java"
+    - "*.c"
+    - "*.cpp"
+    - "*.rs"
+    - "*.md"
+    - "*.yaml"
+    - "*.json"
+
+search:
+  max_results: 50
+  min_score: 0.1
+  timeout: "10s"
+  fusion:
+    enabled: true
+    weights:
+      lexical: 0.6
+      semantic: 0.4
+    normalization: "min_max"
+
+embeddings:
+  model: "codebert"
+  dimension: 768
+  batch_size: 32
+  cache_size: 10000
+
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+  
+security:
+  api_key_required: true
+  rate_limit: 100
+  cors_enabled: true
+  allowed_origins:
+    - "http://localhost:3000"
+    - "https://example.com"
