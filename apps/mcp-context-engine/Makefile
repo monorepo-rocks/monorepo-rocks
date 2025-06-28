@@ -11,6 +11,8 @@ BIN_DIR=./bin
 # Build flags
 LDFLAGS=-ldflags "-s -w"
 BUILD_FLAGS=-trimpath
+# Default to CGO_ENABLED=0 for builds without FAISS C++ dependencies
+CGO_ENABLED ?= 0
 
 # Default target
 all: build
@@ -20,11 +22,11 @@ install-deps:
 	go mod download
 	go mod tidy
 
-# Build for current platform
+# Build for current platform (default: uses stub FAISS implementation)
 build: install-deps
 	@echo "Building for current platform..."
 	@mkdir -p $(BIN_DIR)
-	go build $(BUILD_FLAGS) $(LDFLAGS) -o $(BIN_DIR)/$(BINARY_NAME) $(MAIN_PATH)
+	CGO_ENABLED=$(CGO_ENABLED) go build $(BUILD_FLAGS) $(LDFLAGS) -o $(BIN_DIR)/$(BINARY_NAME) $(MAIN_PATH)
 
 # Build for all platforms
 build-all: install-deps
@@ -32,23 +34,23 @@ build-all: install-deps
 	@mkdir -p $(BIN_DIR)
 	
 	# Darwin (macOS) AMD64
-	GOOS=darwin GOARCH=amd64 go build $(BUILD_FLAGS) $(LDFLAGS) \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=darwin GOARCH=amd64 go build $(BUILD_FLAGS) $(LDFLAGS) \
 		-o $(BIN_DIR)/$(BINARY_NAME)-darwin-amd64 $(MAIN_PATH)
 	
 	# Darwin (macOS) ARM64
-	GOOS=darwin GOARCH=arm64 go build $(BUILD_FLAGS) $(LDFLAGS) \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=darwin GOARCH=arm64 go build $(BUILD_FLAGS) $(LDFLAGS) \
 		-o $(BIN_DIR)/$(BINARY_NAME)-darwin-arm64 $(MAIN_PATH)
 	
 	# Linux AMD64
-	GOOS=linux GOARCH=amd64 go build $(BUILD_FLAGS) $(LDFLAGS) \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=amd64 go build $(BUILD_FLAGS) $(LDFLAGS) \
 		-o $(BIN_DIR)/$(BINARY_NAME)-linux-amd64 $(MAIN_PATH)
 	
 	# Linux ARM64
-	GOOS=linux GOARCH=arm64 go build $(BUILD_FLAGS) $(LDFLAGS) \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=arm64 go build $(BUILD_FLAGS) $(LDFLAGS) \
 		-o $(BIN_DIR)/$(BINARY_NAME)-linux-arm64 $(MAIN_PATH)
 	
 	# Windows AMD64
-	GOOS=windows GOARCH=amd64 go build $(BUILD_FLAGS) $(LDFLAGS) \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=windows GOARCH=amd64 go build $(BUILD_FLAGS) $(LDFLAGS) \
 		-o $(BIN_DIR)/$(BINARY_NAME)-windows-amd64.exe $(MAIN_PATH)
 	
 	@echo "Build complete. Binaries in $(BIN_DIR)/"
@@ -57,10 +59,7 @@ build-all: install-deps
 test:
 	go test -v ./...
 
-# Run tests with coverage
-test-coverage:
-	go test -v -coverprofile=coverage.out ./...
-	go tool cover -html=coverage.out -o coverage.html
+# Run tests with coverage (see test-coverage target below for more options)
 
 # Clean build artifacts
 clean:
@@ -70,7 +69,14 @@ clean:
 # Development build (with debug symbols)
 dev: install-deps
 	@mkdir -p $(BIN_DIR)
-	go build -o $(BIN_DIR)/$(BINARY_NAME) $(MAIN_PATH)
+	CGO_ENABLED=$(CGO_ENABLED) go build -o $(BIN_DIR)/$(BINARY_NAME) $(MAIN_PATH)
+
+# Build with real FAISS support (requires FAISS C++ libraries installed)
+build-faiss: install-deps
+	@echo "Building with real FAISS support..."
+	@echo "Note: This requires FAISS C++ libraries to be installed on your system"
+	@mkdir -p $(BIN_DIR)
+	CGO_ENABLED=1 go build $(BUILD_FLAGS) $(LDFLAGS) -o $(BIN_DIR)/$(BINARY_NAME) $(MAIN_PATH)
 
 # Run the binary
 run: build
@@ -276,6 +282,21 @@ validate-test:
 		exit 1; \
 	fi
 	@echo "Test environment validation complete"
+
+# Show build help
+build-help:
+	@echo "Available build targets:"
+	@echo "  build                  - Build with stub FAISS implementation (default, no CGO)"
+	@echo "  build-faiss           - Build with real FAISS support (requires FAISS C++ libraries)"
+	@echo "  build-all             - Build for all platforms (uses current CGO setting)"
+	@echo "  dev                   - Development build with debug symbols"
+	@echo ""
+	@echo "To override CGO setting:"
+	@echo "  CGO_ENABLED=0 make build     - Force stub FAISS implementation"
+	@echo "  CGO_ENABLED=1 make build     - Force real FAISS implementation"
+	@echo ""
+	@echo "Environment variables for runtime:"
+	@echo "  FAISS_USE_REAL=true          - Use real FAISS when CGO is enabled"
 
 # Show test help
 test-help:
