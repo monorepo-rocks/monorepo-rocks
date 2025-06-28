@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/config"
 	"github.com/monorepo-rocks/monorepo-rocks/apps/mcp-context-engine/src/go/embedder"
@@ -140,25 +142,315 @@ func runWatcher(ctx context.Context, repoPath string, cfg *config.Config, zoekt 
 		return err
 	}
 
+	// Initialize file hash cache for change detection
+	fmt.Println("Initializing file hash cache...")
+	if err := w.InitializeFileHashes(repoPath, isCodeFile); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: Failed to initialize file hashes: %v\n", err)
+	}
+
 	if err := w.Start(ctx); err != nil {
 		return err
 	}
 
-	// Process file events
+	fmt.Println("Watcher started. Processing file events...")
+	
+	// Enhanced event processing with batching and proper incremental updates
+	var consecutiveErrors int
+	maxConsecutiveErrors := 5
+	errorBackoffDuration := time.Second
+	
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case event := <-w.Events():
-			fmt.Printf("File changed: %s\n", event.Path)
-			// Re-index the file
-			if isCodeFile(event.Path) {
-				if err := zoekt.IncrementalIndex(ctx, []string{event.Path}); err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to re-index %s: %v\n", event.Path, err)
+		default:
+			// Get batched events for efficient processing
+			events := w.GetBatchedEvents(1 * time.Second)
+			if len(events) == 0 {
+				continue
+			}
+
+			// Process events in batch with error handling and recovery
+			if err := processBatchedEvents(ctx, events, zoekt, faiss, emb); err != nil {
+				consecutiveErrors++
+				fmt.Fprintf(os.Stderr, "Error processing events (attempt %d/%d): %v\n", consecutiveErrors, maxConsecutiveErrors, err)
+				
+				// Implement exponential backoff for consecutive errors
+				if consecutiveErrors >= maxConsecutiveErrors {
+					fmt.Fprintf(os.Stderr, "Too many consecutive errors. Backing off for %v\n", errorBackoffDuration)
+					time.Sleep(errorBackoffDuration)
+					errorBackoffDuration *= 2
+					if errorBackoffDuration > 30*time.Second {
+						errorBackoffDuration = 30 * time.Second
+					}
+					consecutiveErrors = 0
 				}
+			} else {
+				// Reset error tracking on successful processing
+				consecutiveErrors = 0
+				errorBackoffDuration = time.Second
 			}
 		}
 	}
+}
+
+// processBatchedEvents handles a batch of file events efficiently
+func processBatchedEvents(ctx context.Context, events []watcher.FileEvent, zoekt indexer.ZoektIndexer, faiss indexer.FAISSIndexer, emb embedder.Embedder) error {
+	var filesToIndex []string
+	var filesToDelete []string
+	var chunkIDsToDelete []string
+	var processingErrors []string
+
+	fmt.Printf("Processing batch of %d events\n", len(events))
+
+	// Pre-process events and validate file accessibility
+	for _, event := range events {
+		fmt.Printf("Event: %s %s", event.Operation, event.Path)
+		if event.OldPath != "" {
+			fmt.Printf(" (renamed from %s)", event.OldPath)
+		}
+		fmt.Println()
+
+		// Skip non-code files
+		if !isCodeFile(event.Path) {
+			continue
+		}
+
+		// Validate file for operations that require file access
+		if event.Operation == watcher.OpCreate || event.Operation == watcher.OpModify {
+			if _, err := os.Stat(event.Path); err != nil {
+				processingErrors = append(processingErrors, fmt.Sprintf("Cannot access file %s: %v", event.Path, err))
+				continue
+			}
+		}
+
+		switch event.Operation {
+		case watcher.OpCreate, watcher.OpModify:
+			filesToIndex = append(filesToIndex, event.Path)
+
+		case watcher.OpDelete:
+			filesToDelete = append(filesToDelete, event.Path)
+			// Generate chunk IDs that would have been created for this file
+			chunkIDsToDelete = append(chunkIDsToDelete, generateChunkIDsForFile(event.Path)...)
+
+		case watcher.OpRename:
+			// Handle rename as delete old + create new
+			if event.OldPath != "" && isCodeFile(event.OldPath) {
+				filesToDelete = append(filesToDelete, event.OldPath)
+				chunkIDsToDelete = append(chunkIDsToDelete, generateChunkIDsForFile(event.OldPath)...)
+			}
+			filesToIndex = append(filesToIndex, event.Path)
+		}
+	}
+
+	var hasErrors bool
+
+	// Process deletions first with error handling
+	if len(filesToDelete) > 0 {
+		fmt.Printf("Deleting %d files from indexes\n", len(filesToDelete))
+		
+		// Delete from Zoekt with retry logic
+		if err := deleteFromZoektWithRetry(ctx, zoekt, filesToDelete, 3); err != nil {
+			processingErrors = append(processingErrors, fmt.Sprintf("Failed to delete files from Zoekt after retries: %v", err))
+			hasErrors = true
+		}
+
+		// Delete from FAISS with retry logic
+		if len(chunkIDsToDelete) > 0 {
+			if err := deleteFromFAISSWithRetry(ctx, faiss, chunkIDsToDelete, 3); err != nil {
+				processingErrors = append(processingErrors, fmt.Sprintf("Failed to delete chunks from FAISS after retries: %v", err))
+				hasErrors = true
+			}
+		}
+	}
+
+	// Process additions/modifications with error handling
+	if len(filesToIndex) > 0 {
+		fmt.Printf("Indexing %d files\n", len(filesToIndex))
+		
+		// Re-index in Zoekt with retry logic
+		if err := indexInZoektWithRetry(ctx, zoekt, filesToIndex, 3); err != nil {
+			processingErrors = append(processingErrors, fmt.Sprintf("Failed to incrementally index files in Zoekt after retries: %v", err))
+			hasErrors = true
+		}
+
+		// Re-index in FAISS with retry logic
+		if err := indexFilesInFAISSWithRetry(ctx, filesToIndex, faiss, emb, 3); err != nil {
+			processingErrors = append(processingErrors, fmt.Sprintf("Failed to index files in FAISS after retries: %v", err))
+			hasErrors = true
+		}
+	}
+
+	// Report any processing errors
+	if len(processingErrors) > 0 {
+		for _, errMsg := range processingErrors {
+			fmt.Fprintf(os.Stderr, "Processing error: %s\n", errMsg)
+		}
+	}
+
+	// Return an error only if critical operations failed
+	if hasErrors {
+		return fmt.Errorf("batch processing completed with %d errors", len(processingErrors))
+	}
+
+	return nil
+}
+
+// indexFilesInFAISS handles indexing files in the FAISS vector database
+func indexFilesInFAISS(ctx context.Context, files []string, faiss indexer.FAISSIndexer, emb embedder.Embedder) error {
+	for _, file := range files {
+		// First, delete any existing chunks for this file
+		existingChunkIDs := generateChunkIDsForFile(file)
+		if len(existingChunkIDs) > 0 {
+			if err := faiss.Delete(ctx, existingChunkIDs); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: Failed to delete existing chunks for %s: %v\n", file, err)
+			}
+		}
+
+		// Read file content
+		content, err := os.ReadFile(file)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", file, err)
+			continue
+		}
+
+		// Generate chunks using structure-aware chunking
+		language := detectLanguage(file)
+		chunkSize := 300 // Default chunk size
+		if language == "json" || language == "yaml" || language == "yml" {
+			chunkSize = 1000 // Larger chunk size for structured files
+		}
+		
+		chunks := embedder.ChunkCode(file, file, string(content), language, chunkSize)
+		if len(chunks) == 0 {
+			continue
+		}
+
+		// Generate embeddings
+		embeddings := make([]types.Embedding, 0, len(chunks))
+		for _, chunk := range chunks {
+			emb_result, err := emb.EmbedSingle(ctx, chunk)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to generate embedding for chunk in %s: %v\n", file, err)
+				continue
+			}
+			embeddings = append(embeddings, emb_result)
+		}
+
+		// Add embeddings to FAISS
+		if len(embeddings) > 0 {
+			if err := faiss.AddVectors(ctx, embeddings); err != nil {
+				return fmt.Errorf("failed to add vectors for %s: %w", file, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// generateChunkIDsForFile generates the chunk IDs that would be created for a file
+// This is used for deletion - we need to predict what chunk IDs were created
+func generateChunkIDsForFile(filePath string) []string {
+	// This is a simplified approach. In a real implementation, you might:
+	// 1. Query the FAISS index for chunks with this file path
+	// 2. Maintain a separate mapping of file -> chunk IDs
+	// 3. Use a deterministic chunk ID generation scheme
+	
+	// For now, we'll use a simple approach based on file path hash
+	// This assumes chunk IDs are generated deterministically
+	var chunkIDs []string
+	
+	// Generate some potential chunk IDs based on file path
+	// This is a simplified approach - in practice you'd want to maintain
+	// a proper mapping or query the index
+	baseID := fmt.Sprintf("%x", sha256.Sum256([]byte(filePath)))
+	
+	// Estimate chunks based on typical file size (conservative estimate)
+	// Assume up to 20 chunks per file on average
+	for i := 0; i < 20; i++ {
+		chunkID := fmt.Sprintf("%s_%d", baseID, i)
+		chunkIDs = append(chunkIDs, chunkID)
+	}
+	
+	return chunkIDs
+}
+
+// Retry helper functions for error handling and recovery
+
+// deleteFromZoektWithRetry attempts to delete files from Zoekt with retry logic
+func deleteFromZoektWithRetry(ctx context.Context, zoekt indexer.ZoektIndexer, files []string, maxRetries int) error {
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if err := zoekt.Delete(ctx, files); err != nil {
+			lastErr = err
+			if attempt < maxRetries-1 {
+				waitTime := time.Duration(attempt+1) * time.Second
+				fmt.Fprintf(os.Stderr, "Zoekt delete attempt %d failed, retrying in %v: %v\n", attempt+1, waitTime, err)
+				time.Sleep(waitTime)
+				continue
+			}
+		} else {
+			return nil
+		}
+	}
+	return fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)
+}
+
+// deleteFromFAISSWithRetry attempts to delete chunks from FAISS with retry logic
+func deleteFromFAISSWithRetry(ctx context.Context, faiss indexer.FAISSIndexer, chunkIDs []string, maxRetries int) error {
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if err := faiss.Delete(ctx, chunkIDs); err != nil {
+			lastErr = err
+			if attempt < maxRetries-1 {
+				waitTime := time.Duration(attempt+1) * time.Second
+				fmt.Fprintf(os.Stderr, "FAISS delete attempt %d failed, retrying in %v: %v\n", attempt+1, waitTime, err)
+				time.Sleep(waitTime)
+				continue
+			}
+		} else {
+			return nil
+		}
+	}
+	return fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)
+}
+
+// indexInZoektWithRetry attempts to index files in Zoekt with retry logic
+func indexInZoektWithRetry(ctx context.Context, zoekt indexer.ZoektIndexer, files []string, maxRetries int) error {
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if err := zoekt.IncrementalIndex(ctx, files); err != nil {
+			lastErr = err
+			if attempt < maxRetries-1 {
+				waitTime := time.Duration(attempt+1) * time.Second
+				fmt.Fprintf(os.Stderr, "Zoekt index attempt %d failed, retrying in %v: %v\n", attempt+1, waitTime, err)
+				time.Sleep(waitTime)
+				continue
+			}
+		} else {
+			return nil
+		}
+	}
+	return fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)
+}
+
+// indexFilesInFAISSWithRetry attempts to index files in FAISS with retry logic
+func indexFilesInFAISSWithRetry(ctx context.Context, files []string, faiss indexer.FAISSIndexer, emb embedder.Embedder, maxRetries int) error {
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if err := indexFilesInFAISS(ctx, files, faiss, emb); err != nil {
+			lastErr = err
+			if attempt < maxRetries-1 {
+				waitTime := time.Duration(attempt+1) * time.Second
+				fmt.Fprintf(os.Stderr, "FAISS index attempt %d failed, retrying in %v: %v\n", attempt+1, waitTime, err)
+				time.Sleep(waitTime)
+				continue
+			}
+		} else {
+			return nil
+		}
+	}
+	return fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)
 }
 
 func isCodeFile(path string) bool {
