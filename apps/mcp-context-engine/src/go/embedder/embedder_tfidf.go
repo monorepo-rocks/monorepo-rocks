@@ -340,6 +340,10 @@ func (e *TFIDFEmbedder) generateTFIDFEmbedding(text string) []float32 {
 			if index, exists := e.vocabulary[term]; exists && index < e.dimension {
 				tf := float64(freq) / float64(len(tokens))
 				idf := e.idfValues[term]
+				// If IDF is 0 (single document corpus), use a default value
+				if idf == 0 {
+					idf = 1.0 // Default IDF for single document scenarios
+				}
 				vector[index] = float32(tf * idf)
 			}
 		}
@@ -351,9 +355,27 @@ func (e *TFIDFEmbedder) generateTFIDFEmbedding(text string) []float32 {
 				hash := e.hashTerm(term) % e.dimension
 				tf := float64(freq) / float64(len(tokens))
 				idf := e.idfValues[term]
+				// If IDF is 0 (single document corpus), use a default value
+				if idf == 0 {
+					idf = 1.0 // Default IDF for single document scenarios
+				}
 				vector[hash] += float32(tf * idf)
 			}
 		}
+	}
+	
+	// If the vector is still all zeros (no vocabulary match), create a fallback vector
+	allZero := true
+	for _, v := range vector {
+		if v != 0 {
+			allZero = false
+			break
+		}
+	}
+	
+	if allZero && len(tokens) > 0 {
+		// Create a simple fallback vector based on the text content
+		e.generateFallbackVector(text, vector)
 	}
 	
 	// Normalize the vector to unit length
@@ -372,6 +394,28 @@ func (e *TFIDFEmbedder) hashTerm(term string) int {
 	return hash
 }
 
+// generateFallbackVector creates a simple fallback vector when TF-IDF produces all zeros
+func (e *TFIDFEmbedder) generateFallbackVector(text string, vector []float32) {
+	// Create a simple hash-based vector for the text content
+	// This ensures we always have a non-zero vector that can be normalized
+	textBytes := []byte(strings.ToLower(text))
+	
+	for i := 0; i < len(vector); i++ {
+		// Use position-based hashing to create diverse values
+		hash := 1
+		for j, b := range textBytes {
+			hash = (hash*31 + int(b) + i + j) % 1000000
+		}
+		
+		// Convert to a value in range [-1, 1]
+		value := float32(hash%2000-1000) / 1000.0
+		
+		// Add some structure based on position
+		positionFactor := float32(math.Sin(float64(i) * 0.1))
+		vector[i] = value + positionFactor*0.3
+	}
+}
+
 // normalizeVector performs L2 normalization
 func (e *TFIDFEmbedder) normalizeVector(vector []float32) []float32 {
 	var norm float32
@@ -381,7 +425,11 @@ func (e *TFIDFEmbedder) normalizeVector(vector []float32) []float32 {
 	norm = float32(math.Sqrt(float64(norm)))
 	
 	if norm == 0 {
-		return vector
+		// If norm is still 0, create a minimal fallback vector
+		// This should never happen with the fallback vector generation above,
+		// but it's a safety net
+		vector[0] = 1.0
+		norm = 1.0
 	}
 	
 	normalized := make([]float32, len(vector))
