@@ -2,12 +2,13 @@ package indexer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
-	"regexp/syntax"
 	"strings"
 	"sync"
 	"time"
@@ -33,6 +34,7 @@ type RealZoektIndexer struct {
 
 // NewRealZoektIndexer creates a new real Zoekt indexer instance
 func NewRealZoektIndexer(indexRoot string) ZoektIndexer {
+	log.Printf("*** CREATING REAL ZOEKT INDEXER ***")
 	return &RealZoektIndexer{
 		files:     make(map[string]*FileInfo),
 		indexRoot: indexRoot,
@@ -85,101 +87,87 @@ func (z *RealZoektIndexer) IncrementalIndex(ctx context.Context, files []string)
 
 // Search implements search using real Zoekt query parsing and our indexed data
 func (z *RealZoektIndexer) Search(ctx context.Context, queryStr string, options SearchOptions) ([]types.SearchHit, error) {
+	log.Printf("*** REAL ZOEKT SEARCH CALLED FOR: '%s' ***", queryStr)
 	z.mu.RLock()
 	defer z.mu.RUnlock()
 
 	if len(z.files) == 0 {
+		log.Printf("*** NO FILES IN REAL ZOEKT INDEX ***")
 		return []types.SearchHit{}, nil
 	}
 
 	log.Printf("Real Zoekt search for query: '%s'", queryStr)
+	log.Printf("Debug: Total files in index: %d", len(z.files))
 
-	// Use real Zoekt query parsing for better query handling
-	var q query.Q
-
-	if options.UseRegex {
-		// Create real Zoekt regex query using syntax.Parse
-		var flags syntax.Flags
-		if !options.CaseSensitive {
-			flags = syntax.FoldCase
-		}
-		syntaxRegexp, regexErr := syntax.Parse(queryStr, flags)
-		if regexErr != nil {
-			return nil, fmt.Errorf("invalid regex pattern: %w", regexErr)
-		}
-		q = &query.Regexp{
-			Regexp:        syntaxRegexp,
-			FileName:      false,
-			CaseSensitive: options.CaseSensitive,
-		}
-	} else {
-		// Create real Zoekt substring query
-		q = &query.Substring{
-			Pattern:       queryStr,
-			CaseSensitive: options.CaseSensitive,
-			FileName:      false,
-		}
-	}
-
-	// Apply file pattern filters using real Zoekt query composition
-	if len(options.FilePatterns) > 0 {
-		var fileQueries []query.Q
-		for _, pattern := range options.FilePatterns {
-			fileQuery := &query.Substring{
-				Pattern:  pattern,
-				FileName: true,
-			}
-			fileQueries = append(fileQueries, fileQuery)
-		}
-		
-		// Combine file patterns with OR
-		var fileQ query.Q
-		if len(fileQueries) == 1 {
-			fileQ = fileQueries[0]
-		} else {
-			fileQ = &query.Or{Children: fileQueries}
-		}
-		
-		// Combine with main query using AND
-		q = &query.And{Children: []query.Q{q, fileQ}}
-	}
-
-	// Perform search with enhanced scoring
 	var results []types.SearchHit
 	queryTerms := z.tokenize(strings.ToLower(queryStr))
 	queryTerms = z.deduplicateTerms(queryTerms)
 
-	// Enhanced BM25 parameters for real Zoekt
-	k1 := 1.5  // Slightly higher saturation factor
-	b := 0.75  // Length normalization
+	log.Printf("Debug: Query terms: %v", queryTerms)
 
+	// BM25 parameters
+	k1 := 1.2
+	b := 0.75
+
+	matchedFiles := 0
 	for filePath, fileInfo := range z.files {
-		// Apply file pattern filters
+		log.Printf("Debug: Checking file: %s", filePath)
+		
+		// Apply file pattern filters first
 		if !z.matchesFilePatterns(filePath, options.FilePatterns) {
+			log.Printf("Debug: File %s filtered out by pattern filter", filePath)
 			continue
 		}
 
 		// Apply language filters
 		if !z.matchesLanguages(fileInfo.Language, options.Languages) {
+			log.Printf("Debug: File %s filtered out by language filter", filePath)
 			continue
 		}
 
-		// Calculate enhanced BM25 score
-		score := z.calculateEnhancedBM25(q, queryTerms, fileInfo, k1, b, options)
+		matchedFiles++
 		
-		if score <= 0 {
+		// Calculate BM25 score for content match
+		contentScore := z.calculateBM25Score(queryTerms, fileInfo, k1, b)
+		
+		// Check for filename match (boost score significantly)
+		filenameScore := 0.0
+		filename := filepath.Base(filePath)
+		if z.matchesQuery(filename, queryStr, options) {
+			filenameScore = 10.0 // High boost for filename matches
+			log.Printf("Debug: Filename match for %s, score: %f", filename, filenameScore)
+		}
+		
+		totalScore := contentScore + filenameScore
+		log.Printf("Debug: File %s - content score: %f, filename score: %f, total: %f", filePath, contentScore, filenameScore, totalScore)
+		
+		if totalScore <= 0 {
 			continue
 		}
 
-		// Find matching lines with enhanced matching
-		matches := z.findMatchingLinesEnhanced(q, fileInfo, queryTerms, options)
+		// Find matching lines
+		matches := z.findMatchingLines(fileInfo, queryStr, options)
+		
+		// If no content matches but filename matches, add a synthetic match
+		if len(matches) == 0 && filenameScore > 0 {
+			// Create a match for the first line if filename matches
+			if len(fileInfo.Lines) > 0 {
+				matches = append(matches, LineMatch{
+					LineNumber: 1,
+					Text:       fileInfo.Lines[0],
+					StartByte:  0,
+					EndByte:    len(fileInfo.Lines[0]),
+				})
+			}
+		}
+		
 		for _, match := range matches {
 			hit := types.SearchHit{
 				File:       filePath,
 				LineNumber: match.LineNumber,
 				Text:       match.Text,
-				Score:      score,
-				Source:     "lex", // Enhanced lexical search with real Zoekt
+				Score:      totalScore,
+				Source:     "lex",
 				StartByte:  match.StartByte,
 				EndByte:    match.EndByte,
 				Language:   fileInfo.Language,
@@ -187,6 +175,8 @@ func (z *RealZoektIndexer) Search(ctx context.Context, queryStr string, options 
 			results = append(results, hit)
 		}
 	}
+
+	log.Printf("Debug: Matched %d files after filtering", matchedFiles)
 
 	// Sort by score (descending)
 	results = z.sortByScore(results)
@@ -198,6 +188,73 @@ func (z *RealZoektIndexer) Search(ctx context.Context, queryStr string, options 
 
 	log.Printf("Real Zoekt search returned %d results", len(results))
 	return results, nil
+}
+
+// calculateBM25Score calculates BM25 score for query terms against document
+func (z *RealZoektIndexer) calculateBM25Score(queryTerms []string, doc *FileInfo, k1, b float64) float64 {
+	if z.corpusStats.TotalDocs == 0 || z.corpusStats.AvgDocLength == 0 {
+		return 0
+	}
+
+	docLength := float64(len(z.tokenize(doc.Content)))
+	score := 0.0
+
+	for _, term := range queryTerms {
+		// Calculate term frequency
+		tf := float64(strings.Count(strings.ToLower(doc.Content), term))
+		if tf == 0 {
+			continue
+		}
+
+		// Calculate document frequency (simplified)
+		df := 1.0 // Simplified for now
+		idf := math.Log((float64(z.corpusStats.TotalDocs)-df+0.5)/(df+0.5)) + 1.0
+
+		// BM25 formula
+		tfComponent := (tf * (k1 + 1)) / (tf + k1*(1-b+b*(docLength/z.corpusStats.AvgDocLength)))
+		score += idf * tfComponent
+	}
+
+	return score
+}
+
+// matchesQuery checks if text matches query with case sensitivity options
+func (z *RealZoektIndexer) matchesQuery(text, query string, options SearchOptions) bool {
+	searchText := text
+	searchQuery := query
+	
+	if !options.CaseSensitive {
+		searchText = strings.ToLower(text)
+		searchQuery = strings.ToLower(query)
+	}
+	
+	if options.UseRegex {
+		regex, err := regexp.Compile(searchQuery)
+		if err != nil {
+			return false
+		}
+		return regex.MatchString(searchText)
+	}
+	
+	return strings.Contains(searchText, searchQuery)
+}
+
+// findMatchingLines finds lines in the file that match the query
+func (z *RealZoektIndexer) findMatchingLines(fileInfo *FileInfo, query string, options SearchOptions) []LineMatch {
+	var matches []LineMatch
+	
+	for i, line := range fileInfo.Lines {
+		if z.matchesQuery(line, query, options) {
+			matches = append(matches, LineMatch{
+				LineNumber: i + 1,
+				Text:       line,
+				StartByte:  0,
+				EndByte:    len(line),
+			})
+		}
+	}
+	
+	return matches
 }
 
 // calculateEnhancedBM25 uses real Zoekt query structure for better scoring
@@ -380,9 +437,35 @@ func (z *RealZoektIndexer) Save(ctx context.Context, path string) error {
 
 	log.Printf("Saving real Zoekt index to %s", path)
 	
-	// For now, use the same JSON persistence as the stub for compatibility
-	// In a full implementation, this would use Zoekt's native format
-	
+	// Create a persistable data structure (compatible with stub format)
+	data := struct {
+		Files       map[string]*FileInfo `json:"files"`
+		Stats       IndexStats          `json:"stats"`
+		CorpusStats *CorpusStats        `json:"corpus_stats"`
+	}{
+		Files:       z.files,
+		Stats:       z.stats,
+		CorpusStats: z.corpusStats,
+	}
+
+	// Ensure the directory exists
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	// Write to file
+	file, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("failed to create index file: %w", err)
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	if err := encoder.Encode(data); err != nil {
+		return fmt.Errorf("failed to encode index data: %w", err)
+	}
+
+	log.Printf("Successfully saved real Zoekt index with %d files", len(z.files))
 	return nil
 }
 
@@ -392,10 +475,47 @@ func (z *RealZoektIndexer) Load(ctx context.Context, path string) error {
 	defer z.mu.Unlock()
 
 	log.Printf("Loading real Zoekt index from %s", path)
-	
-	// For now, compatible with stub format
-	// In a full implementation, this would load Zoekt's native format
-	
+
+	// Check if file exists
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		log.Printf("Index file does not exist: %s", path)
+		return nil // Not an error - just means no index saved yet
+	}
+
+	// Read from file
+	file, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("failed to open index file: %w", err)
+	}
+	defer file.Close()
+
+	// Decode data (compatible with stub format)
+	var data struct {
+		Files       map[string]*FileInfo `json:"files"`
+		Stats       IndexStats          `json:"stats"`
+		CorpusStats *CorpusStats        `json:"corpus_stats"`
+	}
+
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&data); err != nil {
+		return fmt.Errorf("failed to decode index data: %w", err)
+	}
+
+	// Restore the data
+	z.files = data.Files
+	z.stats = data.Stats
+	z.corpusStats = data.CorpusStats
+
+	if z.files == nil {
+		z.files = make(map[string]*FileInfo)
+	}
+	if z.corpusStats == nil {
+		z.corpusStats = &CorpusStats{
+			DocFreqs: make(map[string]int),
+		}
+	}
+
+	log.Printf("Successfully loaded real Zoekt index with %d files", len(z.files))
 	return nil
 }
 
