@@ -87,45 +87,31 @@ func (z *RealZoektIndexer) IncrementalIndex(ctx context.Context, files []string)
 
 // Search implements search using real Zoekt query parsing and our indexed data
 func (z *RealZoektIndexer) Search(ctx context.Context, queryStr string, options SearchOptions) ([]types.SearchHit, error) {
-	log.Printf("*** REAL ZOEKT SEARCH CALLED FOR: '%s' ***", queryStr)
 	z.mu.RLock()
 	defer z.mu.RUnlock()
 
 	if len(z.files) == 0 {
-		log.Printf("*** NO FILES IN REAL ZOEKT INDEX ***")
 		return []types.SearchHit{}, nil
 	}
-
-	log.Printf("Real Zoekt search for query: '%s'", queryStr)
-	log.Printf("Debug: Total files in index: %d", len(z.files))
 
 	var results []types.SearchHit
 	queryTerms := z.tokenize(strings.ToLower(queryStr))
 	queryTerms = z.deduplicateTerms(queryTerms)
 
-	log.Printf("Debug: Query terms: %v", queryTerms)
-
 	// BM25 parameters
 	k1 := 1.2
 	b := 0.75
 
-	matchedFiles := 0
 	for filePath, fileInfo := range z.files {
-		log.Printf("Debug: Checking file: %s", filePath)
-		
 		// Apply file pattern filters first
 		if !z.matchesFilePatterns(filePath, options.FilePatterns) {
-			log.Printf("Debug: File %s filtered out by pattern filter", filePath)
 			continue
 		}
 
 		// Apply language filters
 		if !z.matchesLanguages(fileInfo.Language, options.Languages) {
-			log.Printf("Debug: File %s filtered out by language filter", filePath)
 			continue
 		}
-
-		matchedFiles++
 		
 		// Calculate BM25 score for content match
 		contentScore := z.calculateBM25Score(queryTerms, fileInfo, k1, b)
@@ -135,11 +121,9 @@ func (z *RealZoektIndexer) Search(ctx context.Context, queryStr string, options 
 		filename := filepath.Base(filePath)
 		if z.matchesQuery(filename, queryStr, options) {
 			filenameScore = 10.0 // High boost for filename matches
-			log.Printf("Debug: Filename match for %s, score: %f", filename, filenameScore)
 		}
 		
 		totalScore := contentScore + filenameScore
-		log.Printf("Debug: File %s - content score: %f, filename score: %f, total: %f", filePath, contentScore, filenameScore, totalScore)
 		
 		if totalScore <= 0 {
 			continue
@@ -176,8 +160,6 @@ func (z *RealZoektIndexer) Search(ctx context.Context, queryStr string, options 
 		}
 	}
 
-	log.Printf("Debug: Matched %d files after filtering", matchedFiles)
-
 	// Sort by score (descending)
 	results = z.sortByScore(results)
 
@@ -186,7 +168,6 @@ func (z *RealZoektIndexer) Search(ctx context.Context, queryStr string, options 
 		results = results[:options.MaxResults]
 	}
 
-	log.Printf("Real Zoekt search returned %d results", len(results))
 	return results, nil
 }
 
@@ -219,6 +200,7 @@ func (z *RealZoektIndexer) calculateBM25Score(queryTerms []string, doc *FileInfo
 }
 
 // matchesQuery checks if text matches query with case sensitivity options
+// For compound queries, checks if ANY of the query terms match the text
 func (z *RealZoektIndexer) matchesQuery(text, query string, options SearchOptions) bool {
 	searchText := text
 	searchQuery := query
@@ -236,7 +218,16 @@ func (z *RealZoektIndexer) matchesQuery(text, query string, options SearchOption
 		return regex.MatchString(searchText)
 	}
 	
-	return strings.Contains(searchText, searchQuery)
+	// For filename matching, tokenize the query and check if ANY term matches
+	// This handles compound queries like "package.json .json" properly
+	queryTerms := z.tokenize(searchQuery)
+	for _, term := range queryTerms {
+		if strings.Contains(searchText, term) {
+			return true
+		}
+	}
+	
+	return false
 }
 
 // findMatchingLines finds lines in the file that match the query
