@@ -52,35 +52,58 @@ The `--dir` flag is optional and defaults to the current working directory.
 
 ### MCP Configuration
 
-To use with MCP clients, add to your `mcp.json` or similar configuration:
+To use with MCP clients:
+
+<details>
+<summary><strong>Amp Code</strong></summary>
+
+Add this to your Amp settings:
+
+**VS Code Configuration** (`.vscode/settings.json`):
 
 ```json
 {
-  "mcpServers": {
-    "llm-rules": {
+  "amp.mcpServers": {
+    "rules": {
       "command": "npx",
-      "args": ["llm-rules@latest", "--dir", "/path/to/your/repository"]
+      "args": ["llm-rules@latest"]
     }
   }
 }
 ```
-
-**AmpCode Extension Users:** If you're using the AmpCode extension, you can omit `--dir`:
 
 ![](./docs/images/ampcode-mcp.jpg)
 
-For Claude Desktop, add to `claude_desktop_config.json`:
+</details>
+
+<details>
+<summary><strong>Claude Code</strong></summary>
+
+**Project Configuration:**
+
+```sh
+claude mcp add --scope project rules -- npx llm-rules@latest
+```
+
+</details>
+
+<details>
+<summary><strong>Claude Desktop</strong></summary>
+
+Add to your `claude_desktop_config.json`. See [Claude Desktop MCP docs](https://modelcontextprotocol.io/quickstart/user) for more info.
 
 ```json
 {
   "mcpServers": {
-    "llm-rules": {
+    "rules": {
       "command": "npx",
       "args": ["llm-rules@latest", "--dir", "/path/to/your/repository"]
     }
   }
 }
 ```
+
+</details>
 
 ### Example Rule
 
