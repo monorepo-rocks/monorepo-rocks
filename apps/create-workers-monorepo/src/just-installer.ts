@@ -1,9 +1,9 @@
-import { confirm } from '@inquirer/prompts'
+import { confirm, select } from '@inquirer/prompts'
 import Table from 'cli-table3'
 
 export async function checkAndInstallJust(): Promise<void> {
 	// Check if just is already installed
-	if (await which('just', { nothrow: true })) {
+	if (await which('juast', { nothrow: true })) {
 		return
 	}
 
@@ -29,9 +29,9 @@ export async function checkAndInstallJust(): Promise<void> {
 	}
 
 	const platform = process.platform
-	const installCommand = await getInstallCommand(platform)
+	const installMethods = await getAvailableInstallMethods(platform)
 
-	if (!installCommand) {
+	if (installMethods.length === 0) {
 		echo(chalk.yellow('\n⚠️  No automatic installation method found for your system.'))
 		echo(chalk.blue('Please install just manually from: https://just.systems/man/en/packages.html'))
 		echo(
@@ -40,14 +40,22 @@ export async function checkAndInstallJust(): Promise<void> {
 		return
 	}
 
-	const table = new Table({
-		head: [chalk.blueBright('Install Command')],
+	const selectedMethod = await select({
+		message: 'Choose an installation method:',
+		choices: installMethods.map((method) => ({
+			name: `${method.name} - ${chalk.dim(method.cmd)}`,
+			value: method,
+		})),
 	})
-	table.push([installCommand.cmd])
+
+	const table = new Table({
+		head: [chalk.blueBright('Selected Install Command')],
+	})
+	table.push([selectedMethod.cmd])
 	echo(table.toString())
 
 	const confirmInstall = await confirm({
-		message: `Run this command to install just?`,
+		message: `Proceed with installation?`,
 		default: true,
 	})
 
@@ -68,7 +76,7 @@ export async function checkAndInstallJust(): Promise<void> {
 
 		await $({
 			stdio: 'inherit',
-		})`sh -c ${installCommand.cmd}`.verbose()
+		})`sh -c ${selectedMethod.cmd}`.verbose()
 
 		// Verify installation
 		if (await which('just', { nothrow: true })) {
@@ -77,33 +85,53 @@ export async function checkAndInstallJust(): Promise<void> {
 			echo(chalk.yellow('⚠️  just was installed but not found in PATH.'))
 			echo(chalk.dim('You may need to restart your terminal or add it to your PATH.\n'))
 		}
-	} catch (error) {
+	} catch (e) {
 		echo(chalk.red('❌ Failed to install just automatically.'))
 		echo(chalk.blue('Please install just manually from: https://just.systems/man/en/packages.html'))
-		echo(chalk.dim(`Error: ${error instanceof Error ? error.message : String(error)}\n`))
+		echo(chalk.dim(`Error: ${e instanceof Error ? e.message : String(e)}\n`))
 	}
 }
 
-interface InstallCommand {
+interface InstallMethod {
+	name: string
 	cmd: string
 }
 
-async function getInstallCommand(platform: NodeJS.Platform): Promise<InstallCommand | null> {
+async function getAvailableInstallMethods(platform: NodeJS.Platform): Promise<InstallMethod[]> {
+	const methods: InstallMethod[] = []
+
+	// Check for npm (available on all platforms)
+	if (await which('npm', { nothrow: true })) {
+		methods.push({
+			name: 'npm (rust-just)',
+			cmd: 'npm install -g rust-just',
+		})
+	}
+
 	switch (platform) {
 		case 'win32':
 			// Windows - use winget
 			if (await which('winget', { nothrow: true })) {
-				return { cmd: 'winget install --id Casey.Just --exact' }
+				methods.push({
+					name: 'winget',
+					cmd: 'winget install --id Casey.Just --exact',
+				})
 			}
 			break
 
 		case 'darwin':
-			// macOS - prefer mise, then brew
+			// macOS - mise and brew
 			if (await which('mise', { nothrow: true })) {
-				return { cmd: 'mise use -g just' }
+				methods.push({
+					name: 'mise',
+					cmd: 'mise use -g just',
+				})
 			}
 			if (await which('brew', { nothrow: true })) {
-				return { cmd: 'brew install just' }
+				methods.push({
+					name: 'Homebrew',
+					cmd: 'brew install just',
+				})
 			}
 			break
 
@@ -111,18 +139,27 @@ async function getInstallCommand(platform: NodeJS.Platform): Promise<InstallComm
 			// Linux - check for different package managers
 			if (await which('apt', { nothrow: true })) {
 				// Debian/Ubuntu
-				return { cmd: 'sudo apt update && sudo apt install -y just' }
+				methods.push({
+					name: 'apt (Debian/Ubuntu)',
+					cmd: 'sudo apt update && sudo apt install -y just',
+				})
 			}
 			if (await which('dnf', { nothrow: true })) {
 				// Fedora
-				return { cmd: 'sudo dnf install -y just' }
+				methods.push({
+					name: 'dnf (Fedora)',
+					cmd: 'sudo dnf install -y just',
+				})
 			}
 			if (await which('pacman', { nothrow: true })) {
 				// Arch Linux
-				return { cmd: 'sudo pacman -S --noconfirm just' }
+				methods.push({
+					name: 'pacman (Arch)',
+					cmd: 'sudo pacman -S --noconfirm just',
+				})
 			}
 			break
 	}
 
-	return null
+	return methods
 }
