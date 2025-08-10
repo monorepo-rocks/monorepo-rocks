@@ -6,6 +6,7 @@ import { z } from 'zod/v4'
 
 import { ampExists, claudeExists, getAvailableEditors } from './editor'
 import { isDirEmpty } from './fs'
+import { checkAndInstallJust } from './just-installer'
 
 import type { AIAssistant } from './editor'
 
@@ -13,6 +14,9 @@ export async function ensurePrerequisites() {
 	if (!(await which('git', { nothrow: true }))) {
 		throw cliError('git is required to create a monorepo. Please install it and try again.')
 	}
+
+	// Check and offer to install just
+	await checkAndInstallJust()
 }
 
 export const RepoName = z.string().regex(/^(?!\.+$)(?!_+$)[a-z0-9-_.]+$/i)
