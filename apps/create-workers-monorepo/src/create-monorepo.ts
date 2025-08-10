@@ -162,17 +162,21 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 	// remove unwanted AI assistant rules
 	const allRules = ['claude', 'cursor', 'windsurf', 'amp'] as const satisfies AIAssistant[]
 	const rulesToRemove = allRules.filter((rule) => !selectedRules.includes(rule))
-	for (const rule of rulesToRemove) {
-		const ruleFiles = {
-			claude: path.join(targetDir, 'CLAUDE.md'),
-			cursor: path.join(targetDir, '.cursor'),
-			windsurf: path.join(targetDir, '.windsurf'),
-			amp: path.join(targetDir, 'AGENT.md'),
-		} as const
+	const ruleFiles = {
+		claude: [path.join(targetDir, 'CLAUDE.md'), path.join(targetDir, '.claude')],
+		cursor: [path.join(targetDir, '.cursor')],
+		windsurf: [path.join(targetDir, '.windsurf')],
+		amp: [path.join(targetDir, 'AGENT.md')],
+	} as const satisfies Partial<Record<AIAssistant, string[]>>
 
-		const filePath = ruleFiles[rule]
-		await fs.rm(filePath, { recursive: true, force: true })
-	}
+	await pMap(rulesToRemove, async (rule) => {
+		const files = ruleFiles[rule]
+		if (files) {
+			await pMap(files, async (filePath) => {
+				await fs.rm(filePath, { recursive: true, force: true })
+			})
+		}
+	})
 
 	echo(chalk.dim(`Initializing git repository...`))
 	cd(targetDir)
