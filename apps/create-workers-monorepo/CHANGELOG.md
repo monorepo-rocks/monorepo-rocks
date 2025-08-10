@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.6.4
+
+### Patch Changes
+
+- 4b71aca: fix: remove .claude/ directory from template
+
 ## 0.6.3
 
 ### Patch Changes

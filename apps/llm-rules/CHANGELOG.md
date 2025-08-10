@@ -1,5 +1,11 @@
 # llm-rules
 
+## 0.2.11
+
+### Patch Changes
+
+- 1e137f2: chore: improve MCP configuration section in README.md
+
 ## 0.2.10
 
 ### Patch Changes
