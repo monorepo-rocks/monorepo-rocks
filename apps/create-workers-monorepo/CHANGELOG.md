@@ -1,5 +1,13 @@
 # create-workers-monorepo
 
+## 0.7.0
+
+### Minor Changes
+
+- f6ff299: feat: check for just installation and offer to install
+
+  Checks if just is installed and offers to install it automatically. Supports Windows (winget), macOS (mise/brew), and Linux (apt/dnf/pacman).
+
 ## 0.6.4
 
 ### Patch Changes
