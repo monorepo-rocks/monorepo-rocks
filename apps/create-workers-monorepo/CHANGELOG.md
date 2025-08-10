@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.8.0
+
+### Minor Changes
+
+- 92490d7: feat: allow picking just install method and add npm as an install method
+
 ## 0.7.0
 
 ### Minor Changes
