@@ -1,5 +1,15 @@
 # dagger-env
 
+## 0.5.0
+
+### Minor Changes
+
+- 1014656: feat: add type safety for secret names
+
+### Patch Changes
+
+- 0c5ddeb: chore: simplify dagger-env test configs
+
 ## 0.4.2
 
 ### Patch Changes
