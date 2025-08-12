@@ -6,7 +6,7 @@ import { createDaggerEnv } from './dagger-env'
 import type { DaggerOptionsFromConfig } from './dagger-env'
 
 describe('DaggerEnv', () => {
-	const testConfig = {
+	const daggerEnv = createDaggerEnv({
 		args: z.object({
 			push: z.string().optional(),
 			environment: z.enum(['dev', 'prod']).optional(),
@@ -23,7 +23,7 @@ describe('DaggerEnv', () => {
 		secretPresets: {
 			api: ['API_TOKEN', 'DATABASE_URL'],
 			cache: ['REDIS_URL'],
-		} as const,
+		},
 		derivedEnvVars: {
 			API_TOKEN: {
 				API_BASE_URL: 'https://api.example.com',
@@ -32,10 +32,8 @@ describe('DaggerEnv', () => {
 			DATABASE_URL: {
 				DB_POOL_SIZE: '10',
 			},
-		} as const,
-	}
-
-	const daggerEnv = createDaggerEnv(testConfig)
+		},
+	})
 
 	it('should create a DaggerEnv instance', () => {
 		expect(daggerEnv).toBeDefined()
@@ -132,7 +130,7 @@ describe('DaggerEnv integration', () => {
 			secretPresets: {
 				build: ['BUILD_TOKEN', 'CACHE_KEY'],
 				deploy: ['API_TOKEN', 'DEPLOY_TOKEN'],
-			} as const,
+			},
 			derivedEnvVars: {
 				BUILD_TOKEN: {
 					BUILD_API: 'https://build.example.com',
@@ -141,8 +139,8 @@ describe('DaggerEnv integration', () => {
 				API_TOKEN: {
 					API_ACCOUNT_ID: 'test-account-id',
 				},
-			} as const,
-		}
+			},
+		} as const
 
 		const daggerEnv = createDaggerEnv(complexConfig)
 
