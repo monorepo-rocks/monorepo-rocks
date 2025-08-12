@@ -74,7 +74,7 @@ describe('DaggerEnv', () => {
 		const validOptions = {
 			args: {
 				push: 'true',
-				environment: 'dev' as const,
+				environment: 'dev',
 			},
 			env: {
 				CI: 'true',
@@ -107,6 +107,44 @@ describe('DaggerEnv', () => {
 		}
 
 		expect(() => schema.parse(invalidOptions)).toThrow()
+	})
+
+	describe('getWithEnv()', () => {
+		describe('type inference', () => {
+			describe('secretPresets', () => {
+				it('should not have type error for valid preset', async () => {
+					await daggerEnv.getWithEnv({} as any, ['api'], ['API_TOKEN'])
+				})
+
+				it('should have type error for unknown preset', async () => {
+					await daggerEnv.getWithEnv(
+						{} as any,
+						[
+							// @ts-expect-error
+							'unknown',
+						],
+						['API_TOKEN']
+					)
+				})
+			})
+
+			describe('secretNames', () => {
+				it('should not have type error for valid secret name', async () => {
+					await daggerEnv.getWithEnv({} as any, ['api'], ['API_TOKEN'])
+				})
+
+				it('should have type error for unknown secret name', async () => {
+					await daggerEnv.getWithEnv(
+						{} as any,
+						['api'],
+						[
+							// @ts-expect-error
+							'INVALID_SECRET',
+						]
+					)
+				})
+			})
+		})
 	})
 })
 

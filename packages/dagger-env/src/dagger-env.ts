@@ -23,9 +23,9 @@ export type DaggerEnvConfig = {
  * Inferred options type from config
  */
 export type DaggerOptionsFromConfig<T extends DaggerEnvConfig> = {
-	args: z.infer<T['args']>
-	env: z.infer<T['env']>
-	secrets: z.infer<T['secrets']>
+	args: z.output<T['args']>
+	env: z.output<T['env']>
+	secrets: z.output<T['secrets']>
 }
 
 /**
@@ -61,8 +61,8 @@ export class DaggerEnv<T extends DaggerEnvConfig> {
 	 */
 	async getWithEnv(
 		daggerOptions: Secret | DaggerOptionsFromConfig<T>,
-		secretPresets: Array<keyof T['secretPresets']>,
-		secretNames?: string[]
+		secretPresets: Array<Extract<keyof T['secretPresets'], string>>,
+		secretNames?: Array<Extract<keyof z.output<T['secrets']>, string>>
 	): Promise<(con: Container) => Container> {
 		const isSecret = (obj: any): obj is Secret =>
 			obj &&
@@ -81,7 +81,7 @@ export class DaggerEnv<T extends DaggerEnvConfig> {
 
 			// Add individual secret names
 			for (const name of secretNames ?? []) {
-				if (typeof name === 'string' && name in (opts.secrets as Record<string, unknown>)) {
+				if (typeof name === 'string' && name in opts.secrets) {
 					const secret = (opts.secrets as Record<string, string>)[name]
 					if (!secret) {
 						throw new Error(`Secret ${name} is undefined`)
@@ -90,11 +90,11 @@ export class DaggerEnv<T extends DaggerEnvConfig> {
 				}
 			}
 
-			const allSecretNames = [...(secretNames ?? [])]
+			const allSecretNames: string[] = [...(secretNames ?? [])]
 
 			// Add secret presets
 			for (const preset of secretPresets) {
-				const presetSecrets = this.config.secretPresets[preset as string]
+				const presetSecrets = this.config.secretPresets[preset]
 				if (!presetSecrets) {
 					throw new Error(`Unknown secret preset: ${String(preset)}`)
 				}
@@ -120,7 +120,7 @@ export class DaggerEnv<T extends DaggerEnvConfig> {
 			}
 
 			// Add environment variables from options
-			const envVars = opts.env as Record<string, string | undefined>
+			const envVars = opts.env
 			for (const [key, value] of Object.entries(envVars)) {
 				if (value !== undefined && typeof value === 'string') {
 					c = c.withEnvVariable(key, value)
@@ -148,8 +148,8 @@ export class DaggerEnv<T extends DaggerEnvConfig> {
 	/**
 	 * Get secrets for a specific preset
 	 */
-	getPresetSecrets(preset: keyof T['secretPresets']): readonly string[] {
-		const secrets = this.config.secretPresets[preset as string]
+	getPresetSecrets(preset: Extract<keyof T['secretPresets'], string>): readonly string[] {
+		const secrets = this.config.secretPresets[preset]
 		if (!secrets) {
 			throw new Error(`Unknown secret preset: ${String(preset)}`)
 		}
