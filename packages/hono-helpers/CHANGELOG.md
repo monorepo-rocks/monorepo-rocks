@@ -1,5 +1,12 @@
 # @repo/hono-helpers
 
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [d540cab]
+  - @repo/zod@0.1.5
+
 ## 0.1.5
 
 ### Patch Changes

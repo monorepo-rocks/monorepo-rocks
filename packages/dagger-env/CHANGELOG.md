@@ -1,5 +1,11 @@
 # dagger-env
 
+## 0.5.1
+
+### Patch Changes
+
+- d540cab: chore: update deps (zod@3.25.76)
+
 ## 0.5.0
 
 ### Minor Changes

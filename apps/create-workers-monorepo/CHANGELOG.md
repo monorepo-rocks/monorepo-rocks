@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.8.1
+
+### Patch Changes
+
+- d540cab: chore: update deps (zod@3.25.76)
+
 ## 0.8.0
 
 ### Minor Changes

@@ -1,5 +1,12 @@
 # create-workers-repo
 
+## 0.3.16
+
+### Patch Changes
+
+- Updated dependencies [d540cab]
+  - create-workers-monorepo@0.8.1
+
 ## 0.3.15
 
 ### Patch Changes
