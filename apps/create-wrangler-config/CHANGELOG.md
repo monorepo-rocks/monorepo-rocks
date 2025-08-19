@@ -1,5 +1,11 @@
 # create-wrangler-config
 
+## 0.2.4
+
+### Patch Changes
+
+- d540cab: chore: update deps (zod@3.25.76)
+
 ## 0.2.3
 
 ### Patch Changes
