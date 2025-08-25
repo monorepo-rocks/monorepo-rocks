@@ -1,5 +1,11 @@
 # create-wrangler-config
 
+## 0.2.5
+
+### Patch Changes
+
+- 1332152: chore: update deps (zod@4.1.1)
+
 ## 0.2.4
 
 ### Patch Changes

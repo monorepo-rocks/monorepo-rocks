@@ -1,5 +1,11 @@
 # dagger-env
 
+## 0.5.2
+
+### Patch Changes
+
+- 1332152: chore: update deps (zod@4.1.1)
+
 ## 0.5.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.8.2
+
+### Patch Changes
+
+- 1332152: chore: update deps (zod@4.1.1)
+
 ## 0.8.1
 
 ### Patch Changes
