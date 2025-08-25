@@ -7,32 +7,28 @@ const config = {
 		{
 			label: 'local packages',
 			packages: ['**'],
-			dependencies: ['@repo/*', 'create-workers-monorepo'],
+			dependencies: ['$LOCAL'],
 			dependencyTypes: ['!local'], // Exclude the local package itself
 			pinVersion: 'workspace:*',
 		},
 		{
-			label: `pin eslint and all it's plugins for eslint v8`,
-			dependencies: [
-				'eslint',
-				'@types/eslint',
-				'eslint-config-prettier',
-				'eslint-plugin-react-hooks',
-				'eslint-plugin-unused-imports',
-				'@typescript-eslint/eslint-plugin',
-				'@typescript-eslint/parser',
-			],
-			// snapTo removes it from syncpack update list, which is the main goal
-			snapTo: ['@repo/eslint-config'],
+			label: 'ignore zod peer deps for 3.25.76 compatibility',
+			packages: ['dagger-env'],
+			dependencies: ['zod'],
+			dependencyTypes: ['peer'],
+			specifierTypes: ['range'],
+			isIgnored: true,
 		},
 	],
 	semverGroups: [
 		{
 			label: 'pin all deps',
 			range: '',
-			dependencyTypes: ['!peer'],
 			dependencies: ['**'],
 			packages: ['**'],
+			// url is not supported so we need to exclude it
+			// to allow using deps from pkg.pr.new
+			specifierTypes: ['!url'],
 		},
 	],
 }
