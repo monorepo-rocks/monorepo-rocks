@@ -52,7 +52,7 @@
 		"commander": "14.0.0",
 		"gray-matter": "4.0.3",
 		"vitest": "3.1.4",
-		"zod": "3.25.76",
+		"zod": "4.1.1",
 		"zx": "8.5.4"
 	},
 	"publishConfig": {

@@ -64,7 +64,7 @@ importers:
         version: 7.5.1(@types/node@22.15.27)
       '@jahands/cli-tools':
         specifier: 0.10.10
-        version: 0.10.10(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.8.3)(zod@3.25.76)(zx@8.5.4)
+        version: 0.10.10(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.8.3)(zod@4.1.1)(zx@8.5.4)
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
@@ -102,8 +102,8 @@ importers:
         specifier: 3.1.4
         version: 3.1.4(@types/node@22.15.27)(jiti@2.4.2)(tsx@4.19.4)(yaml@2.8.0)
       zod:
-        specifier: 3.25.76
-        version: 3.25.76
+        specifier: 4.1.1
+        version: 4.1.1
       zx:
         specifier: 8.5.4
         version: 8.5.4
@@ -134,7 +134,7 @@ importers:
         version: 7.5.1(@types/node@22.15.27)
       '@jahands/cli-tools':
         specifier: 0.10.10
-        version: 0.10.10(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.8.3)(zod@3.25.76)(zx@8.5.4)
+        version: 0.10.10(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.8.3)(zod@4.1.1)(zx@8.5.4)
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
@@ -160,8 +160,8 @@ importers:
         specifier: 3.1.4
         version: 3.1.4(@types/node@22.15.27)(jiti@2.4.2)(tsx@4.19.4)(yaml@2.8.0)
       zod:
-        specifier: 3.25.76
-        version: 3.25.76
+        specifier: 4.1.1
+        version: 4.1.1
       zx:
         specifier: 8.5.4
         version: 8.5.4
@@ -176,7 +176,7 @@ importers:
         version: 5.0.2
       '@jahands/cli-tools':
         specifier: 0.10.10
-        version: 0.10.10(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.8.3)(zod@3.25.76)(zx@8.5.4)
+        version: 0.10.10(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.8.3)(zod@4.1.1)(zx@8.5.4)
       '@modelcontextprotocol/sdk':
         specifier: 1.12.0
         version: 1.12.0
@@ -199,8 +199,8 @@ importers:
         specifier: 3.1.4
         version: 3.1.4(@types/node@22.15.27)(jiti@2.4.2)(tsx@4.19.4)(yaml@2.8.0)
       zod:
-        specifier: 3.25.76
-        version: 3.25.76
+        specifier: 4.1.1
+        version: 4.1.1
       zx:
         specifier: 8.5.4
         version: 8.5.4
@@ -227,8 +227,8 @@ importers:
         specifier: 3.1.4
         version: 3.1.4(@types/node@22.15.27)(jiti@2.4.2)(tsx@4.19.4)(yaml@2.8.0)
       zod:
-        specifier: 3.25.76
-        version: 3.25.76
+        specifier: 4.1.1
+        version: 4.1.1
 
   packages/eslint-config:
     devDependencies:
@@ -340,7 +340,7 @@ importers:
         version: 14.0.0(commander@14.0.0)
       '@jahands/cli-tools':
         specifier: 0.10.10
-        version: 0.10.10(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.8.3)(zod@3.25.76)(zx@8.5.4)
+        version: 0.10.10(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.8.3)(zod@4.1.1)(zx@8.5.4)
       '@repo/zod':
         specifier: workspace:*
         version: link:../zod
@@ -412,8 +412,8 @@ importers:
   packages/zod:
     dependencies:
       zod:
-        specifier: 3.25.76
-        version: 3.25.76
+        specifier: 4.1.1
+        version: 4.1.1
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -4832,6 +4832,9 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
+  zod@4.1.1:
+    resolution: {integrity: sha512-SgMZK/h8Tigt9nnKkfJMvB/mKjiJXaX26xegP4sa+0wHIFVFWVlsQGdhklDmuargBD3Hsi3rsQRIzwJIhTPJHA==}
+
   zx@8.5.4:
     resolution: {integrity: sha512-44oKea9Sa8ZnOkTnS6fRJpg3quzgnbB43nLrVfYnqE86J4sxgZMUDLezzKET/FdOAVkF4X+Alm9Bume+W+RW9Q==}
     engines: {node: '>= 12.17.0'}
@@ -5527,12 +5530,12 @@ snapshots:
     dependencies:
       minipass: 7.1.2
 
-  '@jahands/cli-tools@0.10.10(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.8.3)(zod@3.25.76)(zx@8.5.4)':
+  '@jahands/cli-tools@0.10.10(@commander-js/extra-typings@14.0.0(commander@14.0.0))(commander@14.0.0)(typescript@5.8.3)(zod@4.1.1)(zx@8.5.4)':
     dependencies:
       '@commander-js/extra-typings': 14.0.0(commander@14.0.0)
       commander: 14.0.0
       typescript: 5.8.3
-      zod: 3.25.76
+      zod: 4.1.1
       zx: 8.5.4
 
   '@jridgewell/gen-mapping@0.3.8':
@@ -9746,5 +9749,7 @@ snapshots:
   zod@3.25.7: {}
 
   zod@3.25.76: {}
+
+  zod@4.1.1: {}
 
   zx@8.5.4: {}
