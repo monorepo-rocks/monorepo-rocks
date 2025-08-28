@@ -1,4 +1,4 @@
-# AGENT.md
+# AGENTS.md
 
 This is a Cloudflare Workers monorepo using pnpm workspaces, Turborepo, and Hono.
 
