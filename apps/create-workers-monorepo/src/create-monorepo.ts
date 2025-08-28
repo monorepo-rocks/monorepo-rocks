@@ -170,7 +170,7 @@ export async function createMonorepo(opts: CreateMonorepoOptions) {
 		claude: [path.join(targetDir, 'CLAUDE.md'), path.join(targetDir, '.claude')],
 		cursor: [path.join(targetDir, '.cursor')],
 		windsurf: [path.join(targetDir, '.windsurf')],
-		amp: [path.join(targetDir, 'AGENT.md')],
+		amp: [path.join(targetDir, 'AGENTS.md')],
 	} as const satisfies Partial<Record<AIAssistant, string[]>>
 
 	await pMap(rulesToRemove, async (rule) => {
