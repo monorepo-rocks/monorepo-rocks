@@ -1,5 +1,13 @@
 # create-workers-monorepo
 
+## 0.8.3
+
+### Patch Changes
+
+- b26d86c: fix: update AmpCode integration to use AGENTS.md instead of AGENT.md
+
+  AmpCode now prefers AGENTS.md
+
 ## 0.8.2
 
 ### Patch Changes
