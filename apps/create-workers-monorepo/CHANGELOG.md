@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.8.4
+
+### Patch Changes
+
+- 09824ac: fix: correct spelling of just cmd
+
 ## 0.8.3
 
 ### Patch Changes
