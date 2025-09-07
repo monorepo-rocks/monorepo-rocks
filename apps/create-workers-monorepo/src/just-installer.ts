@@ -3,7 +3,7 @@ import Table from 'cli-table3'
 
 export async function checkAndInstallJust(): Promise<void> {
 	// Check if just is already installed
-	if (await which('juast', { nothrow: true })) {
+	if (await which('just', { nothrow: true })) {
 		return
 	}
 
