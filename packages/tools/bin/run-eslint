@@ -4,7 +4,7 @@ set -euo pipefail
 # store cache under node_modules when available to reduce clutter
 cache_location=".eslintcache" # default
 if [[ -d "node_modules" ]]; then
-	cache_location="node_modules/.cache/run-eslint/.eslintcache"
+	cache_location="node_modules/.cache/.eslintcache"
 fi
 
 args=(
@@ -30,9 +30,4 @@ while [[ $# -gt 0 ]]; do
 	shift
 done
 
-if command -v bun >/dev/null 2>&1; then
-	# bun is much faster, so use it when available
-	bun --bun eslint "${args[@]}"
-else
-	eslint "${args[@]}"
-fi
+exec bun --bun eslint "${args[@]}"
