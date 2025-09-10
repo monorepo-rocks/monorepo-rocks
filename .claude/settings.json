@@ -12,7 +12,9 @@
       "Bash(pnpm run check:lint:all:*)",
       "Bash(FIX_ESLINT=1 run-eslint)",
       "Bash(ls:*)",
-      "Bash(just check:*)"
+      "Bash(just check:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
     ]
   },
   "enableAllProjectMcpServers": true,
