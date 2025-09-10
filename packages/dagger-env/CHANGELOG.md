@@ -1,5 +1,11 @@
 # dagger-env
 
+## 0.6.0
+
+### Minor Changes
+
+- ffa453f: feat(BREAKING): add withoutEnv() to getWithEnv() and switch to returning an object
+
 ## 0.5.2
 
 ### Patch Changes
