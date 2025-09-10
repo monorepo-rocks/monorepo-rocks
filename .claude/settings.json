@@ -14,5 +14,6 @@
       "Bash(ls:*)",
       "Bash(just check:*)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
 }
