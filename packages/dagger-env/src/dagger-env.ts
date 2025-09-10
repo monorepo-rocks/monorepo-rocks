@@ -63,7 +63,16 @@ export class DaggerEnv<T extends DaggerEnvConfig> {
 		daggerOptions: Secret | DaggerOptionsFromConfig<T>,
 		secretPresets: Array<Extract<keyof T['secretPresets'], string>>,
 		secretNames?: Array<Extract<keyof z.output<T['secrets']>, string>>
-	): Promise<(con: Container) => Container> {
+	): Promise<{
+		/**
+		 * Apply environment variables and secrets to a container
+		 */
+		withEnv: (con: Container) => Container
+		/**
+		 * Remove environment variables and secrets from a container
+		 */
+		withoutEnv: (con: Container) => Container
+	}> {
 		const isSecret = (obj: any): obj is Secret =>
 			obj &&
 			typeof obj === 'object' &&
@@ -76,58 +85,111 @@ export class DaggerEnv<T extends DaggerEnvConfig> {
 			? await this.parseDaggerOptions(daggerOptions)
 			: daggerOptions
 
-		return (con: Container) => {
-			let c = con
+		return {
+			withEnv: (con: Container) => {
+				let c = con
 
-			// Add individual secret names
-			for (const name of secretNames ?? []) {
-				if (typeof name === 'string' && name in opts.secrets) {
-					const secret = (opts.secrets as Record<string, string>)[name]
-					if (!secret) {
-						throw new Error(`Secret ${name} is undefined`)
+				// Add individual secret names
+				for (const name of secretNames ?? []) {
+					if (typeof name === 'string' && name in opts.secrets) {
+						const secret = (opts.secrets as Record<string, string>)[name]
+						if (!secret) {
+							throw new Error(`Secret ${name} is undefined`)
+						}
+						c = c.withSecretVariable(name, dag.setSecret(name, secret))
 					}
-					c = c.withSecretVariable(name, dag.setSecret(name, secret))
-				}
-			}
-
-			const allSecretNames: string[] = [...(secretNames ?? [])]
-
-			// Add secret presets
-			for (const preset of secretPresets) {
-				const presetSecrets = this.config.secretPresets[preset]
-				if (!presetSecrets) {
-					throw new Error(`Unknown secret preset: ${String(preset)}`)
 				}
 
-				for (const secretName of presetSecrets) {
-					const secret = (opts.secrets as Record<string, string>)[secretName]
-					if (!secret) {
-						throw new Error(`Secret ${secretName} is undefined`)
+				const allSecretNames: string[] = [...(secretNames ?? [])]
+
+				// Add secret presets
+				for (const preset of secretPresets) {
+					const presetSecrets = this.config.secretPresets[preset]
+					if (!presetSecrets) {
+						throw new Error(`Unknown secret preset: ${String(preset)}`)
 					}
-					allSecretNames.push(secretName)
-					c = c.withSecretVariable(secretName, dag.setSecret(secretName, secret))
-				}
-			}
 
-			// Add derived env vars based on secretNames
-			for (const name of allSecretNames) {
-				const derivedEnvVars = this.config.derivedEnvVars[name]
-				if (derivedEnvVars) {
-					for (const [key, value] of Object.entries(derivedEnvVars)) {
+					for (const secretName of presetSecrets) {
+						const secret = (opts.secrets as Record<string, string>)[secretName]
+						if (!secret) {
+							throw new Error(`Secret ${secretName} is undefined`)
+						}
+						allSecretNames.push(secretName)
+						c = c.withSecretVariable(secretName, dag.setSecret(secretName, secret))
+					}
+				}
+
+				// Add derived env vars based on secretNames
+				for (const name of allSecretNames) {
+					const derivedEnvVars = this.config.derivedEnvVars[name]
+					if (derivedEnvVars) {
+						for (const [key, value] of Object.entries(derivedEnvVars)) {
+							c = c.withEnvVariable(key, value)
+						}
+					}
+				}
+
+				// Add environment variables from options
+				const envVars = opts.env
+				for (const [key, value] of Object.entries(envVars)) {
+					if (value !== undefined && typeof value === 'string') {
 						c = c.withEnvVariable(key, value)
 					}
 				}
-			}
 
-			// Add environment variables from options
-			const envVars = opts.env
-			for (const [key, value] of Object.entries(envVars)) {
-				if (value !== undefined && typeof value === 'string') {
-					c = c.withEnvVariable(key, value)
+				return c
+			},
+			withoutEnv: (con: Container) => {
+				let c = con
+
+				// Add individual secret names
+				for (const name of secretNames ?? []) {
+					if (typeof name === 'string' && name in opts.secrets) {
+						const secret = (opts.secrets as Record<string, string>)[name]
+						if (!secret) {
+							throw new Error(`Secret ${name} is undefined`)
+						}
+						c = c.withoutSecretVariable(name)
+					}
 				}
-			}
 
-			return c
+				const allSecretNames: string[] = [...(secretNames ?? [])]
+
+				// remove secret presets
+				for (const preset of secretPresets) {
+					const presetSecrets = this.config.secretPresets[preset]
+					if (!presetSecrets) {
+						throw new Error(`Unknown secret preset: ${String(preset)}`)
+					}
+
+					for (const secretName of presetSecrets) {
+						const secret = (opts.secrets as Record<string, string>)[secretName]
+						if (!secret) {
+							throw new Error(`Secret ${secretName} is undefined`)
+						}
+						allSecretNames.push(secretName)
+						c = c.withoutSecretVariable(secretName)
+					}
+				}
+
+				// remove derived env vars based on secretNames
+				for (const name of allSecretNames) {
+					const derivedEnvVars = this.config.derivedEnvVars[name]
+					if (derivedEnvVars) {
+						for (const key of Object.keys(derivedEnvVars)) {
+							c = c.withoutEnvVariable(key)
+						}
+					}
+				}
+
+				// remove environment variables from options
+				const envVars = opts.env
+				for (const key of Object.keys(envVars)) {
+					c = c.withoutEnvVariable(key)
+				}
+
+				return c
+			},
 		}
 	}
 
