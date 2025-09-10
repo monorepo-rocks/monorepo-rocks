@@ -1,5 +1,11 @@
 # @repo/eslint-config
 
+## 0.3.0
+
+### Minor Changes
+
+- b90651c: feat: update eslint deps and modernize config
+
 ## 0.2.4
 
 ### Patch Changes

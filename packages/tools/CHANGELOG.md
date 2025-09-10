@@ -1,5 +1,16 @@
 # @repo/tools
 
+## 0.4.0
+
+### Minor Changes
+
+- 9b1811b: feat: modernize run-eslint script
+
+### Patch Changes
+
+- 239f3db: fix: use correct eslint flag
+  - @repo/zod@0.1.6
+
 ## 0.3.3
 
 ### Patch Changes
