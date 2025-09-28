@@ -1,5 +1,11 @@
 # turbo-config
 
+## 0.2.2
+
+### Patch Changes
+
+- 847505c: chore: use shared function to get turbo config path
+
 ## 0.2.1
 
 ### Patch Changes
