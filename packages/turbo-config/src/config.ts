@@ -1,8 +1,8 @@
 import { pathToFileURL } from 'node:url'
 import { cliError } from '@jahands/cli-tools'
-import * as find from 'empathic/find'
 import { z } from 'zod'
 
+import { getTurboConfigPath } from './path'
 import { TurboConfig } from './schema'
 
 export type DefineConfigFn = () => Promise<TurboConfig>
@@ -25,10 +25,7 @@ export async function defineConfig(fn: DefineConfigFn): Promise<TurboConfig> {
 }
 
 export async function getTurboConfig(): Promise<TurboConfig> {
-	const turboConfigPath = find.up('turbo.config.ts')
-	if (!turboConfigPath) {
-		throw cliError('turbo.config.ts not found')
-	}
+	const turboConfigPath = getTurboConfigPath()
 
 	const mod = await import(pathToFileURL(turboConfigPath).href)
 	if (!('default' in mod)) {
