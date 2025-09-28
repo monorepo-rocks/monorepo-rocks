@@ -13,8 +13,12 @@
 	},
 	"main": "./dist/esm/index.mjs",
 	"bin": {
-		"turbo-config": "./dist/esm/bin/turbo-config.cmd.mjs"
+		"turbo-config": "./bin/turbo-config"
 	},
+	"files": [
+		"dist",
+		"bin"
+	],
 	"scripts": {
 		"build": "runx build bun ./src/index.ts ./src/bin/turbo-config.cmd.ts --format esm cjs --no-sourcemap",
 		"build:dev": "runx build bun ./src/bin/turbo-config.cmd.ts --format esm cjs --no-minify",
