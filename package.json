@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"private": true,
 	"sideEffects": false,
+	"type": "module",
 	"scripts": {
 		"build:workspace": "turbo -F @repo/workspace-dependencies build",
 		"changeset:new": "run-changeset-new",
@@ -12,6 +13,7 @@
 		"check:format": "prettier . --check --cache --ignore-unknown",
 		"check:lint:all": "run-eslint",
 		"check:turbo": "turbo check",
+		"postinstall": "# TODO: turbo-config generate",
 		"fix": "runx fix",
 		"fix:deps": "run-fix-deps",
 		"fix:lint": "FIX_ESLINT=1 run-eslint",
@@ -36,8 +38,9 @@
 		"prettier-plugin-packagejson": "2.5.10",
 		"syncpack": "13.0.4",
 		"turbo": "2.5.3",
+		"turbo-config": "workspace:*",
 		"typescript": "5.5.4",
-		"vitest": "3.1.4"
+		"vitest": "3.2.4"
 	},
 	"packageManager": "pnpm@10.10.0"
 }

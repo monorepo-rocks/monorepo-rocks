@@ -1,0 +1,105 @@
+import { defineConfig } from 'turbo-config'
+
+export default defineConfig(async () => {
+	return {
+		globalDependencies: ['**/.dev.vars'],
+		globalEnv: ['CI', 'GITHUB_ACTIONS', 'VITEST'],
+		globalPassThroughEnv: ['WRANGLER_LOG', 'FORCE_COLOR'],
+		remoteCache: {
+			enabled: true,
+			signature: true,
+		},
+		ui: 'tui',
+		tasks: {
+			topo: {
+				dependsOn: ['^topo'],
+			},
+			build: {
+				dependsOn: ['^build', 'topo'],
+				outputs: ['dist/**', '.wrangler/deploy/config.json'],
+				outputLogs: 'new-only',
+			},
+			dev: {
+				cache: false,
+				dependsOn: ['build', 'topo'],
+				interactive: true,
+				persistent: true,
+				outputLogs: 'new-only',
+			},
+			// preview is used in Vite applications
+			preview: {
+				cache: false,
+				dependsOn: ['build', 'topo'],
+				interactive: true,
+				persistent: true,
+				outputLogs: 'new-only',
+			},
+			deploy: {
+				cache: false,
+				dependsOn: ['build', 'topo'],
+				env: ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN'],
+				outputLogs: 'new-only',
+			},
+			// build:wrangler isn't used much, but can be useful for debugging
+			'build:wrangler': {
+				dependsOn: ['build', 'topo'],
+				outputLogs: 'new-only',
+			},
+			check: {
+				dependsOn: ['check:types', 'check:lint', 'topo'],
+				outputLogs: 'new-only',
+			},
+			'check:ci': {
+				dependsOn: [
+					'//#check:format',
+					'//#check:deps',
+					'check:types',
+					'check:exports',
+					'//#check:lint:all',
+					'//#test:ci',
+					'test:ci',
+					'topo',
+				],
+				outputLogs: 'new-only',
+			},
+			'test:ci': {
+				dependsOn: ['build', 'topo'],
+				outputLogs: 'new-only',
+			},
+			'//#test:ci': {
+				outputLogs: 'new-only',
+			},
+			'//#check:deps': {
+				outputLogs: 'new-only',
+			},
+			'check:types': {
+				dependsOn: ['build', '^check:types', 'topo'],
+				outputLogs: 'new-only',
+			},
+			'check:exports': {
+				dependsOn: ['^check:exports', 'check:types'],
+				outputLogs: 'new-only',
+			},
+			'check:lint': {
+				// does not depend on ^check:lint because it's better to run it
+				// from the root when needing to lint multiple packages
+				dependsOn: ['build', 'topo'],
+				outputLogs: 'new-only',
+				env: ['FIX_ESLINT'],
+			},
+			'//#check:lint:all': {
+				outputLogs: 'new-only',
+				outputs: ['node_modules/.cache/run-eslint/.eslintcache'],
+				env: ['FIX_ESLINT'],
+			},
+			'//#check:format': {
+				dependsOn: [],
+				outputLogs: 'new-only',
+			},
+			'fix:workers-types': {
+				outputs: ['worker-configuration.d.ts', 'topo'],
+				outputLogs: 'new-only',
+			},
+		},
+	}
+})

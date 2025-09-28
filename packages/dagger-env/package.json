@@ -53,14 +53,14 @@
 		"test": "run-vitest"
 	},
 	"dependencies": {
-		"zx": "8.5.4"
+		"zx": "8.8.4"
 	},
 	"devDependencies": {
 		"@dagger.io/dagger": "0.18.9",
 		"@repo/tools": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
 		"typescript": "5.5.4",
-		"vitest": "3.1.4",
+		"vitest": "3.2.4",
 		"zod": "4.1.1"
 	},
 	"peerDependencies": {

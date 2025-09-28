@@ -7,30 +7,28 @@
 		"enabled": true,
 		"signature": true
 	},
-	"ui": "tui",
 	"tasks": {
 		"topo": {
 			"dependsOn": ["^topo"]
 		},
 		"build": {
 			"dependsOn": ["^build", "topo"],
-			"outputs": ["dist/**", ".wrangler/deploy/config.json"],
-			"outputLogs": "new-only"
+			"outputLogs": "new-only",
+			"outputs": ["dist/**", ".wrangler/deploy/config.json"]
 		},
 		"dev": {
 			"cache": false,
 			"dependsOn": ["build", "topo"],
 			"interactive": true,
-			"persistent": true,
-			"outputLogs": "new-only"
+			"outputLogs": "new-only",
+			"persistent": true
 		},
-		// preview is used in Vite applications
 		"preview": {
 			"cache": false,
 			"dependsOn": ["build", "topo"],
 			"interactive": true,
-			"persistent": true,
-			"outputLogs": "new-only"
+			"outputLogs": "new-only",
+			"persistent": true
 		},
 		"deploy": {
 			"cache": false,
@@ -38,7 +36,6 @@
 			"env": ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN"],
 			"outputLogs": "new-only"
 		},
-		// build:wrangler isn't used much, but can be useful for debugging
 		"build:wrangler": {
 			"dependsOn": ["build", "topo"],
 			"outputLogs": "new-only"
@@ -79,24 +76,23 @@
 			"outputLogs": "new-only"
 		},
 		"check:lint": {
-			// does not depend on ^check:lint because it's better to run it
-			// from the root when needing to lint multiple packages
 			"dependsOn": ["build", "topo"],
-			"outputLogs": "new-only",
-			"env": ["FIX_ESLINT"]
+			"env": ["FIX_ESLINT"],
+			"outputLogs": "new-only"
 		},
 		"//#check:lint:all": {
+			"env": ["FIX_ESLINT"],
 			"outputLogs": "new-only",
-			"outputs": ["node_modules/.cache/run-eslint/.eslintcache"],
-			"env": ["FIX_ESLINT"]
+			"outputs": ["node_modules/.cache/run-eslint/.eslintcache"]
 		},
 		"//#check:format": {
 			"dependsOn": [],
 			"outputLogs": "new-only"
 		},
 		"fix:workers-types": {
-			"outputs": ["worker-configuration.d.ts", "topo"],
-			"outputLogs": "new-only"
+			"outputLogs": "new-only",
+			"outputs": ["worker-configuration.d.ts", "topo"]
 		}
-	}
+	},
+	"ui": "tui"
 }
