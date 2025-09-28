@@ -13,7 +13,7 @@
 		"check:format": "prettier . --check --cache --ignore-unknown",
 		"check:lint:all": "run-eslint",
 		"check:turbo": "turbo check",
-		"postinstall": "# TODO: turbo-config",
+		"postinstall": "turbo-config",
 		"fix": "runx fix",
 		"fix:deps": "run-fix-deps",
 		"fix:lint": "FIX_ESLINT=1 run-eslint",
