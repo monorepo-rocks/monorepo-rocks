@@ -5,6 +5,11 @@ const config = {
 	lintFormatting: false, // handled by prettier
 	versionGroups: [
 		{
+			label: 'use published turbo-config',
+			packages: ['monorepo-rocks-monorepo'],
+			dependencies: ['turbo-config'],
+		},
+		{
 			label: 'local packages',
 			packages: ['**'],
 			dependencies: ['$LOCAL'],
