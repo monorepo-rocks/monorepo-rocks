@@ -48,8 +48,8 @@ importers:
         specifier: 2.5.3
         version: 2.5.3
       turbo-config:
-        specifier: 0.2.0
-        version: 0.2.0
+        specifier: 0.2.1
+        version: 0.2.1
       typescript:
         specifier: 5.5.4
         version: 5.5.4
@@ -4674,8 +4674,8 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  turbo-config@0.2.0:
-    resolution: {integrity: sha512-JZUJ+6KtZVdfcs9FNUJx1WCY9PG9fkTAcdIcBpJas0jFbVuDYxUtccEl2tvE4MGe3uB8oY6t1qNU8u3FiSG5qw==}
+  turbo-config@0.2.1:
+    resolution: {integrity: sha512-8I8veFK8+S0+cwuvFQMFIJu474LnkUuacEkJBI+3V2ZlPAuODjBwCLUDFdsI0vJ4sQKGkbpyan4Gw+3R8WORHw==}
     hasBin: true
 
   turbo-darwin-64@2.5.3:
@@ -9709,7 +9709,7 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  turbo-config@0.2.0: {}
+  turbo-config@0.2.1: {}
 
   turbo-darwin-64@2.5.3:
     optional: true
