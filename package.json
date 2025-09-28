@@ -38,7 +38,7 @@
 		"prettier-plugin-packagejson": "2.5.10",
 		"syncpack": "13.0.4",
 		"turbo": "2.5.3",
-		"turbo-config": "workspace:*",
+		"turbo-config": "0.1.0",
 		"typescript": "5.5.4",
 		"vitest": "3.2.4"
 	},

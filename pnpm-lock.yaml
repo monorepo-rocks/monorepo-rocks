@@ -48,8 +48,8 @@ importers:
         specifier: 2.5.3
         version: 2.5.3
       turbo-config:
-        specifier: workspace:*
-        version: link:packages/turbo-config
+        specifier: 0.1.0
+        version: 0.1.0
       typescript:
         specifier: 5.5.4
         version: 5.5.4
@@ -4672,6 +4672,10 @@ packages:
   tsx@4.19.4:
     resolution: {integrity: sha512-gK5GVzDkJK1SI1zwHf32Mqxf2tSJkNx+eYcNly5+nHvWqXUJYUkWBQtKauoESz3ymezAI++ZwT855x5p5eop+Q==}
     engines: {node: '>=18.0.0'}
+    hasBin: true
+
+  turbo-config@0.1.0:
+    resolution: {integrity: sha512-W45dKQMTykXtgsyNsE1mSW9b989tXHgfilGX8YNzWThfBLCc466nwoBdHfeNtzymLPqbOtW6bh2j+A5EEnM8Cw==}
     hasBin: true
 
   turbo-darwin-64@2.5.3:
@@ -9704,6 +9708,8 @@ snapshots:
       get-tsconfig: 4.10.0
     optionalDependencies:
       fsevents: 2.3.3
+
+  turbo-config@0.1.0: {}
 
   turbo-darwin-64@2.5.3:
     optional: true
