@@ -2,6 +2,25 @@
 	"name": "turbo-config",
 	"version": "0.1.0",
 	"private": false,
+	"description": "Write your Turborepo config in TypeScript via turbo.config.ts",
+	"keywords": [
+		"turborepo",
+		"turbo",
+		"turbo.json",
+		"turbo.config.ts",
+		"config"
+	],
+	"homepage": "https://github.com/monorepo-rocks/monorepo-rocks/tree/main/packages/turbo-config",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/monorepo-rocks/monorepo-rocks.git",
+		"directory": "packages/turbo-config"
+	},
+	"license": "MIT",
+	"author": {
+		"name": "Jacob Hands",
+		"url": "https://twitter.com/jachands"
+	},
 	"sideEffects": false,
 	"type": "module",
 	"exports": {
