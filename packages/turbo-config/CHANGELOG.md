@@ -1,5 +1,11 @@
 # turbo-config
 
+## 0.2.1
+
+### Patch Changes
+
+- d7344ab: chore: update readme
+
 ## 0.2.0
 
 ### Minor Changes
