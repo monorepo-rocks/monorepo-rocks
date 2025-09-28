@@ -1,5 +1,17 @@
 # @repo/tools
 
+## 0.5.0
+
+### Minor Changes
+
+- fffdffd: feat: add bun build cmd
+
+### Patch Changes
+
+- fffdffd: chore: update deps
+- da064d6: fix: only rename .js files
+  - @repo/zod@0.1.6
+
 ## 0.4.0
 
 ### Minor Changes

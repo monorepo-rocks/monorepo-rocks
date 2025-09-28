@@ -1,5 +1,11 @@
 # llm-rules
 
+## 0.2.14
+
+### Patch Changes
+
+- fffdffd: chore: update deps
+
 ## 0.2.13
 
 ### Patch Changes

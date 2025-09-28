@@ -1,5 +1,11 @@
 # dagger-env
 
+## 0.6.1
+
+### Patch Changes
+
+- fffdffd: chore: update deps
+
 ## 0.6.0
 
 ### Minor Changes

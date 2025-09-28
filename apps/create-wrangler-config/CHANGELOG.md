@@ -1,5 +1,11 @@
 # create-wrangler-config
 
+## 0.2.6
+
+### Patch Changes
+
+- fffdffd: chore: update deps
+
 ## 0.2.5
 
 ### Patch Changes

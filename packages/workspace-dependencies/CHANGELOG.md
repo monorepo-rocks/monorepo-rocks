@@ -1,5 +1,16 @@
 # @repo/workspace-dependencies
 
+## 0.1.10
+
+### Patch Changes
+
+- fffdffd: chore: update deps
+- Updated dependencies [fffdffd]
+- Updated dependencies [fffdffd]
+- Updated dependencies [da064d6]
+  - @repo/tools@0.5.0
+  - @repo/zod@0.1.6
+
 ## 0.1.9
 
 ### Patch Changes
