@@ -1,6 +1,10 @@
 # turbo-config
 
-`turbo-config` lets you author your Turborepo configuration in TypeScript via `turbo.config.ts` instead of `turbo.json`. It does this by generating `turbo.json` from `turbo.config.ts` via `npx turbo-config`.
+[![npm version](https://badge.fury.io/js/turbo-config.svg)](https://badge.fury.io/js/turbo-config)
+
+`turbo-config` lets you author your Turborepo configuration in TypeScript via `turbo.config.ts` instead of `turbo.json`.
+
+It does this by generating `turbo.json` from `turbo.config.ts` via `npx turbo-config`.
 
 ## Why use `turbo.config.ts`?
 
