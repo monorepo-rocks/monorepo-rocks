@@ -1,5 +1,11 @@
 # create-workers-monorepo
 
+## 0.8.5
+
+### Patch Changes
+
+- fffdffd: chore: update deps
+
 ## 0.8.4
 
 ### Patch Changes

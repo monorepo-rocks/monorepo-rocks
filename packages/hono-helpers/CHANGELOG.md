@@ -1,5 +1,12 @@
 # @repo/hono-helpers
 
+## 0.1.8
+
+### Patch Changes
+
+- fffdffd: chore: update deps
+  - @repo/zod@0.1.6
+
 ## 0.1.7
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @repo/eslint-config
 
+## 0.3.1
+
+### Patch Changes
+
+- fffdffd: chore: update deps
+
 ## 0.3.0
 
 ### Minor Changes
