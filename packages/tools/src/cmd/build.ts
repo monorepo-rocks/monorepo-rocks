@@ -212,10 +212,7 @@ buildCmd
 
 				// change output files to mjs/cjs
 				await pMap(await glob(`${distDir}/**/*.js`), async (file) => {
-					await Promise.all([
-						fs.rename(file, file.replace(/\.js$/, outExt)),
-						fs.rename(file, file.replace(/\.js\.map$/, `${outExt}.map`)),
-					])
+					await fs.rename(file, file.replace(/\.js$/, outExt))
 				})
 			}),
 		])
