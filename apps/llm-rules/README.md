@@ -1,3 +1,8 @@
+## ⚠️ This package has moved!
+
+> This repository is no longer maintained. The package is now published from [jahands/workers-packages](https://github.com/jahands/workers-packages/tree/main/npm-apps/llm-rules).  
+> Please file issues and PRs there.
+
 # llm-rules
 
 A Model Context Protocol (MCP) server that provides tools for accessing Cursor rules found in `.cursor/rules/*.mdc` files within a repository. This allows AI tools like Claude and other LLM assistants to access and use Cursor rules through the MCP protocol.

@@ -1,3 +1,8 @@
+## ⚠️ This package has moved!
+
+> This repository is no longer maintained. The package is now published from [jahands/workers-packages](https://github.com/jahands/workers-packages/tree/main/npm-apps/create-workers-repo).  
+> Please file issues and PRs there.
+
 # create-workers-repo
 
 [![npm version](https://badge.fury.io/js/create-workers-repo.svg)](https://badge.fury.io/js/create-workers-repo)

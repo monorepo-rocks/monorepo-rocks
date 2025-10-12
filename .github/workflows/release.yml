@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    branches: ['main']
+    branches: ["main__DISABLED"]
 
 env:
   FORCE_COLOR: 1

@@ -1,3 +1,8 @@
+## ⚠️ This package has moved!
+
+> This repository is no longer maintained. The package is now published from [jahands/workers-packages](https://github.com/jahands/workers-packages/tree/main/npm-pkgs/dagger-env).  
+> Please file issues and PRs there.
+
 # dagger-env
 
 A type-safe, reusable environment configuration abstraction for Dagger modules with full Zod v4 validation and 1Password integration.

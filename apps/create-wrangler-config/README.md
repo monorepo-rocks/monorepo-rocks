@@ -1,3 +1,8 @@
+## ⚠️ This package has moved!
+
+> This repository is no longer maintained. The package is now published from [jahands/workers-packages](https://github.com/jahands/workers-packages/tree/main/npm-apps/create-wrangler-config).  
+> Please file issues and PRs there.
+
 # create-wrangler-config
 
 CLI tool for quickly setting up a `wrangler.jsonc` configuration file for Cloudflare Workers projects.

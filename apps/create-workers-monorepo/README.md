@@ -1,3 +1,8 @@
+## ⚠️ This package has moved!
+
+> This repository is no longer maintained. The package is now published from [jahands/workers-packages](https://github.com/jahands/workers-packages/tree/main/npm-apps/create-workers-monorepo).  
+> Please file issues and PRs there.
+
 # create-workers-monorepo
 
 [![npm version](https://badge.fury.io/js/create-workers-monorepo.svg)](https://badge.fury.io/js/create-workers-monorepo)

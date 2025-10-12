@@ -1,3 +1,8 @@
+## ⚠️ This repository is archived
+
+> The npm packages from this repository have moved to [jahands/workers-packages](https://github.com/jahands/workers-packages).
+> Please file issues and PRs there.
+
 # monorepo-rocks
 
 A collection of tools for working with monorepos

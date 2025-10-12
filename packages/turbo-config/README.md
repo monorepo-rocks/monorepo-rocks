@@ -1,3 +1,8 @@
+## ⚠️ This package has moved!
+
+> This repository is no longer maintained. The package is now published from [jahands/workers-packages](https://github.com/jahands/workers-packages/tree/main/npm-pkgs/turbo-config).  
+> Please file issues and PRs there.
+
 # turbo-config
 
 [![npm version](https://badge.fury.io/js/turbo-config.svg)](https://badge.fury.io/js/turbo-config)
